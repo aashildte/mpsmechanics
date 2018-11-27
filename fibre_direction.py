@@ -432,9 +432,10 @@ if __name__ == "__main__":
         C_diag = np.stack([fd.C[:,:,:,0], fd.C[:,:,:,3]], axis=3)
         C_offdiag = np.stack([fd.C[:,:,:,1], fd.C[:,:,:,2]], axis=3)
 
-        properties = [fd.grad, F_diag, F_offdiag, C_diag, C_offdiag]
-        labels = ("Gradient", "F diagonal values", "F off-diagonal values", \
-            "C diagonal values", "C off-diagonal values")
+        properties = [fd.org, fd.disp, fd.grad, F_diag, F_offdiag, C_diag, C_offdiag]
+        labels = ("Original values", "Displacement", "Gradient", \
+                "F diagonal values", "F off-diagonal values", \
+                "C diagonal values", "C off-diagonal values")
 
         fd.plot_properties(properties, labels, path, t=t, arrow=True)
 
@@ -476,14 +477,14 @@ if __name__ == "__main__":
     for p in (parent_path, fig_path):
         if not (os.path.exists(p)):
             os.mkdir(p)
-
+    
     fd = Fibre_direction(filename)
-    fd.preprocess_data(alpha = 0.75, N_diff = 5, \
+    t = fd._get_max_timestep()
+    
+    fd.preprocess_data(alpha = 0.75, N_diff = 5, t=t, \
             normalise_values=False, flip_values=False)
 
-    #t = fd._get_max_timestep()
-
-    plot_mechanical_properties(fd, 'All', fig_path)
+    plot_mechanical_properties(fd, t, fig_path)
     #solve_linear_system(fd, fig_path)
     
 

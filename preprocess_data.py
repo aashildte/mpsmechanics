@@ -63,7 +63,7 @@ def perform_operation(A, fn):
 
     # keep original data untouched
 
-    disp = data.copy()
+    disp = A.copy()
 
     # perform operation, given as a function
 
@@ -75,11 +75,40 @@ def perform_operation(A, fn):
     return disp
 
 
-def find_direction_vectors(disp):
+def get_overall_movement(data):
+    """
+
+    Finds sum of L2 norm of each vector,
+    
+        n(t) = sum(i, j) sqrt(x_{t,i,j}^2 + y_{t,i,j}^2)
+
+    for t = 0 ... T.
+
+    Arguments:
+        Data - numpy array, of dimensions T x X x Y x 2
+
+    Returns:
+        Sum array - numpy array of dimension T  
+
+    """
+    T, X, Y = get_dimensions(data)
+
+    disp_norm = np.zeros(T)
+    
+    for t in range(T):
+        disp_norm[t] = sum(np.linalg.norm(data[t].reshape(X*Y, 2), axis=1))
+
+    return disp_norm
+
+
+def find_direction_vectors(disp, idt):
     """
 
     From the given displacement, this function finds the
     direction of most detected movement using linear regression.
+
+    Calls a function which plots the values along with direction vectors
+    for visual check.
 
     Arguments:
         disp - T x X x Y x 2 dimensional numpy array
@@ -109,9 +138,51 @@ def find_direction_vectors(disp):
     e_alpha = np.linalg.norm(dir_v)*dir_v
     e_beta  = np.array([-e_alpha[1], e_alpha[0]])
 
+    _plot_data_vectors(xs, ys, e_alpha, e_beta, idt)
+
     return e_alpha, e_beta
 
-def get_projection_vectors(self, data, e_i):
+
+def _plot_data_vectors(xs, ys, e_alpha, e_beta, idt):
+    """
+
+    Plots data points along with direction vectors.
+
+    Figures saved as Plots/[idt]_alignment.png, Plots/[idt]_alignment.svg
+
+    Arguments:
+        xs - data points along x axis
+        ys - data points along y axis
+        e_alpha - main direction
+        e_beta  - perpendicular vector
+        idt - idt for plots
+
+    """
+
+    # downsample data for plotting - only plot each value once
+
+    pairs = list(set([(x, y) for (x, y) in zip(xs, ys)]))
+
+    p_x = [p[0] for p in pairs]
+    p_y = [p[1] for p in pairs]
+
+    # make plot dir if it doesn't already exist
+    if not (os.path.exists("Plots")):
+         os.mkdir("Plots")
+
+    plt.scatter(p_x, p_y, color='gray')
+
+    sc = [0.1*max(p_x), 0.1*max(p_y)]
+
+    for e in [e_alpha, e_beta]:
+        plt.plot([0, sc[0]*e[0]], [0, sc[1]*e[1]], color='red')
+
+    plt.savefig("Plots/" + idt + "_alignment.png")
+    plt.savefig("Plots/" + idt + "_alignment.svg")
+
+    plt.clf()
+
+def get_projection_vectors(data, e_i):
     """
 
     Extracts the parallel part of each component in disp,

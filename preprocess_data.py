@@ -16,35 +16,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as st
 
-from read_data import read_disp_file
-
-def get_dimensions(A):
-    """
-
-    Every input array is assumed to be a numpy array of dimensions
-    T x X x Y x 2, where T, X, Y can vary. This function checks
-    the input given, extracts the shape and returns X, Y, T.
-
-    Arguments:
-	A - numpy array, assumed to be 4-dimensional
-
-    Returns:
-	X, Y, T - first 3 dimensions of array
-
-    """
-
-    try: 
-        T, X, Y, d = A.shape
-        assert(d==2)
-    except:
-        print("shape of A: ", A.shape)
-        print("Error reading dimensions, exiting ...")
-        exit(-1)
-
-    return T, X, Y
+import read_data as io
 
 
-def perform_operation(A, fn):
+def perform_operation(A, fn, shape=None):
     """
 
     Performs an operation on all values of A, where A is assumed to be
@@ -53,24 +28,26 @@ def perform_operation(A, fn):
     Arguments:
         A - numpy array
         fn - function f((x, y), i, j) -> (x, y)
+        shape - optional, like A if not specified
 
     Returns:
         T x X x Y x 2, numpy array with resulting values
 
     """
 
-    T, X, Y = get_dimensions(A)
+    T, X, Y = A.shape[:3]
 
-    # keep original data untouched
-
-    disp = A.copy()
+    if(shape is None):
+        shape = A.shape
+    
+    disp = np.zeros(shape)
 
     # perform operation, given as a function
 
     for t in range(T):
         for x in range(X):
             for y in range(Y):
-                disp[t, x, y] = fn(disp[t, x, y, :], x, y)
+                disp[t, x, y] = fn(A[t, x, y], x, y)
 
     return disp
 
@@ -91,7 +68,7 @@ def get_overall_movement(data):
         Sum array - numpy array of dimension T  
 
     """
-    T, X, Y = get_dimensions(data)
+    T, X, Y = data.shape[:3]
 
     disp_norm = np.zeros(T)
     
@@ -118,7 +95,7 @@ def find_direction_vectors(disp, idt):
 	e_beta  - e_alpha rotatet pi/2 anti-clockwise
 
     """
-    T, X, Y = get_dimensions(disp)
+    T, X, Y = disp.shape[:3]
 
     xs = []
     ys = []
@@ -207,7 +184,7 @@ def get_min_max_scale(dir_vector, data):
     TODO - code to find rectangle
     """
 
-    T, X, Y = get_dimensions(data)
+    T, X, Y = data.shape[:3]
 
     Cs = np.array([0, 0]), np.array([0, Y-1]), \
        np.array([X-1, 0]), np.array([X-1, Y-1])
@@ -221,7 +198,7 @@ def find_mean_movement_pt(dir_vector, data):
     TODO - code to find rectangle
     """
 
-    T, X, Y = get_dimensions(data)
+    T, X, Y = data.shape[:3]
 
     N = 1000
     movement_bins = np.zeros(N)
@@ -263,7 +240,7 @@ def find_movement_rectangle(data, e_alpha, e_beta):
         TODO - code to find rectangle
     """
 
-    T, X, Y = get_dimensions(data)
+    T, X, Y = data.shape[:3]
 
     e1, e2 = np.array([1, 0]), np.array([0, 1])
 
@@ -308,7 +285,7 @@ def do_diffusion(data, alpha, N_diff):
 
     """
 
-    T, X, Y = get_dimensions(data)
+    T, X, Y = data.shape[:3]
 
     # keep original array untouched
 
@@ -377,28 +354,37 @@ def flip_values(data):
 
 if __name__ == "__main__":
 
-    import sys
-
     try:
         f_in = sys.argv[1]
+        idt = sys.argv[2]
     except:
-        print("Error reading file. Give file name as first argument.")
+        print("Error reading file names. Give displacement file name as " + \
+                  "first argument, identity as second.")
         exit(-1)
     
-    data = read_disp_file(f_in)
+    data = io.read_disp_file(f_in)
 
     # unit tests:
     
-    assert(len(get_dimensions(data))==3)
-    print("Dimensions check passed")
-
-    T, X, Y = get_dimensions(data)
+    T, X, Y = data.shape[:3]
     D = (T, X, Y, 2)
-    
-    e_a, e_b = find_direction_vectors(data)
+   
+    assert(perform_operation(data, lambda x, i, j : 1).shape==D) 
+    print("Perform operation check passed")
 
-    assert(len(e_a)==2 and len(e_b)==2 and np.dot(e_a, e_b)==0)
+    e_a, e_b = find_direction_vectors(data, idt)
+
+    assert(e_a.shape==(2,) and e_b.shape==(2,))
     print("Vector check passed")
+    
+    assert(get_projection_vectors(data, e_a).shape==D)
+    print("Projection vectors check passed")
+    
+    # TODO check for get_min_max_scale
+
+    # TODO check for find_mean_movement_pt
+
+    # TODO check for find_movement_rectangle
     
     assert(do_diffusion(data, 0.75, 2).shape==D)
     print("Diffusion check passed")

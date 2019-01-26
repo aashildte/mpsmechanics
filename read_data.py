@@ -13,16 +13,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
 def read_disp_file(filename):
     """
 
     Reads the input file, where the file is assumed to be a csv file on
     the form
-            T, X, Y
-            x0, y0
-            x1, y1
-            ...
+        T, X, Y
+        x0, y0
+        x1, y1
+        ...
+
     where we have T x X x Y values, giving the position for a given unit
     for time step t0, t1, ..., for  x coordinates x0, x1, ... and
     y coordinates y0, y1, ...
@@ -34,12 +34,12 @@ def read_disp_file(filename):
         filename - csv file
 
     Returns:
-        4-dimensional numpy array of rec_dimensions
-            T x X x Y x 2
+        4-dimensional numpy array, of dimensions T x X x Y x 2
 
     """
 
     f = open(filename, 'r')
+
     T, X, Y = map(int, str.split(f.readline(), ","))
 
     data = np.zeros((T, X, Y, 2))
@@ -47,10 +47,25 @@ def read_disp_file(filename):
     for t in range(T):
         for i in range(X):
             for j in range(Y):
-                d = str.split(f.readline(), ",")[:2]
+                d = str.split(f.readline().strip(), ",")
                 data[t, i, j] = np.array(d)
 
     f.close()
 
     return data
 
+
+if __name__ == "__main__":
+    
+    try:
+        f_in = sys.argv[1]
+    except:
+        print("Give file name as first argument")
+        exit(-1)
+
+    data = read_disp_file(f_in)
+
+    assert(len(data.shape)==4)
+
+    print("Read data test passed")
+    print("All tests passed")

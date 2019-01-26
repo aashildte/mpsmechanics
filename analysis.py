@@ -5,7 +5,7 @@ for a number of features.
 
 Run script as (with python 3)
 
-    python analyzis.py file1.csv file2.csv ...
+    python analysis.py file1.csv file2.csv ...
 
 where file1, file2 etc is the given displacement. The fileX part of the
 input files are used as an identity for that data set, both used for
@@ -22,7 +22,7 @@ Output saved: For each idt,
     where each row corresponds to a given input file.
 
 
-Aashild Telle / Simula Research Labratory / 2019
+Åshild Telle / Simula Research Labratory / 2019
 
 """
 
@@ -59,7 +59,7 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt):
 
     disp_data = io.read_disp_file(f_in)
  
-    T, X, Y = pp.get_dimensions(disp_data)
+    T, X, Y = disp_data.shape[:3]
 
     # some parameters
 
@@ -98,8 +98,11 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt):
 
     # maximum + average
 
-    max_vals = [max(v) for v in [max_contr_L2, max_contr_x, max_prev]]
-    avg_vals = [np.mean(v) for v in [max_contr_L2, max_contr_x, max_prev]]
+    try:
+        max_vals = [max(v) for v in [max_contr_L2, max_contr_x, max_prev]]
+        avg_vals = [np.mean(v) for v in [max_contr_L2, max_contr_x, max_prev]]
+    except ValueError:
+        print("Empty sequence – no maxima found")
 
     return [avg_beat] + max_vals + avg_vals
 

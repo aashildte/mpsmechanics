@@ -11,44 +11,43 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-from read_data import read_disp_file
-from preprocess_data import get_dimensions, get_overall_movement
+import read_data as io
+import preprocess_data as pp
 
 
 def _get_local_intervals(disp_norm, eps=.25):
     """
 
-        Given displacement over time, this tries to calculate the maxima
-        of each beat.
+    Given displacement over time, this tries to calculate the maxima 
+    of each beat.
 
-        The idea is to find local maximum regions by cutting of all
-        values below the mean. If the maximum in a local region is below
-        (1 + eps)*mean we won't include it (attempting to remove small
-        local minima close to the cut-of).
+    The idea is to find local maximum regions by cutting of all
+    values below the mean. If the maximum in a local region is below
+    (1 + eps)*mean we won't include it (attempting to remove small
+    local minima close to the cut-of).
 
-        Arguments:
-            disp_norm - 1D numpy array of dimensions T, displacement over time.
-            eps - cut-of value, default .25
-        
-        Returns:
-            list of local intervals
+    Arguments:
+        disp_norm - 1D numpy array of dimensions T, displacement over time.
+        eps - cut-of value, default .25
+
+    Returns:
+        list of local intervals
 
     """    
 
 
     T = len(disp_norm)
 
-    # find percentile
+    # find mean and a threshold value
 
     q1 = np.mean(disp_norm)
     q2 = (1 + eps)*q1
 
     local_intervals = []
 
-    t = 0
+    # iterate through data set
 
-    t_start = 0
-    t_stop = 0
+    t, t_start, t_stop = 0, 0, 0
 
     started = False
     threshold = False
@@ -72,15 +71,15 @@ def _get_local_intervals(disp_norm, eps=.25):
 
 def _get_beat_maxima(disp_norm, local_intervals):
     """
-        From data on displacement over time, this function calculates
-        the indices of the maxima of each beat.
+    From data on displacement over time, this function calculates
+    the indices of the maxima of each beat.
 
-        Arguments:
-            disp_norm - 1D numpy array of dimensions T, disp. over time
-            local_intervals - list of intervals containing a maximum point
+    Arguments:
+        disp_norm - 1D numpy array of dimensions T, disp. over time
+        local_intervals - list of intervals containing a maximum point
 
-        Returns:
-            list of maxima indices
+    Returns:
+        list of maxima indices
     """
 
     maxima = []
@@ -95,44 +94,44 @@ def _get_beat_maxima(disp_norm, local_intervals):
 
 def get_beat_maxima(data, idt, T_max):
     """
-        From data on displacement over time, this function calculates
-        the indices of the maxima of each beat.
+    From data on displacement over time, this function calculates
+    the indices of the maxima of each beat.
 
-        Arguments:
-            data - T x X x Y x 2 numpy array, displacement values
-            idt - idt for visulization check plots
-            T_max     - last time value
+    Arguments:
+        data - T x X x Y x 2 numpy array, displacement values
+        idt - idt for visulization check plots
+        T_max     - last time value
 
-        Returns:
-            list of maxima indices
+    Returns:
+        list of maxima indices
         
     """
 
-    disp_norm = get_overall_movement(data)
+    disp_norm = pp.get_overall_movement(data)
     local_intervals = _get_local_intervals(disp_norm)
     maxima = _get_beat_maxima(disp_norm, local_intervals)
     _plot_maxima(disp_norm, maxima, idt, T_max)
 
     return maxima
 
-def get_average(maxima):
+def get_average(pts):
     """
 
-        Average difference of a set of points (maxima).
+    Calculates average difference of a set of points.
 
-        Arguments:
-            maxima - list of points
+    Arguments:
+        pts - list of points
 
-        Returns:
-            averaged difference
+    Returns:
+        averaged difference
 
     """
 
-    N = len(maxima)
+    N = len(pts)
     s = 0
 
     for k in range(N-1):
-        s = s + (maxima[k+1] - maxima[k])
+        s = s + (pts[k+1] - pts[k])
 
     return s/(N-1)
          
@@ -141,15 +140,15 @@ def get_average(maxima):
 def _plot_maxima(disp_norm, maxima, idt, T_max):
     """
 
-        Plots values and maxima for visual check.
+    Plots values and maxima for visual check.
 
-        Plots are saved as Plots/[idt]_maxima.png and Plots/[idt]_maxima.svg.
+    Plots are saved as Plots/[idt]_maxima.png and Plots/[idt]_maxima.svg.
 
-        Arguments:
-            disp_norm - displacement over time
-            maxima    - list of maxima indices
-            idt       - filename idt
-            T_max     - last time value
+    Arguments:
+        disp_norm - displacement over time
+        maxima    - list of maxima indices
+        idt       - filename idt
+        T_max     - last time value
     """
     
     # make plot dir if it doesn't already exist
@@ -179,8 +178,15 @@ if __name__ == "__main__":
         print("Error reading file. Give file name as first argument, identity for plotting as second.")
         exit(-1)
     
-    data = read_disp_file(f_in)
-    disp_norm = _get_overall_movement(data)
-    local_intervals = _get_local_intervals(disp_norm)
-    maxima = _get_beat_maxima(disp_norm, local_intervals)
-    _plot_maxima(disp_norm, maxima, f_ou)
+    data = io.read_disp_file(f_in)
+
+    T, X, Y = data.shape[:3]
+
+    maxima = get_beat_maxima(data, "test", T)
+    assert(maxima != None)
+    print("Beat maxima check passed")
+
+    assert(get_average(maxima) != None)
+    print("Average check passed")
+
+    print("All checks passed")

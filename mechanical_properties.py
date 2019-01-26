@@ -1,8 +1,8 @@
 """
 
 Module for analyzing mechanical properties from motion vector images:
+- Prevalence
 - Displacement
-- Velocity
 - Principal strain
 
 Åshild Telle / Simula Research Labratory / 2019
@@ -15,86 +15,113 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+import read_data as io
 import preprocess_data as pp
 
 
 def get_prevalence(movement, dt, dx, threshold):
     """
+    Computes a true/false array for whether the displacement surpasses 
+    a given threshold.
+
     Arguments:
         movement - T x X x Y x 2 numpy array
+        dt - time difference (1/sampling rate)
+        dx - space difference (width / X = height / Y)
+        threshold - cut-of value, in space/time units
 
     Returns:
-        prevalence - T x X x Y x 2 numpy array
+        prevalence - T x X x Y x 2 numpy boolean array
 
     """
 
-    threshold = threshold*dx/dt            # in same units
+    threshold = threshold*dx/dt         # scale
 
-    f_th = lambda x, i, j, threshold=threshold: (np.linalg.norm(x) > threshold)    
+    f_th = lambda x, i, j, th=threshold: (np.linalg.norm(x) > th)    
 
     return pp.perform_operation(movement, f_th)
 
 
-
-def compute_velocity(data, dt):
-    T, X, Y = pp.get_dimensions(data)
-
-    v = np.zeros((T-1, X, Y, 2))
-
-    for t in range(T-1):
-        for x in range(X):
-            for y in range(Y):
-                v[t, x, y] = (data[t+1, x, y] - data[t, x, y])/dt
-
-    return v
-
-
-def compute_gradient(data):
+def compute_deformation_tensor(data):
     """
-        Computes the gradient from values in data
+    Computes the deformation tensor F from values in data
+
+    TODO calculate using perform_operation
+
+    Arguments:
+        data - numpy array of dimensions T x X x Y x 2
+
+    Returns:
+        F, deformation tensor, of dimensions T x X x Y x 4
 
     """
-    T, X, Y = pp.get_dimensions(data)
 
-    grad_x = np.array(np.gradient(data[:,:,:,0], axis=1))
-    grad_y = np.array(np.gradient(data[:,:,:,1], axis=2))
-    grad = np.stack((grad_x, grad_y), axis=3)
-    
-    return grad
+    T, X, Y = data.shape[:3]
 
-def compute_deformation_tensor(disp):
-    """
-        Computes the deformation tensor F from values in data
-    """
+    dudx = np.array(np.gradient(data[:,:,:,0], axis=1))
+    dudy = np.array(np.gradient(data[:,:,:,0], axis=2))
+    dvdx = np.array(np.gradient(data[:,:,:,1], axis=1))
+    dvdy = np.array(np.gradient(data[:,:,:,1], axis=2))
 
-
-    dudx = np.array(np.gradient(disp[:,:,:,0], axis=1))
-    dudy = np.array(np.gradient(disp[:,:,:,0], axis=2))
-    dvdx = np.array(np.gradient(disp[:,:,:,1], axis=1))
-    dvdy = np.array(np.gradient(disp[:,:,:,1], axis=2))
-        
-    F = np.stack((dudx, dudy, dvdx, dvdy), axis=3)
-
-    return F
-
-def compute_cauchy_green_tensor(F):
-    """
-        Computes the Cauchy-Green tensor C from F.
-    """
-
-    T, X, Y = len(F), len(F[0]), len(F[0,0])
- 
-    C = np.zeros_like(F)
+    F = np.zeros((T, X, Y, 2, 2))
 
     for t in range(T):
-        for i in range(X):
-            for j in range(Y):
-                C[t,i,j] = F[t,i,j].transpose()*F[t,i,j]
+        for x in range(X):
+            for y in range(Y):
+                F[t, x, y] = \
+                    np.array([[dudx[t, x, y] + 1, dudy[t, x, y]],
+                              [dvdx[t, x, y], dvdy[t, x, y] + 1]])
+    
+    return F
 
-    self.C = C
+
+def compute_cauchy_green_tensor(data):
+    """
+    Computes the transpose along the third dimension of data; if data
+    represents the deformation gradient tensor F (over time and 2 spacial
+    dimensions) this corresponds to the cauchy green tensor C.
+
+    Arguments:
+        data - numpy array of dimensions T x X x Y x 2 x 2
+
+    Returns
+        C, numpy array of dimensions T x X x Y x 2 x 2
+
+    """
+
+    F = compute_deformation_tensor(data)
+    f = lambda x, i, j : x.transpose()*x 
+
+    return pp.perform_operation(F, f)
 
 
-def plot_properties(self, properties, labels, path, t='All', arrow=False):
+def compute_principal_strain(data):
+    """
+    Computes the principal strain defined to be the largest eigenvector
+    (eigenvector corresponding to largest eigenvalue, scaled) of the
+    Cauchy-Green tensor, for each point (t, x, y).
+
+    Arguments:
+        data - displacement data, numpy array of dimension T x X x Y x 2
+
+    Returns:
+        principal strain - numpy array of dimension T x X x Y x 2
+
+    """
+
+    X, Y, T = data.shape[:3]
+
+    C = compute_cauchy_green_tensor(data)
+
+    f = lambda x, i, j, \
+            find_ps=lambda X : X[0][0]*X[1][1] if X[0][0] > X[0][1] \
+                                    else X[0][1]*X[1][1] : \
+            find_ps(np.linalg.eig(x))
+
+    return pp.perform_operation(C, f, shape=(X, Y, T, 2))
+
+
+def plot_properties(properties, labels, path, arrow=False):
         """
         
         Plots given data for given time step(s).
@@ -110,16 +137,14 @@ def plot_properties(self, properties, labels, path, t='All', arrow=False):
 
         """
     
-        t_start, t_stop = self._formate_time_values(t)
-
         for (l, p) in zip(labels, properties):
-            for t in range(t_start, t_stop):
+            for t in range(T):
                 filename = path + l + ("%03d" %t) + ".svg"
                 x, y = p[t,:,:,0], p[t,:,:,1]
                 fd.plot_solution(filename, (l + " at time step %3d" % t),
                     x, y, arrow=arrow)
 
-def plot_solution(self, filename, title, U, V, arrow=False):
+def plot_solution(filename, title, U, V, arrow=False):
         """
 
         Gives a quiver plot.
@@ -146,4 +171,31 @@ def plot_solution(self, filename, title, U, V, arrow=False):
 
 
 if __name__ == "__main__":
-    pass
+
+    try:
+        f_in = sys.argv[1]
+        idt = sys.argv[2]
+    except:
+        print("Error reading file names. Give displacement file name as " + \
+             "first argument, identity as second.")
+        exit(-1)
+    
+    data = io.read_disp_file(f_in)
+
+    T, X, Y = data.shape[:3]
+
+    assert(get_prevalence(data, 1, 1, T).shape == (T, X, Y, 2))
+    print("Prevalence check passed")
+
+    assert(compute_deformation_tensor(data).shape == (T, X, Y, 2, 2))
+    print("F check passed")
+    
+    assert(compute_cauchy_green_tensor(data).shape == (T, X, Y, 2, 2))
+    print("C check passed")
+
+    assert(compute_principal_strain(data).shape == (T, X, Y, 2))
+    print("Principal strain check passed")
+
+    # TODO checks for plotting
+
+    print("All checks passed")

@@ -78,6 +78,30 @@ def get_overall_movement(data):
     return disp_norm
 
 
+def get_max_ind(disp):
+    """
+
+    Finds the index of the maximum value of disp. If there are multiple
+    maxima (same number) the first one will be returned.
+
+    Arguments:
+        disp - 1D list-like data structure
+
+    Returns
+        index corresponding to maximum index
+
+    """
+
+    T = len(disp)
+
+    max_t = (0, disp[0])
+
+    for t in range(T):
+        if(disp[t] > max_t[1]):
+            max_t = (t, disp[t])
+
+    return max_t[0]
+
 def find_direction_vectors(disp, idt):
     """
 

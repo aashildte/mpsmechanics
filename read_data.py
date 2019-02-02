@@ -55,6 +55,31 @@ def read_disp_file(filename):
     return data
 
 
+
+def make_dir_structure(path):
+    """
+
+    Makes a directory structure based on a given path.
+
+    """
+
+    # check if runs on Windows or Linux/Mac
+
+    os_del = "\\" if os.name=="nt" else "/"
+
+    print(os_del)
+
+    dirs = path.split(os_del)
+
+    acc_d = "."
+
+    for d in dirs:
+        acc_d = acc_d + os_del + d
+
+        if not (os.path.exists(acc_d)):
+            os.mkdir(acc_d)
+
+
 if __name__ == "__main__":
     
     try:

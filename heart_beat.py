@@ -6,7 +6,6 @@
 
 """
 
-import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +14,7 @@ import read_data as io
 import preprocess_data as pp
 
 
-def _get_local_intervals(disp_norm, eps=.25):
+def _get_local_intervals(disp_norm, eps):
     """
 
     Given displacement over time, this tries to calculate the maxima 
@@ -28,7 +27,7 @@ def _get_local_intervals(disp_norm, eps=.25):
 
     Arguments:
         disp_norm - 1D numpy array of dimensions T, displacement over time.
-        eps - cut-of value, default .25
+        eps - buffer value, maxima needs to be above (1+eps)*average value
 
     Returns:
         list of local intervals
@@ -107,67 +106,100 @@ def get_beat_maxima(data, idt, T_max):
         
     """
 
+    eps = 0.25
+
     disp_norm = pp.get_overall_movement(data)
-    local_intervals = _get_local_intervals(disp_norm)
+    local_intervals = _get_local_intervals(disp_norm, eps)
     maxima = _get_beat_maxima(disp_norm, local_intervals)
-    _plot_maxima(disp_norm, maxima, idt, T_max)
+    _plot_disp_i(disp_norm, maxima, eps, idt, T_max)
 
     return maxima
 
-def get_average(pts):
+
+def _plot_disp_i(disp_norm, maxima, eps, idt, T_max):
     """
 
-    Calculates average difference of a set of points.
+    Plots values, maxima, mean value and mean value*(1+eps) for a 
+    visual check.
 
-    Arguments:
-        pts - list of points
-
-    Returns:
-        averaged difference
-
-    """
-
-    N = len(pts)
-    s = 0
-
-    for k in range(N-1):
-        s = s + (pts[k+1] - pts[k])
-
-    return s/(N-1)
-         
-
-
-def _plot_maxima(disp_norm, maxima, idt, T_max):
-    """
-
-    Plots values and maxima for visual check.
-
-    Plots are saved as Plots/[idt]_maxima.png and Plots/[idt]_maxima.svg.
+    Plots are saved as Plots/[idt]_mean.png and Plots/[idt]_mean.svg.
 
     Arguments:
         disp_norm - displacement over time
-        maxima    - list of maxima indices
+        maxima    - time steps for maxima values
+        eps       - buffer value
         idt       - filename idt
         T_max     - last time value
     """
     
     # make plot dir if it doesn't already exist
-    
-    if not (os.path.exists("Plots")):
-         os.mkdir("Plots")
-
+    path = "Plots"
+    io.make_dir_structure(path)
+ 
     t = np.linspace(0, T_max, len(disp_norm))
     
-    m_t = [t[m] for m in maxima]
-
     plt.plot(t, disp_norm)
-    max_vals = [disp_norm[m] for m in maxima]
-    plt.scatter(m_t, max_vals, color='red')
     
-    plt.savefig("Plots/" + idt + "_maxima.png")
-    plt.savefig("Plots/" + idt + "_maxima.svg")
+    mean = np.mean(disp_norm)
+
+    mean_vals = mean*np.ones(len(t))
+    mean_eps  = (mean*(1 + eps))*np.ones(len(t))
+
+    plt.plot(t, mean_vals, 'r')
+    plt.plot(t, mean_eps, 'g')
+    
+    m_t = [t[m] for m in maxima]
+    max_vals = [disp_norm[m] for m in maxima]
+
+    plt.scatter(m_t, max_vals, color='red')
+   
+
+    plt.legend(['Displacement', 'Mean value', \
+        'Mean (1 + $\epsilon$)', 'Maxima'], loc=4)
+ 
+    plt.savefig(path + "/" + idt + "_mean.png")
+    plt.savefig(path + "/" + idt + "_mean.svg")
 
     plt.clf()
+         
+
+
+def plot_maxima(values, maxima, idt, property_s, T_max):
+    """
+
+    Plots values and maxima for visual check.
+
+    Plots are saved as [idt]_[suffix].png and [idt]_[suffix].svg in 
+    a folder named Plots.
+
+    Arguments:
+        values     - data over time
+        maxima     - list of maxima indices
+        idt        - filename idt
+        property_s - identifies value of interest
+        T_max      - last time value
+    """
+    
+    path = "Plots"
+    io.make_dir_structure(path)
+
+    t = np.linspace(0, T_max, len(values))
+
+    print("maxima", maxima)   
+ 
+    m_t = [t[m] for m in maxima]
+
+    plt.plot(t, values)
+    max_vals = [values[m] for m in maxima]
+    plt.scatter(m_t, max_vals, color='red')
+
+    plt.legend([property_s, 'Maxima'], loc=4)
+    
+    plt.savefig(path + "/" + idt + "_" + property_s + ".png")
+    plt.savefig(path + "/" + idt + "_" + property_s + ".svg")
+
+    plt.clf()
+
 
 if __name__ == "__main__":
 
@@ -188,5 +220,7 @@ if __name__ == "__main__":
 
     assert(get_average(maxima) != None)
     print("Average check passed")
+
+    # TODO check for plot_maxima
 
     print("All checks passed")

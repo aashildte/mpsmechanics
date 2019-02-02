@@ -7,19 +7,29 @@ Run script as (with python 3)
 
     python analysis.py file1.csv file2.csv ...
 
-where file1, file2 etc is the given displacement. The fileX part of the
-input files are used as an identity for that data set, both used for
-plotting (for visual checks) and identity in output file.
+where file1, file2 etc is the given displacement. The fileX part of
+the input files are used as an identity for that data set, both used
+for plotting (for visual checks) and identity in output file.
 
-Output saved: For each idt,
-    maxima_idt.png, maxima_idt.svg
-    alignment_idt.png, alignment_idt.svg
-    values.csv on the form
+Output saved: For each data file given, we calculate and save a set
+of values to be used as metrics when comparing the desings. These
+will be saved in a file called values.csv, where each row contains
+the values
+    - identity - file name of the given data set
+    - average beat rate
+    - maximum beat rate
+    - average displacement
+    - maximum displacement
+    - average x motion
+    - maximum x motion
+    - average prevalence
+    - maximum prevalence
+    - average principal strain
+    - maximum principal strain
 
-        , Average beat rate, Average displacement, ...
-    idt , average beat rate for idt, average displacement for idt, ...
-
-    where each row corresponds to a given input file.
+We also plot figures for alignment and beat rate as well as a plot
+for each characteristic value. The plots are saved in "Plots", and
+each is saved both as a png and as a svg file.
 
 
 Åshild Telle / Simula Research Labratory / 2019
@@ -35,7 +45,7 @@ import heart_beat as hb
 import mechanical_properties as mc
 
 
-def get_numbers_of_interest(f_in, alpha, N_d, idt):
+def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
     """
 
     Arguments:
@@ -43,6 +53,7 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt):
         alpha - diffusion coefficient
         N_d - diffusion number
         idt - data set idt
+        dimensions - tuple (x, y), picture dimensions
 
     Returns:
         average beat rate
@@ -72,39 +83,62 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt):
     # characteristic values
  
     maxima = np.array(hb.get_beat_maxima(disp_data, idt, T_max))
-    e_alpha, e_beta = pp.find_direction_vectors(disp_data, idt)
+    e_alpha, e_beta = pp.find_direction_vectors(disp_data, idt, \
+        dimensions)
 
-    avg_beat = hb.get_average(maxima)*dt    # in Hz
+    beat = np.array([(maxima[k] - maxima[k-1]) \
+                        for k in range(1, len(maxima))])
 
     # preprocess data
 
     disp_data = pp.do_diffusion(disp_data, alpha, N_d)
     disp_data_x = pp.get_projection_vectors(disp_data, e_alpha)
 
-    # get displacement, displacement x, prevalance
+    # get displacement, displacement x, prevalance, principal strain
 
     disp_data_t = pp.get_overall_movement(disp_data)
     disp_data_x_t = pp.get_overall_movement(disp_data_x)
     
     prevalence = pp.get_overall_movement(\
                      mc.get_prevalence(disp_data, dt, dx, tr))
+
+    pr_strain = pp.get_overall_movement(\
+                     mc.compute_principal_strain(disp_data))
+
     # ... for each beat ...
 
     maxima = hb.get_beat_maxima(disp_data, idt, T_max)
 
-    max_contr_L2 = np.array([disp_data_t[m] for m in maxima])
-    max_contr_x = np.array([disp_data_x_t[m] for m in maxima])
-    max_prev = np.array([prevalence[m] for m in maxima])
+    # differences:
+    beat_r = np.array([maxima[k+1] - maxima[k] \
+        for k in range(len(maxima)-1)])
+
+    values = [disp_data_t, disp_data_x_t, prevalence, pr_strain]
+    max_vals = np.array([[metric[m] for m in maxima] \
+                   for metric in values])
+
+    # plot some values
+    suffixes = ["Displacement", "X motion", "Prevalence", \
+                    "Principal strain"]
+
+    for (val, s) in zip(values, suffixes):
+        hb.plot_maxima(val, maxima, idt, s, T_max)
 
     # maximum + average
 
     try:
-        max_vals = [max(v) for v in [max_contr_L2, max_contr_x, max_prev]]
-        avg_vals = [np.mean(v) for v in [max_contr_L2, max_contr_x, max_prev]]
+        max_vals = [max(m) for m in max_vals]
+        avg_vals = [np.mean(m) for m in max_vals]
+        values = [np.mean(beat_r), max(beat_r)]
     except ValueError:
         print("Empty sequence – no maxima found")
 
-    return [avg_beat] + max_vals + avg_vals
+
+    for k in range(len(max_vals)):
+        values.append(max_vals[k])
+        values.append(avg_vals[k])
+
+    return values
 
 
 try:
@@ -116,14 +150,31 @@ except:
 alpha = 0.75
 N_d = 5
 
-output_headers = ", Average beat rate, Average displacement, Average x displacement, Average prevalence, Max displacement, Max x displacement, Max prevalence"
+dimensions = (664.30, 381.55)
+
+output_headers = ",".join([" ", "Average beat rate", "Maximum beat rate", \
+                          "Average displacement", "Maximum displacement", \
+                          "Average x motion", "Maximum x motion", \
+                          "Average prevalence", "Maximum prevalence", \
+                          "Average principal strain", "Maximum principal strain"])
 
 fout = open("values.csv", "w")
 
 for f_in in sys.argv[1:]:
-    idt = f_in.split("/")[-1].split(".")[0]
+    last_fn = f_in.split("/")[-1].split(".")
 
-    values = get_numbers_of_interest(f_in, alpha, N_d, idt)
+    # check suffix - if not a csv file, skip this one
+
+    prefix, suffix = last_fn
+
+    if(suffix != "csv"):
+        continue
+
+    # perform analysis
+
+    idt = prefix
+
+    values = get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions)
     values_str = ", ".join([idt] + list(map(str, values)))
 
     fout.write(values_str)

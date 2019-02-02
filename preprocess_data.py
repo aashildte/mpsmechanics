@@ -102,7 +102,7 @@ def get_max_ind(disp):
 
     return max_t[0]
 
-def find_direction_vectors(disp, idt):
+def find_direction_vectors(disp, idt, dimensions):
     """
 
     From the given displacement, this function finds the
@@ -113,6 +113,7 @@ def find_direction_vectors(disp, idt):
 
     Arguments:
         disp - T x X x Y x 2 dimensional numpy array
+        dimensions - pair of dimension values (x, y)
 
     Returns:
 	e_alpha - vector in 1st or 4th quadrant along most movement
@@ -139,12 +140,12 @@ def find_direction_vectors(disp, idt):
     e_alpha = np.linalg.norm(dir_v)*dir_v
     e_beta  = np.array([-e_alpha[1], e_alpha[0]])
 
-    _plot_data_vectors(xs, ys, e_alpha, e_beta, idt)
+    _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions)
 
     return e_alpha, e_beta
 
 
-def _plot_data_vectors(xs, ys, e_alpha, e_beta, idt):
+def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions):
     """
 
     Plots data points along with direction vectors.
@@ -154,22 +155,35 @@ def _plot_data_vectors(xs, ys, e_alpha, e_beta, idt):
     Arguments:
         xs - data points along x axis
         ys - data points along y axis
+        X  - number of data points in x direction
+        Y  - number of data points in y direction
         e_alpha - main direction
         e_beta  - perpendicular vector
         idt - idt for plots
+        dimensions - pair of dimensions (x, y)
 
     """
+    # scale dimensions to standard size in x direction
+
+    scale = 6.4/dimensions[0]
+    dimensions_scaled = (scale*dimensions[0], scale*dimensions[1])
+
+    plt.figure(figsize=dimensions_scaled)
 
     # downsample data for plotting - only plot each value once
 
     pairs = list(set([(x, y) for (x, y) in zip(xs, ys)]))
 
-    p_x = [p[0] for p in pairs]
-    p_y = [p[1] for p in pairs]
+    p_x = np.array([p[0] for p in pairs])
+    p_y = np.array([p[1] for p in pairs])
 
-    # make plot dir if it doesn't already exist
-    if not (os.path.exists("Plots")):
-         os.mkdir("Plots")
+    # scale
+
+    p_x = dimensions[0]/X*p_x
+    p_y = dimensions[1]/Y*p_y
+
+    path = "Plots"
+    io.make_dir_structure(path)
 
     plt.scatter(p_x, p_y, color='gray')
 
@@ -178,8 +192,8 @@ def _plot_data_vectors(xs, ys, e_alpha, e_beta, idt):
     for e in [e_alpha, e_beta]:
         plt.plot([0, sc[0]*e[0]], [0, sc[1]*e[1]], color='red')
 
-    plt.savefig("Plots/" + idt + "_alignment.png")
-    plt.savefig("Plots/" + idt + "_alignment.svg")
+    plt.savefig(path + "/" + idt + "_alignment.png")
+    plt.savefig(path + "/" + idt + "_alignment.svg")
 
     plt.clf()
 

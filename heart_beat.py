@@ -156,6 +156,8 @@ def _plot_disp_i(disp_norm, maxima, eps, idt, T_max):
 
     plt.legend(['Displacement', 'Mean value', \
         'Mean (1 + $\epsilon$)', 'Maxima'], loc=4)
+
+    plt.xlabel('Time (s)')
  
     plt.savefig(path + "/" + idt + "_mean.png")
     plt.savefig(path + "/" + idt + "_mean.svg")
@@ -183,10 +185,7 @@ def plot_maxima(values, maxima, idt, property_s, T_max):
     path = "Plots"
     io.make_dir_structure(path)
 
-    t = np.linspace(0, T_max, len(values))
-
-    print("maxima", maxima)   
- 
+    t = np.linspace(0, T_max, len(values)) 
     m_t = [t[m] for m in maxima]
 
     plt.plot(t, values)
@@ -194,6 +193,7 @@ def plot_maxima(values, maxima, idt, property_s, T_max):
     plt.scatter(m_t, max_vals, color='red')
 
     plt.legend([property_s, 'Maxima'], loc=4)
+    plt.xlabel('Time (s)')
     
     plt.savefig(path + "/" + idt + "_" + property_s + ".png")
     plt.savefig(path + "/" + idt + "_" + property_s + ".svg")

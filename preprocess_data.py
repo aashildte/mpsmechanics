@@ -169,6 +169,8 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions):
     dimensions_scaled = (scale*dimensions[0], scale*dimensions[1])
 
     plt.figure(figsize=dimensions_scaled)
+    plt.xlabel('$\mu m$')
+    plt.ylabel('$\mu m$')
 
     # downsample data for plotting - only plot each value once
 
@@ -195,6 +197,7 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions):
     plt.savefig(path + "/" + idt + "_alignment.png")
     plt.savefig(path + "/" + idt + "_alignment.svg")
 
+    plt.figure()
     plt.clf()
 
 def get_projection_vectors(data, e_i):

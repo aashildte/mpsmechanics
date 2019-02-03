@@ -45,6 +45,65 @@ import heart_beat as hb
 import mechanical_properties as mc
 
 
+def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
+    disp_data = io.read_disp_file(f_in)
+ 
+    T, X, Y = disp_data.shape[:3]
+    T_max = dt*T
+
+    # beat rate - find all maximum points
+
+    maxima = np.array(hb.get_beat_maxima(disp_data, idt, T_max))
+
+    # preprocess data
+
+    disp_data = pp.do_diffusion(disp_data, alpha, N_d)
+
+    return disp_data, maxima
+    
+
+def get_xfraction(disp_data, disp_data_t, idt, dimensions):
+    e_alpha, e_beta = pp.find_direction_vectors(disp_data, idt, \
+        dimensions)
+
+    disp_data_x = pp.get_projection_vectors(disp_data, e_alpha)
+    disp_data_x_t = pp.get_overall_movement(disp_data_x)
+  
+    T = len(disp_data_x_t)
+ 
+    disp_data_xfraction = np.zeros(T)
+
+    for t in range(T):
+        if(disp_data_t[t] > 1E-10):
+            disp_data_xfraction[t] = disp_data_x_t[t]/disp_data_t[t]
+
+    return disp_data_xfraction
+
+
+def get_prevalence(disp_data, disp_data_t, dt):
+
+    T, X, Y = disp_data.shape[:3]
+
+    # some parameters
+    dx = 2044./664*10E-6   # approximately
+    tr = 2*10E-6           # from paper
+    scale = 1./(X*Y)       # no of points
+    
+    prev_xy = mc.get_prevalence(disp_data, dt, dx, tr)
+
+    prevalence = np.zeros(T)
+
+    print(prev_xy.shape)
+
+    for t in range(T):
+        for x in range(X):
+            for y in range(Y):
+                if(prev_xy[t,x,y]==1):
+                    prevalence[t] = prevalence[t] + 1
+
+    return scale*prevalence
+
+
 def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
     """
 
@@ -56,64 +115,48 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
         dimensions - tuple (x, y), picture dimensions
 
     Returns:
-        average beat rate
-        average displacement
-        average displacement in x direction
-        average prevalence
-        max displacement
-        max displacement in x direction
-        max prevalence
+        List of values:
+          average beat rate
+          average displacement
+          average displacement in x direction
+          average prevalence
+          max displacement
+          max displacement in x direction
+          max prevalence
 
     where each value is taken over peak values only.
 
     """
-
-    disp_data = io.read_disp_file(f_in)
- 
-    T, X, Y = disp_data.shape[:3]
-
-    # some parameters
-
+    
     dt = 1./100            # 100 frames per second
-    dx = 2044./664*10E-6   # approximately
-    tr = 2*10E-6           # from paper
+    
+    disp_data, maxima = get_underlying_data(f_in, alpha, N_d, idt, \
+        dt, dimensions)
 
+    T = disp_data.shape[0]
+    
     T_max = dt*T
 
-    # characteristic values
- 
-    maxima = np.array(hb.get_beat_maxima(disp_data, idt, T_max))
-    e_alpha, e_beta = pp.find_direction_vectors(disp_data, idt, \
-        dimensions)
-
+    
     beat = np.array([(maxima[k] - maxima[k-1]) \
                         for k in range(1, len(maxima))])
-
-    # preprocess data
-
-    disp_data = pp.do_diffusion(disp_data, alpha, N_d)
-    disp_data_x = pp.get_projection_vectors(disp_data, e_alpha)
 
     # get displacement, displacement x, prevalance, principal strain
 
     disp_data_t = pp.get_overall_movement(disp_data)
-    disp_data_x_t = pp.get_overall_movement(disp_data_x)
-    
-    prevalence = pp.get_overall_movement(\
-                     mc.get_prevalence(disp_data, dt, dx, tr))
+
+    disp_data_x_fraction = get_xfraction(disp_data, disp_data_t, \
+        idt, dimensions)
+
+    prevalence = get_prevalence(disp_data, disp_data_t, dt)
 
     pr_strain = pp.get_overall_movement(\
                      mc.compute_principal_strain(disp_data))
 
     # ... for each beat ...
 
-    maxima = hb.get_beat_maxima(disp_data, idt, T_max)
-
-    # differences:
-    beat_r = np.array([maxima[k+1] - maxima[k] \
-        for k in range(len(maxima)-1)])
-
-    values = [disp_data_t, disp_data_x_t, prevalence, pr_strain]
+    values = [disp_data_t, disp_data_x_fraction, prevalence, \
+        pr_strain]
     max_vals = np.array([[metric[m] for m in maxima] \
                    for metric in values])
 
@@ -129,7 +172,7 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
     try:
         max_vals = [max(m) for m in max_vals]
         avg_vals = [np.mean(m) for m in max_vals]
-        values = [np.mean(beat_r), max(beat_r)]
+        values = [np.mean(beat), max(beat)]
     except ValueError:
         print("Empty sequence – no maxima found")
 

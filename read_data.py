@@ -63,11 +63,10 @@ def make_dir_structure(path):
 
     """
 
-    # check if runs on Windows or Linux/Mac
+    # Folder structure different depending on OS,
+    # check and assign different for Windows and Linux/Mac
 
     os_del = "\\" if os.name=="nt" else "/"
-
-    print(os_del)
 
     dirs = path.split(os_del)
 

@@ -34,12 +34,14 @@ def get_prevalence(movement, dt, dx, threshold):
         prevalence - T x X x Y x 2 numpy boolean array
 
     """
+ 
+    T, X, Y = movement.shape[:3]
 
     threshold = threshold*dx/dt         # scale
 
     f_th = lambda x, i, j, th=threshold: (np.linalg.norm(x) > th)    
 
-    return pp.perform_operation(movement, f_th)
+    return pp.perform_operation(movement, f_th, shape=(T, X, Y))
 
 
 def compute_deformation_tensor(data):

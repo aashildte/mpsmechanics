@@ -75,8 +75,10 @@ def get_xfraction(disp_data, disp_data_t, idt, dimensions):
 
     for t in range(T):
         if(disp_data_t[t] > 1E-10):
-            disp_data_xfraction[t] = disp_data_x_t[t]/disp_data_t[t]
+            print(disp_data_x_t[t]/disp_data_t[t])
 
+            disp_data_xfraction[t] = disp_data_x_t[t]/disp_data_t[t]
+    
     return disp_data_xfraction
 
 

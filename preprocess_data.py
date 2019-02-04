@@ -102,7 +102,7 @@ def get_max_ind(disp):
 
     return max_t[0]
 
-def find_direction_vectors(disp, idt, dimensions):
+def find_direction_vectors(disp, idt, dimensions, mu=1E-5):
     """
 
     From the given displacement, this function finds the
@@ -114,6 +114,7 @@ def find_direction_vectors(disp, idt, dimensions):
     Arguments:
         disp - T x X x Y x 2 dimensional numpy array
         dimensions - pair of dimension values (x, y)
+        mu - optional argument, threshold for movement detection
 
     Returns:
 	e_alpha - vector in 1st or 4th quadrant along most movement
@@ -129,7 +130,7 @@ def find_direction_vectors(disp, idt, dimensions):
         for x in range(X):
             for y in range(Y):
                 n_vector = disp[t, x, y, :]
-                if(np.linalg.norm(n_vector) >= 1):
+                if(np.linalg.norm(n_vector) >= mu):
                     xs.append(x)
                     ys.append(y)
 
@@ -215,7 +216,7 @@ def get_projection_vectors(data, e_i):
     """
     e_i = 1./(np.linalg.norm(e_i))*e_i
 
-    f = lambda x, i, j, e_i=e_i: np.dot(x, e_i)*x
+    f = lambda x, i, j, e_i=e_i: np.dot(x, e_i)*e_i
 
     return perform_operation(data, f)
 

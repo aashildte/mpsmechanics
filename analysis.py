@@ -46,6 +46,24 @@ import mechanical_properties as mc
 
 
 def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
+    """
+
+    Preprocessing data + finding maxima.
+
+    Arguments:
+        f_in - filename for csv file
+        alpha - diffusion parameter
+        N_d - diffusion parameter
+        idt - identity of data set, for relevant plots
+        dt - fps
+        dimensions - dimensions of picture used for recording
+    
+    Returns:
+        displacement, numpy array of dimensions T x X x Y x 2
+        maxima - local maxima (of each beat)
+
+    """
+
     disp_data = io.read_disp_file(f_in)
  
     T, X, Y = disp_data.shape[:3]
@@ -63,6 +81,23 @@ def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
     
 
 def get_xfraction(disp_data, disp_data_t, idt, dimensions):
+    """
+ 
+    Calculates x fraction of movement over all time steps.
+
+    Arguments:
+        disp_data - displacement, numpy array of dimensions
+            T x X x Y x 2
+        disp_data_t - displacement over time (L2 norm),
+            numpy array of dimension T
+        idt - identity for relevant plots
+        dimensions - dimensions of picture for recording
+    
+    Returns:
+        x motion over time, normalized wrt disp_data_t
+
+    """
+
     e_alpha, e_beta = pp.find_direction_vectors(disp_data, idt, \
         dimensions)
 
@@ -82,7 +117,24 @@ def get_xfraction(disp_data, disp_data_t, idt, dimensions):
     return disp_data_xfraction
 
 
+
 def get_prevalence(disp_data, disp_data_t, dt):
+    """
+ 
+    Calculates prevalence over all time steps.
+
+    Arguments:
+        disp_data - displacement, numpy array of dimensions
+            T x X x Y x 2
+        disp_data_t - displacement over time (L2 norm),
+            numpy array of dimension T
+        dt - fps value
+    
+    Returns:
+        prevalence over time, normalized with respect to X and Y
+
+    """
+
 
     T, X, Y = disp_data.shape[:3]
 

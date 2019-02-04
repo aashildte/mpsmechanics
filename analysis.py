@@ -241,8 +241,10 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
 try:
     assert(len(sys.argv)>1)
 except:
-    print("Give file names as arguments.")
+    print("Give file names + output file as arguments.")
     exit(-1)
+
+f_out = sys.argv[-1]
 
 alpha = 0.75
 N_d = 5
@@ -255,9 +257,9 @@ output_headers = ",".join([" ", "Average beat rate", "Maximum beat rate", \
                           "Average prevalence", "Maximum prevalence", \
                           "Average principal strain", "Maximum principal strain"])
 
-fout = open("values.csv", "w")
+fout = open(f_out, "w")
 
-for f_in in sys.argv[1:]:
+for f_in in sys.argv[1:-1]:
     last_fn = f_in.split("/")[-1].split(".")
 
     # check suffix - if not a csv file, skip this one

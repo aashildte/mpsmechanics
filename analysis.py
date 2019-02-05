@@ -65,17 +65,16 @@ def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
     """
 
     disp_data = io.read_disp_file(f_in)
- 
-    T, X, Y = disp_data.shape[:3]
-    T_max = dt*T
-
-    # beat rate - find all maximum points
-
-    maxima = np.array(hb.get_beat_maxima(disp_data, idt, T_max))
-
+    
     # preprocess data
 
     disp_data = pp.do_diffusion(disp_data, alpha, N_d)
+ 
+    # beat rate - find all maximum points
+
+    T, X, Y = disp_data.shape[:3]
+    T_max = dt*T
+    maxima = np.array(hb.get_beat_maxima(disp_data, idt, T_max))
 
     return disp_data, maxima
     

@@ -206,8 +206,10 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
 
     values = [disp_data_t, disp_data_x_fraction, prevalence, \
         pr_strain]
-    max_vals = np.array([[metric[m] for m in maxima] \
+    beat_values = np.array([[metric[m] for m in maxima] \
                    for metric in values])
+
+    print("max_vals: ", max_vals)
 
     # plot some values
     suffixes = ["Displacement", "X motion", "Prevalence", \
@@ -219,8 +221,9 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
     # maximum + average
 
     try:
-        max_vals = [max(m) for m in max_vals]
-        avg_vals = [np.mean(m) for m in max_vals]
+        max_vals = [max(m) for v in beat_values]
+        avg_vals = [np.mean(m) for v in beat_values]
+
         values = [np.mean(beat), max(beat)]
     
         for k in range(len(max_vals)):
@@ -254,6 +257,8 @@ output_headers = ",".join([" ", "Average beat rate", "Maximum beat rate", \
 
 fout = open(f_out, "w")
 
+fout.write(output_headers + "\n")
+
 for f_in in sys.argv[1:-1]:
     last_fn = f_in.split("/")[-1].split(".")
 
@@ -264,7 +269,7 @@ for f_in in sys.argv[1:-1]:
     if(suffix != "csv"):
         continue
 
-    print("Analyzing data set: " + last_fn)
+    print("Analyzing data set: " + prefix)
 
     # perform analysis
 

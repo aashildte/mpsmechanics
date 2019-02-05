@@ -264,9 +264,10 @@ for f_in in sys.argv[1:-1]:
 
     # check suffix - if not a csv file, skip this one
 
-    prefix, suffix = last_fn
-
-    if(suffix != "csv"):
+    try:
+        prefix, suffix = last_fn
+        assert(suffix == "csv")
+    except:
         continue
 
     print("Analyzing data set: " + prefix)

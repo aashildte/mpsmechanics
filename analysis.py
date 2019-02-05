@@ -110,8 +110,6 @@ def get_xfraction(disp_data, disp_data_t, idt, dimensions):
 
     for t in range(T):
         if(disp_data_t[t] > 1E-10):
-            print(disp_data_x_t[t]/disp_data_t[t])
-
             disp_data_xfraction[t] = disp_data_x_t[t]/disp_data_t[t]
     
     return disp_data_xfraction
@@ -135,7 +133,6 @@ def get_prevalence(disp_data, disp_data_t, dt):
 
     """
 
-
     T, X, Y = disp_data.shape[:3]
 
     # some parameters
@@ -146,8 +143,6 @@ def get_prevalence(disp_data, disp_data_t, dt):
     prev_xy = mc.get_prevalence(disp_data, dt, dx, tr)
 
     prevalence = np.zeros(T)
-
-    print(prev_xy.shape)
 
     for t in range(T):
         for x in range(X):
@@ -227,13 +222,13 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
         max_vals = [max(m) for m in max_vals]
         avg_vals = [np.mean(m) for m in max_vals]
         values = [np.mean(beat), max(beat)]
+    
+        for k in range(len(max_vals)):
+            values.append(max_vals[k])
+            values.append(avg_vals[k])
+
     except ValueError:
         print("Empty sequence – no maxima found")
-
-
-    for k in range(len(max_vals)):
-        values.append(max_vals[k])
-        values.append(avg_vals[k])
 
     return values
 
@@ -269,12 +264,14 @@ for f_in in sys.argv[1:-1]:
     if(suffix != "csv"):
         continue
 
+    print("Analyzing data set: " + last_fn)
+
     # perform analysis
 
     idt = prefix
 
     values = get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions)
-    values_str = ", ".join([idt] + list(map(str, values)))
+    values_str = ", ".join([idt] + list(map(str, values))) + "\n"
 
     fout.write(values_str)
 

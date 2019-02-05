@@ -34,7 +34,6 @@ def _get_local_intervals(disp_norm, eps):
 
     """    
 
-
     T = len(disp_norm)
 
     # find mean and a threshold value

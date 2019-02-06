@@ -208,8 +208,6 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
     beat_values = np.array([[metric[m] for m in maxima] \
                    for metric in values])
 
-    print("max_vals: ", max_vals)
-
     # plot some values
     suffixes = ["Displacement", "X motion", "Prevalence", \
                     "Principal strain"]
@@ -220,19 +218,20 @@ def get_numbers_of_interest(f_in, alpha, N_d, idt, dimensions):
     # maximum + average
 
     try:
-        max_vals = [max(m) for v in beat_values]
-        avg_vals = [np.mean(m) for v in beat_values]
+        max_vals = [max(v) for v in beat_values]
+        avg_vals = [np.mean(v) for v in beat_values]
 
-        values = [np.mean(beat), max(beat)]
+        r_values = [np.mean(beat), max(beat)]
     
         for k in range(len(max_vals)):
-            values.append(max_vals[k])
-            values.append(avg_vals[k])
+            r_values.append(max_vals[k])
+            r_values.append(avg_vals[k])
 
     except ValueError:
         print("Empty sequence – no maxima found")
+        r_values = []
 
-    return values
+    return r_values
 
 
 try:

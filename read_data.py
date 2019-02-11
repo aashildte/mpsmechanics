@@ -74,7 +74,6 @@ def make_dir_structure(path):
 
     for d in dirs:
         acc_d = acc_d + os_del + d
-
         if not (os.path.exists(acc_d)):
             os.mkdir(acc_d)
 

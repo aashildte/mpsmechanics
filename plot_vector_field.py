@@ -10,10 +10,15 @@ Module for plotting quiver plots.
 import sys
 import os
 import numpy as np
+import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.colors as cl
+from math import ceil
 
+import preprocess_data as pp
+import read_data as io
 
-def plot_solution(filename, title, xs, ys, U, V, arrow):
+def plot_vector_field(filename, title, xs, ys, U, V, arrow):
     """
     Gives a quiver plot.
 
@@ -28,32 +33,64 @@ def plot_solution(filename, title, xs, ys, U, V, arrow):
 
     headwidth = 3 if arrow else 0
 
-    plt.subplot(211)
     plt.quiver(xs, ys, np.transpose(U), np.transpose(V), \
            headwidth=headwidth, minshaft=2.5)
     plt.title(title)
     plt.savefig(filename)
     plt.clf()
 
+def plot_direction_and_magnitude(vector_fields, norms, labels, filters, dimensions, idt):
+
+    path = "../Plots_dir_mag"
+    io.make_dir_structure(path)
+
+    N = len(vector_fields)
+        
+    k = 3
+
+    X, Y = vector_fields[0].shape[:2]
+ 
+    xc = np.linspace(0, dimensions[0], X+1)
+    yc = np.linspace(0, dimensions[1], Y+1)
+
+    # scale dimensions to something reasonable
+
+    scale = 10/dimensions[0]
+    dimensions = (scale*dimensions[0], scale*dimensions[1])
+
+    plt.subplots(2*N,1,figsize=dimensions)
+
+    for i in range(N):
+        data = vector_fields[i]
+
+        data_d = pp.normalize_values(np.asarray([data]))[0]
+        data_m = pp.calculate_magnitude(np.asarray([data]))[0]
+        
+        data_d = filters[i](data_d)
+
+        Ud, Vd = data_d[:,:,0], data_d[:,:,1]
+
+        # get ever k value
+        Ud = np.array([[Ud[i, j] for j in range(0, Y, k)] \
+                for i in range(0, X, k)])
+        Vd = np.array([[Vd[i, j] for j in range(0, Y, k)] \
+                for i in range(0, X, k)])
+        
+
+        plt.subplot(1, 2*N, 1+2*i)
+        plt.axis('off')
+        plt.title(labels[i])
+        plt.quiver(Ud, Vd, headwidth=3)
+
+        plt.subplot(1, 2*N, 2*i+2)
+        plt.axis('off')
+        plt.title(" ")
+
+        plt.pcolor(yc, xc, data_m, norm=norms[i], linewidth=0)
 
 
-def plot_properties(properties, labels, path, arrow):
-    """
-    Plots given data for given time step(s).
-
-    Arguments:
-        properties - list of numpy arrays, each needs four-dimensional
-            of the same size, with the last dimension being 2 (normally
-            each would be of dimension T x X x Y x 2).
-       labels - for title and figure name
-       path - where to save the figures
-       arrow - boolean value, plot values with or without arrrow head
-
-    """
-    
-    for (l, p) in zip(labels, properties):
-        filename = path + l + ("%03d" %t) + ".svg"
-        x, y = p[t,:,:,0], p[t,:,:,1]
-        plot_solution(filename, (l + " at time step %3d" % t),
-            x, y, arrow=arrow)
+    #plt.savefig(path + "/" + idt + "_direction_magnitude.png")
+    plt.savefig(path + "/" + idt + "_direction_magnitude.svg")
+    #plt.show()
+    plt.clf()
 

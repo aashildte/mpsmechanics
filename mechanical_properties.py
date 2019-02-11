@@ -97,6 +97,18 @@ def compute_cauchy_green_tensor(data):
     return pp.perform_operation(F, f)
 
 
+def find_principal_vector(T, x, y):
+    
+    S = np.linalg.eig(T)
+
+    if(S[0][0] > S[0][1]):
+        return S[0][0]*S[1][0]
+    else:
+        return S[0][1]*S[1][1]
+
+
+
+
 def compute_principal_strain(data):
     """
     Computes the principal strain defined to be the largest eigenvector
@@ -111,66 +123,24 @@ def compute_principal_strain(data):
 
     """
 
-    X, Y, T = data.shape[:3]
-
+    T, X, Y = data.shape[:3]
+    print("Dimensions: ", T, X, Y)
+    
     C = compute_cauchy_green_tensor(data)
 
-    f = lambda x, i, j, \
-            find_ps=lambda X : X[0][0]*X[1][1] if X[0][0] > X[0][1] \
-                                    else X[0][1]*X[1][1] : \
-            find_ps(np.linalg.eig(x))
+    #f = lambda x, i, j, \
+    #        find_ps=lambda S : S[0][0]*S[1][0] if S[0][0] > S[0][1] \
+    #                                else S[0][1]*S[1][1] : \
+    #        find_ps(np.linalg.eig(x))
 
-    return pp.perform_operation(C, f, shape=(X, Y, T, 2))
+    P = pp.perform_operation(C, find_principal_vector, shape=(T, X, Y, 2))
 
+    #for t in range(T):
+    #    for x in range(X):
+    #        for y in range(Y):
+    #            print(P[t, x, y])
 
-def plot_properties(properties, labels, path, arrow=False):
-        """
-        
-        Plots given data for given time step(s).
-
-        Arguments:
-            properties - list of numpy arrays, each needs four-dimensional
-                of the same size, with the last dimension being 2 (normally
-                each would be of dimension T x X x Y x 2).
-            labels - for title and figure name
-            path - where to save the figures
-            t - time steps of interest, can be a single integer or a tuple
-            arrow - boolean value, plot values with or without arrrow head
-
-        """
-    
-        for (l, p) in zip(labels, properties):
-            for t in range(T):
-                filename = path + l + ("%03d" %t) + ".svg"
-                x, y = p[t,:,:,0], p[t,:,:,1]
-                fd.plot_solution(filename, (l + " at time step %3d" % t),
-                    x, y, arrow=arrow)
-
-def plot_solution(filename, title, U, V, arrow=False):
-        """
-
-        Gives a quiver plot.
-
-        Arguments:
-            filename - save as this file
-            title - give title
-            U, V - x and y components of vector field
-            arrow - boolean value, plot with or without arrows
-
-        """
-
-        xs, ys = self.xs, self.ys
-
-        headwidth = 3 if arrow else 0
-
-        plt.subplot(211)
-        plt.quiver(xs, ys, np.transpose(U), np.transpose(V), \
-                headwidth=headwidth, minshaft=2.5)
-        plt.title(title)
-        plt.savefig(filename)
-        plt.clf()
-
-
+    return P
 
 if __name__ == "__main__":
 

@@ -393,6 +393,19 @@ def flip_values(data):
     
     return perform_operation(data, f)
 
+def calculate_magnitude(data):
+
+    T, X, Y = data.shape[:3]
+
+    magnitude = np.zeros((T, X, Y))
+
+    for t in range(T):
+        for x in range(X):
+            for y in range(Y):
+                magnitude[t, x, y] = np.linalg.norm(data[t, x, y])
+
+    return magnitude
+
 
 if __name__ == "__main__":
 
@@ -438,3 +451,5 @@ if __name__ == "__main__":
     print("Flip values check passed")
 
     print("All checks passed.")
+
+    # TODO check for magnitude

@@ -1,27 +1,16 @@
 """
 
-Given data on displacement, this script finds average and overall values
-for a number of features.
+Given data on displacement, this script finds average and overall
+values for a number of features: Average and maximum of each of
+    - beat rate
+    - displacement
+    - x motion
+    - prevalence
+    - principal strain
 
-Output saved: For each data set given, we calculate and save a set
-of values to be used as metrics when comparing the desings. These
-will be saved in a file called values.csv, where each row contains
-the values
-    - identity - file name of the given data set
-    - average beat rate
-    - maximum beat rate
-    - average displacement
-    - maximum displacement
-    - average x motion
-    - maximum x motion
-    - average prevalence
-    - maximum prevalence
-    - average principal strain
-    - maximum principal strain
-
-We also plot figures for alignment and beat rate as well as a plot
-for each characteristic value. The plots are saved in "Plots", and
-each is saved both as a png and as a svg file.
+Figures for alignment as well as all the characteristic values are
+plotted and saved in "Plots"; each is saved both as a png and as a
+svg file.
 
 Åshild Telle / Simula Research Labratory / 2019
 

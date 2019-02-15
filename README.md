@@ -24,8 +24,8 @@ eg as
 
 or, to read in all csv files in a given folder,
 
-    python3 analysis.py [path]/*        (for linux and mac)
-    python3 analysis.py [path]\*        (for windows - maybe?)
+    python3 analysis.py [path]/* output_file       (for linux and mac)
+    python3 analysis.py [path]\* output_file       (for windows - maybe?)
 
 where the list of csv files contains T x X x Y lines with 2 values on each line (with the first line giving the dimensions) – these are assumed to be displacement data.
 
@@ -37,6 +37,9 @@ The output will be saved as plots (in a folder called Plots) for visual checks a
 
 Run first
 
-    get_range.py
+    python3 get_range.py
 
-for all files of interest; possibly using the script get_range.sh.
+for all files of interest; then find maximum values (script will be added later) and then
+
+    python3 plot_disp_strain.py [input file] [max displacement] [max principal strain] 
+.

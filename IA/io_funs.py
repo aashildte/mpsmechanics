@@ -55,6 +55,8 @@ def read_disp_file(filename):
     return data
 
 
+def get_os_del():
+    return "\\" if os.name=="nt" else "/"
 
 def make_dir_structure(path):
     """
@@ -65,15 +67,15 @@ def make_dir_structure(path):
 
     # Folder structure different depending on OS,
     # check and assign different for Windows and Linux/Mac
+    
+    de = get_os_del()
 
-    os_del = "\\" if os.name=="nt" else "/"
-
-    dirs = path.split(os_del)
+    dirs = path.split(de)
 
     acc_d = "."
 
     for d in dirs:
-        acc_d = acc_d + os_del + d
+        acc_d = acc_d + de + d
         if not (os.path.exists(acc_d)):
             os.mkdir(acc_d)
 

@@ -151,16 +151,17 @@ def _plot_disp_i(disp_norm, maxima, eps, idt, T_max):
     m_t = [t[m] for m in maxima]
     max_vals = [disp_norm[m] for m in maxima]
 
-    plt.scatter(m_t, max_vals, color='red')
-   
+    plt.scatter(m_t, max_vals, color='red')   
 
     plt.legend(['Displacement', 'Mean value', \
         'Mean (1 + $\epsilon$)', 'Maxima'], loc=4)
 
     plt.xlabel('Time (s)')
- 
-    plt.savefig(path + "/" + idt + "_mean.png")
-    plt.savefig(path + "/" + idt + "_mean.svg")
+
+    de = io.get_os_del()
+
+    plt.savefig(path + de + idt + "_mean.png")
+    plt.savefig(path + de + idt + "_mean.svg")
 
     plt.clf()
          

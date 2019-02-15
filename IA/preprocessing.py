@@ -195,11 +195,14 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions):
     for e in [e_alpha, e_beta]:
         plt.plot([0, sc[0]*e[0]], [0, sc[1]*e[1]], color='red')
 
-    plt.savefig(path + "/" + idt + "_alignment.png")
-    plt.savefig(path + "/" + idt + "_alignment.svg")
+    de = io.get_os_del()
+
+    plt.savefig(path + de + idt + "_alignment.png")
+    plt.savefig(path + de + idt + "_alignment.svg")
 
     plt.figure()
     plt.clf()
+
 
 def get_projection_vectors(data, e_i):
     """

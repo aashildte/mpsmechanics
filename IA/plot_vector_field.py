@@ -60,7 +60,7 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
 
     """
 
-    path = "../Plots_dir_mag"
+    path = "Plots_dir_mag"
     io.make_dir_structure(path)
 
     N = len(vector_fields)

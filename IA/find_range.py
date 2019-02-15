@@ -60,8 +60,10 @@ except:
     print("Give file name as first positional argument.")
     exit(-1)
 
+de = io.get_os_del()
+
 f_in = sys.argv[1]
-idt = f_in.split("/")[-1].split(".")[0]
+idt = f_in.split(de)[-1].split(".")[0]
 
 max1, max2 = find_max_values(f_in)
 
@@ -69,6 +71,6 @@ max1, max2 = find_max_values(f_in)
 
 path = "disp_strain_range"
 io.make_dir_structure(path)
-fout = open(path + "range_" + idt + ".csv", "w")
+fout = open(path + de + "range_" + idt + ".csv", "w")
 fout.write(str(max1) + ", " + str(max2) + ", ")
 fout.close()

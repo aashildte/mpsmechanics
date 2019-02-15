@@ -15,8 +15,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import read_data as io
-import preprocess_data as pp
+import io_funs as io
+import preprocessing as pp
 
 
 def get_prevalence(movement, dt, dx, threshold):
@@ -124,7 +124,6 @@ def compute_principal_strain(data):
     """
 
     T, X, Y = data.shape[:3]
-    print("Dimensions: ", T, X, Y)
     
     C = compute_cauchy_green_tensor(data)
 
@@ -146,17 +145,15 @@ if __name__ == "__main__":
 
     try:
         f_in = sys.argv[1]
-        idt = sys.argv[2]
     except:
-        print("Error reading file names. Give displacement file name as " + \
-             "first argument, identity as second.")
+        print("Error: Give displacement file name as first positional argument")
         exit(-1)
     
     data = io.read_disp_file(f_in)
 
     T, X, Y = data.shape[:3]
 
-    assert(get_prevalence(data, 1, 1, T).shape == (T, X, Y, 2))
+    assert(get_prevalence(data, 1, 1, T).shape == (T, X, Y))
     print("Prevalence check passed")
 
     assert(compute_deformation_tensor(data).shape == (T, X, Y, 2, 2))
@@ -171,3 +168,4 @@ if __name__ == "__main__":
     # TODO checks for plotting
 
     print("All checks passed")
+

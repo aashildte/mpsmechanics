@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as st
 
-import read_data as io
+import io_funs as io
 
 
 def perform_operation(A, fn, shape=None):
@@ -113,7 +113,7 @@ def find_direction_vectors(disp, idt, dimensions, mu=1E-5):
 
     Arguments:
         disp - T x X x Y x 2 dimensional numpy array
-        dimensions - pair of dimension values (x, y)
+        dimensions - pair of values for dimensions of image, (x, y)
         mu - optional argument, threshold for movement detection
 
     Returns:
@@ -411,13 +411,12 @@ if __name__ == "__main__":
 
     try:
         f_in = sys.argv[1]
-        idt = sys.argv[2]
     except:
-        print("Error reading file names. Give displacement file name as " + \
-                  "first argument, identity as second.")
+        print("Error: Give displacement file name as first positional argument.")
         exit(-1)
     
     data = io.read_disp_file(f_in)
+    idt = f_in.split("/")[-1].split(".")[0]
 
     # unit tests:
     
@@ -427,7 +426,7 @@ if __name__ == "__main__":
     assert(perform_operation(data, lambda x, i, j : 1).shape==D) 
     print("Perform operation check passed")
 
-    e_a, e_b = find_direction_vectors(data, idt)
+    e_a, e_b = find_direction_vectors(data, idt, (X, Y))
 
     assert(e_a.shape==(2,) and e_b.shape==(2,))
     print("Vector check passed")

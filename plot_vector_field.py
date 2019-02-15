@@ -10,13 +10,13 @@ Module for plotting quiver plots.
 import sys
 import os
 import numpy as np
-import matplotlib; matplotlib.use('Agg')
+#import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 from math import ceil
 
-import preprocess_data as pp
-import read_data as io
+import preprocessing as pp
+import io_funs as io
 
 def plot_vector_field(filename, title, xs, ys, U, V, arrow):
     """
@@ -39,7 +39,7 @@ def plot_vector_field(filename, title, xs, ys, U, V, arrow):
     plt.savefig(filename)
     plt.clf()
 
-def plot_direction_and_magnitude(vector_fields, norms, labels, filters, dimensions, idt):
+def plot_direction_and_magnitude(vector_fields, norms, labels, dimensions, idt):    
 
     path = "../Plots_dir_mag"
     io.make_dir_structure(path)
@@ -60,14 +60,13 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, filters, dimensio
 
     plt.subplots(2*N,1,figsize=dimensions)
 
+
     for i in range(N):
         data = vector_fields[i]
 
         data_d = pp.normalize_values(np.asarray([data]))[0]
         data_m = pp.calculate_magnitude(np.asarray([data]))[0]
         
-        data_d = filters[i](data_d)
-
         Ud, Vd = data_d[:,:,0], data_d[:,:,1]
 
         # get ever k value

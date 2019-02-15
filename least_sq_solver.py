@@ -157,11 +157,12 @@ class Least_sq_solver:
 
         bx, by = disp_x.flatten(), disp_y.flatten()
 
-        coeff_lambdas = np.linalg.lstsq(A, bx)[0] #, rcond=None)[0]
-        coeff_kappas = np.linalg.lstsq(A, by)[0] #, rcond=None)[0]
+        coeff_lambdas = np.linalg.lstsq(A, bx, rcond=None)[0]
+        coeff_kappas = np.linalg.lstsq(A, by, rcond=None)[0]
 
         VX = np.dot(A, coeff_lambdas).reshape(X, Y)
         VY = np.dot(A, coeff_kappas).reshape(X, Y)
 
         return VX, VY
 
+# TODO implement tests

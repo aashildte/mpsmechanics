@@ -1,3 +1,4 @@
+
 """
 
     Calculates beat rate + gives interval splitting based on maxima
@@ -10,8 +11,8 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-import read_data as io
-import preprocess_data as pp
+import io_funs as io
+import preprocessing as pp
 
 
 def _get_local_intervals(disp_norm, eps):
@@ -204,21 +205,18 @@ if __name__ == "__main__":
 
     try:
         f_in = sys.argv[1]
-        f_ou = sys.argv[2]
     except:
         print("Error reading file. Give file name as first argument, identity for plotting as second.")
         exit(-1)
     
     data = io.read_disp_file(f_in)
+    idt = f_in.split("/")[-1].split(".")[0]
 
     T, X, Y = data.shape[:3]
 
-    maxima = get_beat_maxima(data, "test", T)
+    maxima = get_beat_maxima(data, idt, T)
     assert(maxima != None)
     print("Beat maxima check passed")
-
-    assert(get_average(maxima) != None)
-    print("Average check passed")
 
     # TODO check for plot_maxima
 

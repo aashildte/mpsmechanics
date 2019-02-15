@@ -12,8 +12,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import read_data as io
-import preprocess_data as pp
+import io_funs as io
+import preprocessing as pp
 import mechanical_properties as mc
 import heart_beat as hb
 import least_sq_solver as lsq
@@ -99,8 +99,6 @@ def find_vector_field(data, M, N, basis_type, dimensions):
     l = lsq.Least_sq_solver(X, Y, xs, ys, disp_x, disp_y) 
     VX, VY = l.solve(M, N, basis_type)
 
-    vs.plot_solution("test.svg", "Test", xs, ys, VX, VY, False)
-
     return VX, VY
 
 
@@ -108,11 +106,10 @@ if __name__ == "__main__":
 
     try:
         f_in, M, N, X, Y = sys.argv[1:6]
+        M, N, X, Y = int(M), int(N), int(X), int(Y)
     except:
         print("Error: Give input file, M, N, length and height as arguments")
         exit(-1)
-
-    M, N, X, Y = map(int, (M, N, X, Y))
 
     data = io.read_disp_file(f_in) 
     VX, VY = find_vector_field(data, M, N, "trig", [X, Y])

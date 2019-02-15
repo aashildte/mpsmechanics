@@ -50,7 +50,6 @@ labels = ["Displacement", "Principal strain"]
 # filter values by 0 displacement
 
 X, Y = disp.shape[:2]
-print(X, Y)
 for x in range(X):
     for y in range(Y):
         if (np.linalg.norm(disp[x, y]) < 1E-10):

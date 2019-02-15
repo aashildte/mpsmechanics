@@ -1,8 +1,8 @@
 """
 
-Module for plotting quiver plots.
+Module for plotting quiver and magnitude plots.
 
-Åshild Telle / Simula Research Labratory / 2018
+Åshild Telle / Simula Research Labratory / 2018-2019
 
 """
 
@@ -20,16 +20,18 @@ import io_funs as io
 
 def plot_vector_field(filename, title, xs, ys, U, V, arrow):
     """
-    Gives a quiver plot.
+    
+    Gives a quiver plot of a given vector field.
 
     Arguments:
         filename - save as this file
         title - give title
+        xs - x indices
+        ys - y indices
         U, V - x and y components of vector field
         arrow - boolean value, plot with or without arrows
 
     """
-
 
     headwidth = 3 if arrow else 0
 
@@ -39,7 +41,24 @@ def plot_vector_field(filename, title, xs, ys, U, V, arrow):
     plt.savefig(filename)
     plt.clf()
 
-def plot_direction_and_magnitude(vector_fields, norms, labels, dimensions, idt):    
+
+def plot_direction_and_magnitude(vector_fields, norms, labels, \
+        dimensions, idt):    
+    """
+
+    Gives a combined quiver + colour plot for a set of given
+    vector fields, combined in the same subplot.
+
+    Arguments:
+        vector_fields - list of a set of numpy array, each
+            assumed to have the same dimension X x Y x 2
+        norms - scale for colour plot
+        labels - title given for each entry in the set
+        dimensions - image size, for scaling to realistic
+            x-y relation of the output plots
+        idt - used for saving to file
+
+    """
 
     path = "../Plots_dir_mag"
     io.make_dir_structure(path)

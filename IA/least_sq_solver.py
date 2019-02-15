@@ -1,16 +1,13 @@
 
 """
 
-Module for finding a least squares solution of a
-given linear system
+Module for finding a least squares solution of a given linear system.
 
 Åshild Telle / Simula Research Labratory / 2018
 
 """
 
-
 import numpy as np
-
 
 class Least_sq_solver:
     def __init__(self, X, Y, xs, ys, disp_x, disp_y):
@@ -21,8 +18,8 @@ class Least_sq_solver:
     def _get_taylor_polynomial_basis(self, N):
         """
 
-        Generates a list of functions, the function space
-        basis given by
+        Generates a list of functions, the function space basis given
+        by
             {1, x, 1/2 x^2, ..., 1/(N-1)! x^(N-1)}
 
         Arguments:
@@ -40,8 +37,8 @@ class Least_sq_solver:
     def _get_trigonometric_basis(self, N):
         """
 
-        Generates a list of functions, the function space
-        basis given by
+        Generates a list of functions, the function space basis given
+        by
             {1, sin(x), cos(x), ..., 1/sqrt(N-1)cos((N-1)x)}
 
         Arguments:
@@ -65,11 +62,10 @@ class Least_sq_solver:
     def _generate_tensor_product(self, basis_funs, M, N):
         """
 
-        Generates the tensor product of two function
-        basises, i.e. the functions spanning
+        Generates the tensor product of two function basises, i.e.
+        the functions spanning
             span(basis_funs[:M]) x span(basis_funs[:N])
-        giving a one-dimensional list of MxN basis
-        functions back.
+        giving a one-dimensional list of MxN basis functions back.
 
         Arguments:
             basis_funs - at least max(M, N) functions
@@ -94,8 +90,7 @@ class Least_sq_solver:
     def _get_basis_functions(self, M, N, basis_type):
         """
 
-        Transform basis given as string to a set of
-        functions.
+        Transform basis given as string to a set of functions.
 
         Arguments:
             M - number of functions for x direction
@@ -103,8 +98,8 @@ class Least_sq_solver:
             basis_type - string, must be "trig" or "taylor"
 
         Returns:
-            tensor product of M x N functions from the
-                given function basis
+            tensor product of M x N functions from the given
+            function basis
 
         """
 
@@ -121,8 +116,7 @@ class Least_sq_solver:
     def solve(self, M, N, basis_type):
         """
 
-        Solve the linear system, finding a least squares
-        solution.
+        Solve the linear system, finding a least squares solution.
 
         Arguments:
             M - number of functions for x direction
@@ -137,11 +131,6 @@ class Least_sq_solver:
         X, Y, xs, ys, disp_x, disp_y = \
             self.X, self.Y, self.xs, self.ys, \
             self.disp_x, self.disp_y
-
-        if(M > X or N > Y):
-            print(M, X, N, Y)
-            print("Error: Only have ", X, "x", Y, "points")
-            exit(-1)
 
         # define matrix
         funs = self._get_basis_functions(M, N, basis_type)

@@ -69,8 +69,8 @@ def get_prevalence(disp_data, disp_data_t, dt):
     Arguments:
         disp_data - displacement, numpy array of dimensions
             T x X x Y x 2
-        disp_data_t - displacement over time (L2 norm),
-            numpy array of dimension T
+        disp_data_t - displacement over time (L2 norm), numpy
+            array of dimension T
         dt - fps value
     
     Returns:

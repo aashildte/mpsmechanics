@@ -2,8 +2,6 @@
 
 f=test_input.csv
 
-echo 'init'
-python3 __init__.py
 echo 'analysis'
 python3 IA/analysis.py $f test_output.csv
 echo 'fibre_direction'

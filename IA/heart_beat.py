@@ -166,7 +166,7 @@ def _plot_disp_i(disp_norm, maxima, eps, idt, T_max):
          
 
 
-def plot_maxima(values, maxima, idt, property_s, T_max):
+def plot_maxima(values, maxima, idt, property_s, T_max, y_interval=None):
     """
 
     Plots values and maxima for visual check.
@@ -180,6 +180,7 @@ def plot_maxima(values, maxima, idt, property_s, T_max):
         idt        - filename idt
         property_s - identifies value of interest
         T_max      - last time value
+        y_interval- optional, 2-tuple like, gives y scale for plot
     """
     
     path = "Plots"
@@ -194,6 +195,9 @@ def plot_maxima(values, maxima, idt, property_s, T_max):
 
     plt.legend([property_s, 'Maxima'], loc=4)
     plt.xlabel('Time (s)')
+
+    if y_interval is not None:
+        plt.yscale(y_interval)
     
     plt.savefig(path + "/" + idt + "_" + property_s + ".png")
     plt.savefig(path + "/" + idt + "_" + property_s + ".svg")

@@ -32,3 +32,11 @@ where the list of csv files contains T x X x Y lines with 2 values on each line 
 Note that the output file is always assumed to be the last file name given, and that *this file will be overwritten without any warning* if it already exists.
 
 The output will be saved as plots (in a folder called Plots) for visual checks as well as key values in an output file called values.csv
+
+# Displacement and strain
+
+Run first
+
+    get_range.py
+
+for all files of interest; possibly using the script get_range.sh.

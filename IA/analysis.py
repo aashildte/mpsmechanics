@@ -5,7 +5,7 @@ for a number of features.
 
 Run script as (with python 3)
 
-    python analysis.py file1.csv file2.csv ...
+    python analysis.py file1.csv file2.csv ... -o [output file]
 
 where file1, file2 etc is the given displacement. The fileX part of
 the input files are used as an identity for that data set, both used
@@ -45,6 +45,8 @@ import heart_beat as hb
 import mechanical_properties as mc
 import metrics as mt
 
+from optparse import OptionParser
+
 def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
     """
 
@@ -82,10 +84,19 @@ def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
 try:
     assert(len(sys.argv)>1)
 except:
-    print("Give file names + output file as arguments.")
+    print("Give file names as arguments; optional argument -o output file.")
     exit(-1)
 
-f_out = sys.argv[-1]
+
+# get output file if given
+
+parser = OptionParser()
+parser.add_option("-o")
+(options, args) = parser.parse_args()
+options = vars(options)
+
+f_o = options["o"]
+fout = open(f_o, "w") if f_o is not None else None
 
 alpha = 0.75
 N_d = 5
@@ -99,7 +110,8 @@ output_headers = ",".join([" ", "Average beat rate", "Maximum beat rate", \
                           "Average prevalence", "Maximum prevalence", \
                           "Average principal strain", "Maximum principal strain"])
 
-fout = open(f_out, "w")
+if fout is not None:
+    fout = open(f_out, "w")
 
 fout.write(output_headers + "\n")
 
@@ -125,6 +137,10 @@ for f_in in sys.argv[1:-1]:
     values = mt.get_numbers_of_interest(disp_data, maxima, idt, dimensions)
     values_str = ", ".join([idt] + list(map(str, values))) + "\n"
 
-    fout.write(values_str)
+    if fout is not None:
+        fout.write(values_str)
+    
+    print(values_str)
 
-fout.close()
+if fout is not None:
+    fout.close()

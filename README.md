@@ -20,12 +20,12 @@ Perform an analysis by running the script as
 
 eg as
 
-    python3 analysis.py L2.csv output.csv
+    python3 analysis.py L2.csv - output.csv
 
 or, to read in all csv files in a given folder,
 
-    python3 analysis.py [path]/* output_file       (for linux and mac)
-    python3 analysis.py [path]\* output_file       (for windows - maybe?)
+    python3 analysis.py [path]/* -o output_file       (for Linux and Mac)
+    python3 analysis.py [path]\* -o output_file       (for Windows - maybe?)
 
 where the list of csv files contains T x X x Y lines with 2 values on each line (with the first line giving the dimensions) – these are assumed to be displacement data.
 

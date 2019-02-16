@@ -156,7 +156,7 @@ def get_numbers_of_interest(disp_data, maxima, idt, dimensions):
     yscales = [None, (0, 1), (0, 1), None]
 
     for (val, s, yscale) in zip(values, suffixes, yscales):
-        hb.plot_maxima(val, maxima, idt, s, T_max)
+        hb.plot_maxima(val, maxima, idt, s, T_max, yscale)
 
     # maximum + average
 

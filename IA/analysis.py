@@ -111,11 +111,10 @@ output_headers = ",".join([" ", "Average beat rate", "Maximum beat rate", \
                           "Average principal strain", "Maximum principal strain"])
 
 if fout is not None:
-    fout = open(f_out, "w")
+    fout.write(output_headers + "\n")
 
-fout.write(output_headers + "\n")
 
-for f_in in sys.argv[1:-1]:
+for f_in in args:
     last_fn = f_in.split("/")[-1].split(".")
 
     # check suffix - if not a csv file, skip this one

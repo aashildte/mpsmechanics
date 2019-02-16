@@ -3,7 +3,7 @@
 f=test_input.csv
 
 echo 'analysis'
-python3 IA/analysis.py $f test_output.csv
+python3 IA/analysis.py $f
 echo 'fibre_direction'
 python3 IA/fibre_direction.py $f 118 25 118 25
 echo 'heart_beat'

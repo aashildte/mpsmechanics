@@ -106,7 +106,7 @@ def get_beat_maxima(data, idt, T_max):
         
     """
 
-    eps = 0.25
+    eps = 0.01
 
     disp_norm = pp.get_overall_movement(data)
     local_intervals = _get_local_intervals(disp_norm, eps)
@@ -198,7 +198,7 @@ def plot_maxima(values, maxima, idt, property_s, T_max, y_interval=None):
     plt.xlabel('Time (s)')
 
     if y_interval is not None:
-        plt.yscale(y_interval)
+        plt.ylim(y_interval[0], y_interval[1])
     
     plt.savefig(path + "/" + idt + "_" + property_s + ".png")
     plt.savefig(path + "/" + idt + "_" + property_s + ".svg")

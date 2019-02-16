@@ -1,7 +1,7 @@
 """
 
 Given data on displacement, this script finds average and overall
-values for a number of features: Average and maximum of each of
+values for a number of features: Average of each of
     - beat rate
     - displacement
     - x motion
@@ -61,7 +61,7 @@ def get_xfraction(disp_data, disp_data_t, idt, dimensions):
 
 
 
-def get_prevalence(disp_data, disp_data_t, dt):
+def get_prevalence(disp_data, disp_data_t, threshold):
     """
  
     Calculates prevalence over all time steps.
@@ -69,27 +69,30 @@ def get_prevalence(disp_data, disp_data_t, dt):
     Arguments:
         disp_data - displacement, numpy array of dimensions
             T x X x Y x 2
-        disp_data_t - displacement over time (L2 norm), numpy
+        disp_data_t - displacement over time (l2 norm), numpy
             array of dimension T
-        dt - fps value
-    
+        threshold - should be scaled to unit scales 
+
     Returns:
-        prevalence over time, normalized with respect to X and Y
+        prevalence over time, normalized with respect to X and Y;
+        numpy array of dimensions T-1 x X x Y x 2
 
     """
 
     T, X, Y = disp_data.shape[:3]
 
     # some parameters
-    dx = 2044./664*10E-6   # approximately
-    tr = 2*10E-6           # from paper
-    scale = 1./(X*Y)       # no of points
+    #dx = 2044./664*10E-6          # approximately
+
+    # scale threshold:
+
+    scale = 1./(X*Y)              # no of points
     
-    prev_xy = mc.get_prevalence(disp_data, dt, dx, tr)
+    prev_xy = mc.get_prevalence(disp_data, threshold)
 
-    prevalence = np.zeros(T)
+    prevalence = np.zeros(T-1)
 
-    for t in range(T):
+    for t in range(T-1):
         for x in range(X):
             for y in range(Y):
                 if(prev_xy[t,x,y]==1):
@@ -98,13 +101,15 @@ def get_prevalence(disp_data, disp_data_t, dt):
     return scale*prevalence
 
 
-def get_numbers_of_interest(disp_data, maxima, idt, dimensions):
+def get_numbers_of_interest(disp_data, scale, idt, dt, dx, \
+        dimensions):
     """
 
     Arguments:
         disp_data - displacement data 
-        maxima - list over indices, assumed to be maxima (?)
         idt - data set idt
+        dt - temporal difference
+        dx - spacial difference
         dimensions - tuple (x, y), picture dimensions
 
     Returns:
@@ -113,19 +118,17 @@ def get_numbers_of_interest(disp_data, maxima, idt, dimensions):
           average displacement
           average displacement in x direction
           average prevalence
-          max displacement
-          max displacement in x direction
-          max prevalence
 
     where each value is taken over peak values only.
 
     """
     
-    dt = 1./100            # 100 frames per second
-    
-    T = disp_data.shape[0]
-    
+    # beat rate - find all maximum points
+
+    T, X, Y = disp_data.shape[:3]
     T_max = dt*T
+
+    maxima = hb.get_beat_maxima(disp_data, scale, idt, T_max)
 
     beat = np.array([(maxima[k] - maxima[k-1]) \
                         for k in range(1, len(maxima))])
@@ -136,11 +139,19 @@ def get_numbers_of_interest(disp_data, maxima, idt, dimensions):
 
     disp_data_x_fraction = get_xfraction(disp_data, disp_data_t, \
         idt, dimensions)
+    
+    # threshold given by 2 um/s; emperically, from paper
+    # we scale to get on same units as displacement data,
+    # and to get dt on a unit scale in prevalence test
 
-    prevalence = get_prevalence(disp_data, disp_data_t, dt)
+    threshold = 2*10E-6*dt/scale
+
+    prevalence = get_prevalence(disp_data, disp_data_t, threshold)
+
+    # TODO check scaling
 
     pr_strain = pp.get_overall_movement(\
-                     mc.compute_principal_strain(disp_data))
+                     mc.compute_principal_strain(scale*disp_data))
 
     # ... for each beat ...
 
@@ -153,26 +164,24 @@ def get_numbers_of_interest(disp_data, maxima, idt, dimensions):
     suffixes = ["Displacement", "X motion", "Prevalence", \
                     "Principal strain"]
 
-    yscales = [None, (0, 1), (0, 1), None]
+    yscales = [None, (-0.1, 1.1), (-0.1, 1.1), None]
 
-    for (val, s, yscale) in zip(values, suffixes, yscales):
-        hb.plot_maxima(val, maxima, idt, s, T_max, yscale)
+    scaling = [scale, 1, 1, 1]   # TODO check scaling of ps
 
-    # maximum + average
+    for (sc, val, s, yscale) in zip(scaling, values, suffixes, yscales):
+        hb.plot_maxima(sc*val, maxima, idt, s, T_max, yscale)
 
-    try:
-        max_vals = [max(v) for v in beat_values]
-        avg_vals = [np.mean(v) for v in beat_values]
+    # average
 
-        r_values = [np.mean(beat), max(beat)]
-    
-        for k in range(len(max_vals)):
-            r_values.append(max_vals[k])
-            r_values.append(avg_vals[k])
-
-    except ValueError:
+    if(len(maxima)==0):
         print("Empty sequence – no maxima found")
         r_values = []
+    elif(len(maxima)==1):
+        print("One single beat found")
+        r_values = [np.mean(v) for (sc, v) in zip(scaling, beat_values)]
+    else:
+        r_values = [np.mean(beat)] + \
+                [np.mean(v) for (sc, v) in zip(scaling, beat_values)]
 
     return r_values
 

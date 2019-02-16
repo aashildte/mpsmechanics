@@ -3,7 +3,7 @@
 
     Calculates beat rate + gives interval splitting based on maxima
 
-    Aashild Telle / Simula Research Labratory / 2019
+    Aashild Telle / Simula Research Labratory / 2018-2019
 
 """
 
@@ -51,14 +51,26 @@ def _get_local_intervals(disp_norm, eps):
     started = False
     threshold = False
 
-    for t in range(T):
+    # skip first interval if we start at a peak
+    tt = 0
+    while(disp_norm[tt] > q2):
+        tt = tt + 1
+
+    # find intervals
+
+    for t in range(tt, T):
+
+        # crossing from below
+        
         if(disp_norm[t] > q1):
             if(not started):
                 t_start = t
                 started = True
-            elif(disp_norm[t] > q2):
+            elif (disp_norm[t] > q2):
                 threshold = True
-            
+ 
+        # crossing from above
+
         if(threshold and disp_norm[t] < q1):
             t_stop = t
             local_intervals.append((t_start, t_stop))
@@ -78,7 +90,8 @@ def _get_beat_maxima(disp_norm, local_intervals):
         local_intervals - list of intervals containing a maximum point
 
     Returns:
-        list of maxima indices
+        numpy array of maxima indices
+
     """
 
     maxima = []
@@ -88,10 +101,12 @@ def _get_beat_maxima(disp_norm, local_intervals):
         m_ind = list(disp_norm[x1:x2]).index(m) + x1
         maxima.append(m_ind)
     
+    maxima = np.array(maxima)
+
     return maxima
 
 
-def get_beat_maxima(data, idt, T_max):
+def get_beat_maxima(data, scale, idt, T_max):
     """
     From data on displacement over time, this function calculates
     the indices of the maxima of each beat.
@@ -106,17 +121,17 @@ def get_beat_maxima(data, idt, T_max):
         
     """
 
-    eps = 0.01
+    eps = 0.05
 
     disp_norm = pp.get_overall_movement(data)
     local_intervals = _get_local_intervals(disp_norm, eps)
     maxima = _get_beat_maxima(disp_norm, local_intervals)
-    _plot_disp_i(disp_norm, maxima, eps, idt, T_max)
+    _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max)
 
     return maxima
 
 
-def _plot_disp_i(disp_norm, maxima, eps, idt, T_max):
+def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
     """
 
     Plots values, maxima, mean value and mean value*(1+eps) for a 
@@ -126,21 +141,21 @@ def _plot_disp_i(disp_norm, maxima, eps, idt, T_max):
 
     Arguments:
         disp_norm - displacement over time
+        scale     - scale to get in SI units
         maxima    - time steps for maxima values
         eps       - buffer value
         idt       - filename idt
         T_max     - last time value
     """
     
-    # make plot dir if it doesn't already exist
-    path = "Plots"
-    io.make_dir_structure(path)
  
     t = np.linspace(0, T_max, len(disp_norm))
+   
+    disp_scaled = scale*disp_norm
+
+    plt.plot(t, disp_scaled)
     
-    plt.plot(t, disp_norm)
-    
-    mean = np.mean(disp_norm)
+    mean = np.mean(disp_scaled)
 
     mean_vals = mean*np.ones(len(t))
     mean_eps  = (mean*(1 + eps))*np.ones(len(t))
@@ -149,7 +164,7 @@ def _plot_disp_i(disp_norm, maxima, eps, idt, T_max):
     plt.plot(t, mean_eps, 'g')
     
     m_t = [t[m] for m in maxima]
-    max_vals = [disp_norm[m] for m in maxima]
+    max_vals = [disp_scaled[m] for m in maxima]
 
     plt.scatter(m_t, max_vals, color='red')   
 
@@ -158,6 +173,10 @@ def _plot_disp_i(disp_norm, maxima, eps, idt, T_max):
 
     plt.xlabel('Time (s)')
 
+    # make plot dir if it doesn't already exist
+    path = "Plots"
+    io.make_dir_structure(path)
+    
     de = io.get_os_del()
 
     plt.savefig(path + de + idt + "_mean.png")
@@ -182,6 +201,7 @@ def plot_maxima(values, maxima, idt, property_s, T_max, y_interval=None):
         property_s - identifies value of interest
         T_max      - last time value
         y_interval- optional, 2-tuple like, gives y scale for plot
+
     """
     
     path = "Plots"
@@ -214,12 +234,12 @@ if __name__ == "__main__":
         print("Error reading file. Give file name as first argument, identity for plotting as second.")
         exit(-1)
     
-    data = io.read_disp_file(f_in)
+    data, scale = io.read_disp_file(f_in, 1)
     idt = f_in.split("/")[-1].split(".")[0]
 
     T, X, Y = data.shape[:3]
 
-    maxima = get_beat_maxima(data, idt, T)
+    maxima = get_beat_maxima(data, 1, idt, T)
     assert(maxima != None)
     print("Beat maxima check passed")
 

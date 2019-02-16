@@ -19,16 +19,16 @@ import io_funs as io
 import preprocessing as pp
 
 
-def get_prevalence(movement, dt, dx, threshold):
+def get_prevalence(movement, threshold):
     """
     Computes a true/false array for whether the displacement surpasses 
     a given threshold.
 
     Arguments:
         movement - T x X x Y x 2 numpy array
-        dt - time difference (1/sampling rate)
-        dx - space difference (width / X = height / Y)
-        threshold - cut-of value, in space/time units
+        threshold - cut-of value, in space/time units; should be scaled
+            already - meaning that the movement can be compared on a
+            unit scale
 
     Returns:
         prevalence - T x X x Y x 2 numpy boolean array
@@ -36,12 +36,10 @@ def get_prevalence(movement, dt, dx, threshold):
     """
  
     T, X, Y = movement.shape[:3]
-
-    threshold = threshold*dx/dt         # scale
-
+    dxdt = np.diff(movement, axis=1)
     f_th = lambda x, i, j, th=threshold: (np.linalg.norm(x) > th)    
 
-    return pp.perform_operation(movement, f_th, shape=(T, X, Y))
+    return pp.perform_operation(dxdt, f_th, shape=(T, X, Y))
 
 
 def compute_deformation_tensor(data):
@@ -97,18 +95,6 @@ def compute_cauchy_green_tensor(data):
     return pp.perform_operation(F, f)
 
 
-def find_principal_vector(T, x, y):
-    
-    S = np.linalg.eig(T)
-
-    if(S[0][0] > S[0][1]):
-        return S[0][0]*S[1][0]
-    else:
-        return S[0][1]*S[1][1]
-
-
-
-
 def compute_principal_strain(data):
     """
     Computes the principal strain defined to be the largest eigenvector
@@ -127,17 +113,12 @@ def compute_principal_strain(data):
     
     C = compute_cauchy_green_tensor(data)
 
-    #f = lambda x, i, j, \
-    #        find_ps=lambda S : S[0][0]*S[1][0] if S[0][0] > S[0][1] \
-    #                                else S[0][1]*S[1][1] : \
-    #        find_ps(np.linalg.eig(x))
+    f = lambda x, i, j, \
+            find_ps=lambda S : S[0][0]*S[1][0] if S[0][0] > S[0][1] \
+                                    else S[0][1]*S[1][1] : \
+            find_ps(np.linalg.eig(x))
 
-    P = pp.perform_operation(C, find_principal_vector, shape=(T, X, Y, 2))
-
-    #for t in range(T):
-    #    for x in range(X):
-    #        for y in range(Y):
-    #            print(P[t, x, y])
+    P = pp.perform_operation(C, f, shape=(T, X, Y, 2))
 
     return P
 
@@ -149,11 +130,12 @@ if __name__ == "__main__":
         print("Error: Give displacement file name as first positional argument")
         exit(-1)
     
-    data = io.read_disp_file(f_in)
+    data, scale = io.read_disp_file(f_in, 1)
 
     T, X, Y = data.shape[:3]
+    threshold = 1E-6
 
-    assert(get_prevalence(data, 1, 1, T).shape == (T, X, Y))
+    assert(get_prevalence(data, threshold).shape == (T, X, Y))
     print("Prevalence check passed")
 
     assert(compute_deformation_tensor(data).shape == (T, X, Y, 2, 2))

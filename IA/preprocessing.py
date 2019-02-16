@@ -102,7 +102,7 @@ def get_max_ind(disp):
 
     return max_t[0]
 
-def find_direction_vectors(disp, idt, dimensions, mu=1E-5):
+def find_direction_vectors(disp, idt, dimensions, mu=1E-14):
     """
 
     From the given displacement, this function finds the
@@ -418,7 +418,7 @@ if __name__ == "__main__":
         print("Error: Give displacement file name as first positional argument.")
         exit(-1)
     
-    data = io.read_disp_file(f_in)
+    data, scale = io.read_disp_file(f_in, 1)
     idt = f_in.split("/")[-1].split(".")[0]
 
     # unit tests:

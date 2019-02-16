@@ -9,12 +9,15 @@ import plot_vector_field as pl
 import io_funs as io
 
 def find_values(f_in):
-    disp_data = io.read_disp_file(f_in)
+
+    xlen = 664.30
+
+    disp_data, scale = io.read_disp_file(f_in, xlen)
     strain_data = mc.compute_principal_strain(disp_data)
 
     time_step = pp.get_max_ind(pp.get_overall_movement(disp_data))
 
-    return disp_data[time_step], strain_data[time_step]
+    return scale*disp_data[time_step], strain_data[time_step]
 
 
 def get_range(data):

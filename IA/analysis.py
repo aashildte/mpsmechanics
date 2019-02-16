@@ -17,22 +17,17 @@ will be saved in a file called values.csv, where each row contains
 the values
     - identity - file name of the given data set
     - average beat rate
-    - maximum beat rate
     - average displacement
-    - maximum displacement
     - average x motion
-    - maximum x motion
     - average prevalence
-    - maximum prevalence
     - average principal strain
-    - maximum principal strain
 
 We also plot figures for alignment and beat rate as well as a plot
 for each characteristic value. The plots are saved in "Plots", and
 each is saved both as a png and as a svg file.
 
 
-Åshild Telle / Simula Research Labratory / 2019
+Åshild Telle / Simula Research Labratory / 2018-2019
 
 """
 
@@ -47,7 +42,7 @@ import metrics as mt
 
 from optparse import OptionParser
 
-def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
+def get_underlying_data(f_in, alpha, N_d, idt, dt, xlen, dimensions):
     """
 
     Preprocessing data + finding maxima.
@@ -58,6 +53,7 @@ def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
         N_d - diffusion parameter
         idt - identity of data set, for relevant plots
         dt - fps
+        xlen - picture x dimension
         dimensions - dimensions of picture used for recording
     
     Returns:
@@ -66,19 +62,15 @@ def get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions):
 
     """
 
-    disp_data = io.read_disp_file(f_in)
-    
+    disp_data, scale = io.read_disp_file(f_in, xlen)
+   
+    print("scale given by: ", scale)
+
     # preprocess data
 
     disp_data = pp.do_diffusion(disp_data, alpha, N_d)
  
-    # beat rate - find all maximum points
-
-    T, X, Y = disp_data.shape[:3]
-    T_max = dt*T
-    maxima = np.array(hb.get_beat_maxima(disp_data, idt, T_max))
-
-    return disp_data, maxima
+    return disp_data, scale
 
 
 try:
@@ -100,15 +92,18 @@ fout = open(f_o, "w") if f_o is not None else None
 
 alpha = 0.75
 N_d = 5
-dt = 1./100            # 100 frames per second
+dt = 1./100                       # cl argument? fps
 
-dimensions = (664.30, 381.55)
+dimensions = (664.30, 381.55)     # cl argument?
+threshold = 2E-6                  # meters per second
 
-output_headers = ",".join([" ", "Average beat rate", "Maximum beat rate", \
-                          "Average displacement", "Maximum displacement", \
-                          "Average x motion", "Maximum x motion", \
-                          "Average prevalence", "Maximum prevalence", \
-                          "Average principal strain", "Maximum principal strain"])
+xlen = (dimensions[0]*1E-6)
+
+output_headers = ",".join([" ", "Average beat rate",
+                          "Average displacement",
+                          "Average x motion",
+                          "Average prevalence",
+                          "Average principal strain"])
 
 if fout is not None:
     fout.write(output_headers + "\n")
@@ -131,15 +126,21 @@ for f_in in args:
 
     idt = prefix
 
-    disp_data, maxima = get_underlying_data(f_in, alpha, N_d, idt, dt, dimensions)
+    disp_data, scale = get_underlying_data(f_in, alpha, N_d, idt, \
+            dt, xlen, dimensions)
 
-    values = mt.get_numbers_of_interest(disp_data, maxima, idt, dimensions)
+    T, X, Y = disp_data.shape[:3]
+
+    dx = xlen/X
+
+    values = mt.get_numbers_of_interest(disp_data, scale, idt, dt, \
+            dx, dimensions)
     values_str = ", ".join([idt] + list(map(str, values))) + "\n"
 
     if fout is not None:
         fout.write(values_str)
     
-    print(values_str)
+    print("Metrics found: ", values)
 
 if fout is not None:
     fout.close()

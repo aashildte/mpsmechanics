@@ -44,7 +44,8 @@ def find_max_values(f_in):
 
     """
     
-    disp_data = io.read_disp_file(f_in)
+    xlen = 664.30
+    disp_data, scale = io.read_disp_file(f_in, xlen)
     strain_data = mc.compute_principal_strain(disp_data)
 
     time_step = pp.get_max_ind(pp.get_overall_movement(disp_data))
@@ -69,7 +70,7 @@ max1, max2 = find_max_values(f_in)
 
 # save values
 
-path = "disp_strain_range"
+path = "Output\ values/find_range"
 io.make_dir_structure(path)
 fout = open(path + de + "range_" + idt + ".csv", "w")
 fout.write(str(max1) + ", " + str(max2) + ", ")

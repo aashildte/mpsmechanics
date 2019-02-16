@@ -111,7 +111,9 @@ if __name__ == "__main__":
         print("Error: Give input file, M, N, length and height as arguments")
         exit(-1)
 
-    data = io.read_disp_file(f_in) 
+    x_len = 664E-6
+
+    data, scale = io.read_disp_file(f_in, x_len)
     VX, VY = find_vector_field(data, M, N, "trig", [X, Y])
 
 

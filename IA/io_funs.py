@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def read_disp_file(filename):
+def read_disp_file(filename, xlen):
     """
 
     Reads the input file, where the file is assumed to be a csv file on
@@ -30,11 +30,16 @@ def read_disp_file(filename):
     x0, y0 gives relative motion of unit (0, 0) at time step 0; x1, y1
     gives relative motion of unit (1, 0) at time step 0, etc.
 
+    The displacement is given as *scaled*, i.e. scaled to a range around 0.
+    This is to avoid potential problems with numerical precision.
+
     Arguments:
         filename - csv file
+        xlen - length of picture, in m
 
     Returns:
         4-dimensional numpy array, of dimensions T x X x Y x 2
+        scale - how much to scale output with in the end
 
     """
 
@@ -42,17 +47,53 @@ def read_disp_file(filename):
 
     T, X, Y = map(int, str.split(f.readline(), ","))
 
+    dx = xlen/X
+
     data = np.zeros((T, X, Y, 2))
 
     for t in range(T):
         for i in range(X):
             for j in range(Y):
-                d = str.split(f.readline().strip(), ",")
-                data[t, i, j] = np.array(d)
-
+                str_values = str.split(f.readline().strip(), ",")
+                d = list(map(float, str_values))
+                data[t, i, j] = dx*np.array(d)
+    
     f.close()
 
-    return data
+    scale = _get_scale(data)
+
+    return scale*data, 1./scale
+
+
+def _get_scale(data):
+    """
+
+    Scales data such that the middle value is on standard form, i.e.
+    in the range [0.1, 1]
+
+    """
+
+
+    # get maximum and minimum; scale middle value
+
+    mmax = abs(np.max(data))
+    mmin = abs(np.min(data))
+
+    mid = 0.5*(mmax + mmin)
+
+    # scale from above or below; dependin on scale
+
+    scale = 1
+
+    while(mid > 1):
+        mid = mid/10
+        scale = scale/10
+
+    while(mid < 1E-1):
+        mid = mid*10
+        scale = scale*10
+
+    return scale
 
 
 def get_os_del():
@@ -88,7 +129,7 @@ if __name__ == "__main__":
         print("Give file name as first argument")
         exit(-1)
 
-    data = read_disp_file(f_in)
+    data, scale = read_disp_file(f_in, 1)
 
     assert(len(data.shape)==4)
 

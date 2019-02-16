@@ -39,7 +39,15 @@ Run first
 
     python3 get_range.py
 
-for all files of interest; then find maximum values (script will be added later) and then
+for all files of interest; then
+
+    python3 calc_maxima [list of output files]
+
+where list of output files are as given in get\_range.py; typically something like
+    "Output values/get_range/*"
+
+(at least on mac/linux), which will print two values, max displacement and max principal strain; and then finally
 
     python3 plot_disp_strain.py [input file] [max displacement] [max principal strain] 
-.
+
+The 3-step split is necessesary because the first can run in parallel (on different cores, no communication needed); the second step is a syncronization step; the third step can again be done independently. An option would obviously be to implent the whole thing as a program using e.g. MPI; however at the current state of this project this is probably sufficient.

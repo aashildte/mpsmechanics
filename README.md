@@ -16,22 +16,25 @@ where input file is a csv file, M x N the desired size of the function space, X 
 
 Perform an analysis by running the script as
 
-    python3 analysis.py [list of csv files] [output file]
+    python3 analysis.py [input file] indices -p indices
 
-eg as
+where the input file is a csv file as specified, and indices a string of integers (e.g. "1 3 6 7", quotation marks included) specifying what properties we want to compute. The integers correspond to one of the following numbers / properties:
+    - 0: average beat rate
+    - 1: average displacement
+    - 2: average x motion
+    - 3: average y motion
+    - 4: average prevalence
+    - 5: average principal strain
+    - 6: average principal strain in x direction (x strain)
+    - 7: average principal strain in y direction (y strain)
 
-    python3 analysis.py L2.csv - output.csv
+and the list after "-p" indicates which of these that are to be plotted similtanously.
 
-or, to read in all csv files in a given folder,
+Example:
 
-    python3 analysis.py [path]/* -o output_file       (for Linux and Mac)
-    python3 analysis.py [path]\* -o output_file       (for Windows - maybe?)
+    python3 analysis.py test.csv "0 1 2 3 7" -p "2 3"
 
-where the list of csv files contains T x X x Y lines with 2 values on each line (with the first line giving the dimensions) – these are assumed to be displacement data.
-
-Note that the output file is always assumed to be the last file name given, and that *this file will be overwritten without any warning* if it already exists.
-
-The output will be saved as plots (in a folder called Plots) for visual checks as well as key values in an output file called values.csv
+The output will be saved in Output -> Analysis, plots will be saved in Figures -> Analysis.
 
 # Displacement and strain
 
@@ -44,7 +47,7 @@ for all files of interest; then
     python3 calc_maxima [list of output files]
 
 where list of output files are as given in get\_range.py; typically something like
-    "Output values/get_range/*"
+    "Output/get_range/*"
 
 (at least on mac/linux), which will print two values, max displacement and max principal strain; and then finally
 

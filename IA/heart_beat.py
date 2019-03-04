@@ -12,8 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import io_funs as io
-import preprocessing as pp
-
+import operations as op
 
 def _get_local_intervals(disp_norm, eps):
     """
@@ -106,30 +105,53 @@ def _get_beat_maxima(disp_norm, local_intervals):
     return maxima
 
 
-def get_beat_maxima(data, scale, idt, T_max):
+def calc_beat_maxima_time(data, scale, T_max, plt_pr):
     """
-    From data on displacement over time, this function calculates
-    the indices of the maxima of each beat.
+
+    From data on displacement over time only, this function
+    calculates the indices of the maxima of each beat.
+
+    Arguments:
+        data - numpy array, displacement values over time
+        T_max     - last time value
+        plt_pr - dictionary defining visual output
+
+    Returns:
+        list of maxima indices
+        
+    """
+    
+    eps = 0.05
+    
+    local_intervals = _get_local_intervals(data, eps)
+    maxima = _get_beat_maxima(data, local_intervals)
+
+    if(plt_pr["visual check"]):
+        idt = plt_pr["idt"]
+        _plot_disp_thresholds(data, scale, maxima, eps, idt, T_max)
+
+    return maxima
+
+
+def calc_beat_maxima_2D(data, scale, T_max, plt_pr):
+    """
+
+    From data on displacement over space and time, this function
+    calculates the indices of the maxima of each beat.
 
     Arguments:
         data - T x X x Y x 2 numpy array, displacement values
-        idt - idt for visulization check plots
         T_max     - last time value
+        plt_pr - dictionary defining visual output
 
     Returns:
         list of maxima indices
         
     """
 
-    eps = 0.05
-
-    disp_norm = pp.get_overall_movement(data)
-    local_intervals = _get_local_intervals(disp_norm, eps)
-    maxima = _get_beat_maxima(disp_norm, local_intervals)
-    _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max)
-
-    return maxima
-
+    disp_norm = op.calc_norm_over_time(data)
+    
+    return calc_beat_maxima_time(disp_norm, scale, T_max, plt_pr)
 
 def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
     """
@@ -137,7 +159,10 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
     Plots values, maxima, mean value and mean value*(1+eps) for a 
     visual check.
 
-    Plots are saved as Plots/[idt]_mean.png and Plots/[idt]_mean.svg.
+    Plots are saved as 
+        idt + _mean.png
+        idt + _pean.svg
+    in a folder called "Figures".
 
     Arguments:
         disp_norm - displacement over time
@@ -174,54 +199,57 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
     plt.xlabel('Time (s)')
 
     # make plot dir if it doesn't already exist
-    path = "Plots"
+    de = io.get_os_delimiter()
+    path = de.join(("Figures" + de + idt).split(de)[:-1])
     io.make_dir_structure(path)
-    
-    de = io.get_os_del()
 
-    plt.savefig(path + de + idt + "_mean.png")
-    plt.savefig(path + de + idt + "_mean.svg")
+    plt.savefig("Figures" + de + idt + "_mean.png")
+    plt.savefig("Figures" + de + idt + "_mean.svg")
 
     plt.clf()
          
 
 
-def plot_maxima(values, maxima, idt, property_s, T_max, y_interval=None):
+def plot_maxima(values, maxima, idt, description, T_max, y_interval=None):
     """
 
     Plots values and maxima for visual check.
 
     Plots are saved as [idt]_[suffix].png and [idt]_[suffix].svg in 
-    a folder named Plots.
+    a folder named Figures
 
     Arguments:
-        values     - data over time
-        maxima     - list of maxima indices
-        idt        - filename idt
-        property_s - identifies value of interest
-        T_max      - last time value
-        y_interval- optional, 2-tuple like, gives y scale for plot
+        values      - data over time
+        maxima      - list of maxima indices
+        idt         - filename idt
+        T_max       - last time value
+        description - title
+        y_interval  - optional, 2-tuple like, gives y scale for plot
 
     """
-    
-    path = "Plots"
+ 
+    de = io.get_os_delimiter()
+
+    subpath = "Figures" + de
+    path = de.join((subpath + idt).split(de)[:-1])
     io.make_dir_structure(path)
 
     t = np.linspace(0, T_max, len(values)) 
-    m_t = [t[m] for m in maxima]
+    #m_t = [t[m] for m in maxima]
 
     plt.plot(t, values)
-    max_vals = [values[m] for m in maxima]
-    plt.scatter(m_t, max_vals, color='red')
+    #max_vals = [values[m] for m in maxima]
+    #plt.scatter(m_t, max_vals, color='red')
 
-    plt.legend([property_s, 'Maxima'], loc=4)
+    #plt.legend([description, 'Maxima'], loc=4)
     plt.xlabel('Time (s)')
+    plt.title(description)
 
     if y_interval is not None:
         plt.ylim(y_interval[0], y_interval[1])
     
-    plt.savefig(path + "/" + idt + "_" + property_s + ".png")
-    plt.savefig(path + "/" + idt + "_" + property_s + ".svg")
+    plt.savefig(subpath + idt + ".png")
+    plt.savefig(subpath + idt + ".svg")
 
     plt.clf()
 
@@ -231,18 +259,22 @@ if __name__ == "__main__":
     try:
         f_in = sys.argv[1]
     except:
-        print("Error reading file. Give file name as first argument, identity for plotting as second.")
+        print("Error reading file. Give file name as first argument.")
         exit(-1)
     
     data, scale = io.read_disp_file(f_in, 1)
-    idt = f_in.split("/")[-1].split(".")[0]
+    T = data.shape[0]
+    ppl = {}
+    for i in range(8):
+        ppl[int(i)] = {"plot" : False}
+    
+    ppl["idt"] = "unit_tests"
+    ppl["visual check"] = False
+    disp = op.calc_norm_over_time(data)
 
-    T, X, Y = data.shape[:3]
+    assert(calc_beat_maxima_time(disp, 1, T, ppl) is not None)
+    assert(calc_beat_maxima_2D(data, 1, T, ppl) is not None)
+    plot_maxima(disp, calc_beat_maxima_time(disp, 1, T, ppl), \
+            "unit_tests", "Displacement", T)    # no return value
 
-    maxima = get_beat_maxima(data, 1, idt, T)
-    assert(maxima != None)
-    print("Beat maxima check passed")
-
-    # TODO check for plot_maxima
-
-    print("All checks passed")
+    print("All checks passed for heart_beat.py")

@@ -13,7 +13,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import io_funs as io
+import operations as op
 import preprocessing as pp
+import angular as an
 import mechanical_properties as mc
 import heart_beat as hb
 import least_sq_solver as lsq
@@ -38,16 +40,19 @@ def _preprocess_data(org, alpha, N_diff):
 
     T, X, Y = org.shape[:3]
 
-    disp_t = pp.get_overall_movement(org)
-    max_t = pp.get_max_ind(disp_t)
+    # get timestep with largest movement
 
-    data = pp.do_diffusion(np.asarray([org[max_t]]), alpha, N_diff)
-    data = pp.normalize_values(data)
-    data = pp.flip_values(data)
+    time_step = op.calc_max_ind(op.calc_norm_over_time(org))
 
-    # let direction be defined from timestep with largest displacement
-        
-    return data[0]
+    data_t = org[time_step]
+
+    # treat/average values
+
+    data_t = pp.do_diffusion(data_t, alpha, N_diff, over_time=False)
+    data_t = op.normalize_values(data_t, over_time=False)
+    data_t = an.flip_values(data_t, over_time=False)
+ 
+    return data_t
 
 
 def _define_mesh_points(X, Y, dimensions):
@@ -114,7 +119,6 @@ if __name__ == "__main__":
     x_len = 664E-6
 
     data, scale = io.read_disp_file(f_in, x_len)
-    VX, VY = find_vector_field(data, M, N, "trig", [X, Y])
+    assert(find_vector_field(data, M, N, "trig", [X, Y]) is not None)
 
-
-    print("VX, VY calculated – next step TBA")
+    print("All checks passed for fibre_direction.py")

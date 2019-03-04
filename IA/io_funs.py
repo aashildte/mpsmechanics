@@ -1,6 +1,6 @@
 """
 
-Module for IO operations
+Functions for IO operations: Reading files, creating folder structures.
 
 Åshild Telle / Simula Research Labratory / 2019
 
@@ -18,6 +18,7 @@ def read_disp_file(filename, xlen):
 
     Reads the input file, where the file is assumed to be a csv file on
     the form
+
         T, X, Y
         x0, y0
         x1, y1
@@ -35,18 +36,17 @@ def read_disp_file(filename, xlen):
 
     Arguments:
         filename - csv file
-        xlen - length of picture, in m
+        xlen - length of picture, in meters
 
     Returns:
         4-dimensional numpy array, of dimensions T x X x Y x 2
-        scale - how much to scale output with in the end
+        scale - scale data points with this to get original magnitude
 
     """
 
     f = open(filename, 'r')
 
     T, X, Y = map(int, str.split(f.readline(), ","))
-
     dx = xlen/X
 
     data = np.zeros((T, X, Y, 2))
@@ -62,7 +62,9 @@ def read_disp_file(filename, xlen):
 
     scale = _get_scale(data)
 
-    return scale*data, 1./scale
+    # omit first value; reference configuration
+
+    return scale*data[1:], 1./scale
 
 
 def _get_scale(data):
@@ -96,8 +98,18 @@ def _get_scale(data):
     return scale
 
 
-def get_os_del():
+def get_os_delimiter():
+    """
+    
+    Gets file directory delimiter for a specific OS system.
+
+    Returns:
+        \ if the OS is Windows
+        / otherwise
+
+    """
     return "\\" if os.name=="nt" else "/"
+
 
 def make_dir_structure(path):
     """
@@ -106,10 +118,7 @@ def make_dir_structure(path):
 
     """
 
-    # Folder structure different depending on OS,
-    # check and assign different for Windows and Linux/Mac
-    
-    de = get_os_del()
+    de = get_os_delimiter()
 
     dirs = path.split(de)
 
@@ -129,10 +138,9 @@ if __name__ == "__main__":
         print("Give file name as first argument")
         exit(-1)
 
-    data, scale = read_disp_file(f_in, 1)
+    assert(read_disp_file(f_in, 1) is not None)
+    assert(get_os_delimiter() is not None)
+    make_dir_structure("Figures")         # no return value
 
-    assert(len(data.shape)==4)
-
-    print("Read data test passed")
-    print("All tests passed")
+    print("All tests passed for io_funs.py")
 

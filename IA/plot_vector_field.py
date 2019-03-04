@@ -2,6 +2,8 @@
 
 Module for plotting quiver and magnitude plots.
 
+TODO make more general subplot aux. functions for direction / magnitude resp.
+
 Åshild Telle / Simula Research Labratory / 2018-2019
 
 """
@@ -13,8 +15,10 @@ import numpy as np
 #import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
+import matplotlib as mpl
 from math import ceil
 
+import operations as op
 import preprocessing as pp
 import io_funs as io
 
@@ -43,7 +47,7 @@ def plot_vector_field(filename, title, xs, ys, U, V, arrow):
 
 
 def plot_direction_and_magnitude(vector_fields, norms, labels, \
-        dimensions, idt):    
+        dimensions, path, idt): 
     """
 
     Gives a combined quiver + colour plot for a set of given
@@ -56,12 +60,10 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
         labels - title given for each entry in the set
         dimensions - image size, for scaling to realistic
             x-y relation of the output plots
-        idt - used for saving to file
+        path - save to this location
+        idt - using this identity
 
     """
-
-    path = "Plots_dir_mag"
-    io.make_dir_structure(path)
 
     N = len(vector_fields)
         
@@ -83,8 +85,8 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
     for i in range(N):
         data = vector_fields[i]
 
-        data_d = pp.normalize_values(np.asarray([data]))[0]
-        data_m = pp.calculate_magnitude(np.asarray([data]))[0]
+        data_d = op.normalize_values(data, over_time=False)
+        data_m = op.calc_magnitude(data, over_time=False)
         
         Ud, Vd = data_d[:,:,0], data_d[:,:,1]
 
@@ -94,7 +96,6 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
         Vd = np.array([[Vd[i, j] for j in range(0, Y, k)] \
                 for i in range(0, X, k)])
         
-
         plt.subplot(1, 2*N, 1+2*i)
         plt.axis('off')
         plt.title(labels[i])
@@ -106,10 +107,42 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
 
         plt.pcolor(yc, xc, data_m, norm=norms[i], linewidth=0)
 
-    de = io.get_os_del()
+    de = io.get_os_delimiter()
 
-    #plt.savefig(path + "/" + idt + "_direction_magnitude.png")
+    plt.savefig(path + de + idt + "_direction_magnitude.png")
     plt.savefig(path + de + idt + "_direction_magnitude.svg")
+    #plt.show()
+    plt.clf()
+
+
+
+def plot_magnitude(vector_fields, norms, dimensions, titles, \
+        path, idt):
+
+    scale = 10/dimensions[0]
+    dimensions = (scale*dimensions[0], scale*dimensions[1])
+    
+    X, Y = vector_fields[0].shape[:2]
+ 
+    xc = np.linspace(0, dimensions[0], X+1)
+    yc = np.linspace(0, dimensions[1], Y+1)
+
+    N = len(vector_fields)
+
+    fig, ax = plt.subplots(N,1,figsize=dimensions)
+
+    for n in range(N):
+        plt.subplot(1, N, n+1)
+        plt.pcolor(yc, xc, vector_fields[n], norm=norms[n], linewidth=0)
+        plt.axis('off')
+        plt.title(titles[n])
+
+    plt.colorbar()
+   
+    de = io.get_os_delimiter()
+
+    plt.savefig(path + de + idt + "_magnitude.png")
+    plt.savefig(path + de + idt + "_magnitude.svg")
     #plt.show()
     plt.clf()
 

@@ -24,6 +24,7 @@ import sys
 import numpy as np
 import matplotlib.colors as cl
 
+import operations as op
 import preprocessing as pp
 import mechanical_properties as mc
 import plot_vector_field as pl
@@ -45,15 +46,15 @@ def find_max_values(f_in):
     """
     
     xlen = 664.30
+
     disp_data, scale = io.read_disp_file(f_in, xlen)
-    strain_data = mc.compute_principal_strain(disp_data)
+    
+    time_step = op.calc_max_ind(op.calc_norm_over_time(disp_data))
+    disp_t = disp_data[time_step]
 
-    time_step = pp.get_max_ind(pp.get_overall_movement(disp_data))
+    strain_t = mc.calc_principal_strain(disp_t, over_time=False)
 
-    disp_m = pp.calculate_magnitude(np.array([disp_data[time_step]]))
-    strain_m = pp.calculate_magnitude(np.array([strain_data[time_step]]))
-
-    return np.max(disp_m), np.max(strain_m)
+    return np.max(scale*disp_t), np.max(strain_t)
 
 try:
     assert(len(sys.argv)>1)
@@ -61,7 +62,7 @@ except:
     print("Give file name as first positional argument.")
     exit(-1)
 
-de = io.get_os_del()
+de = io.get_os_delimiter()
 
 f_in = sys.argv[1]
 idt = f_in.split(de)[-1].split(".")[0]
@@ -70,7 +71,7 @@ max1, max2 = find_max_values(f_in)
 
 # save values
 
-path = "Output\ values/find_range"
+path = "Output" + de + "Find_range"
 io.make_dir_structure(path)
 fout = open(path + de + "range_" + idt + ".csv", "w")
 fout.write(str(max1) + ", " + str(max2) + ", ")

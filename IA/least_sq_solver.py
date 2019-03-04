@@ -154,4 +154,7 @@ class Least_sq_solver:
 
         return VX, VY
 
-# TODO implement tests
+    
+if __name__ == "__main__":
+
+    print("TODO - implement unit tests here")

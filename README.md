@@ -54,3 +54,12 @@ where list of output files are as given in get\_range.py; typically something li
     python3 plot_disp_strain.py [input file] [max displacement] [max principal strain] 
 
 The 3-step split is necessesary because the first can run in parallel (on different cores, no communication needed); the second step is a syncronization step; the third step can again be done independently. An option would obviously be to implent the whole thing as a program using e.g. MPI; however at the current state of this project this is probably sufficient.
+
+
+# Tracking points
+
+Run
+
+    python3 track_points.py [file1] [file2]
+
+where file1 give displacement, file2 points of interest. See test\_input.csv, test\_points.csv for examples.

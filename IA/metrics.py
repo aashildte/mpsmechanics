@@ -12,7 +12,6 @@ Figures for alignment as well as all the characteristic values are
 plotted and saved in "Plots"; each is saved both as a png and as a
 svg file.
 
-#TODO consider moving plotting properties to function itself
 #TODO also make plotting maximum points optional
 
 Åshild Telle / Simula Research Labratory / 2019
@@ -28,9 +27,21 @@ import operations as op
 import angular as an
 import heart_beat as hb
 import mechanical_properties as mc
-
+import metric_plotting as mp
 
 def add_plt_information(ppl, idt, Tmax):
+    """
+    Save some general information about the metrics calculated in
+    this file. These are used for visual output (plots) for
+    filenames, labels, etc.
+
+    Arguments:
+        ppl - dictionary which will be altered
+        idt - string identity of given data set
+        Tmax - time frame for experiment
+
+    """
+
 
     suffixes = ["beat_rate", "disp", "xmotion", "ymotion",
             "prevalence", "prstran", "xprstrain", "yprstrain"]
@@ -51,59 +62,81 @@ def add_plt_information(ppl, idt, Tmax):
 
 
 def _calc_beat_rate(maxima, disp_t, plt_pr, plt_id):
+    """
+
+    Calculates beat rate based on displacement: Average of difference
+    between given maximum indices.
+
+    Arguments:
+        maxima - list of indices
+        disp_t - displacement over time, used for plotting
+        plt_pr - plotting properties dictionary
+        plt_id - identity for value of interest, used for plotting
+
+    Returns:
+        Average beat rate
+
+    """
+    
     beat = np.array([(maxima[k] - maxima[k-1]) \
                         for k in range(1, len(maxima))])
 
-    if plt_pr[plt_id]["plot"]:
+    if(plt_pr[plt_id]["plot"]):
+ 
+        # TODO plot vertical lines too!
 
-        # TODO plot vertical lines too
-
-        hb.plot_maxima(disp_t, maxima, plt_pr[plt_id]["idt"], \
-                plt_pr[plt_id]["title"], plt_pr[plt_id]["Tmax"], \
-                plt_pr[plt_id]["yscale"])
+        hb.plot_maxima(disp_t, maxima, plt_pr, plt_id)
 
     return np.mean(beat)
 
 
 def _calc_displacement(maxima, disp_t, plt_pr, plt_id, scale): 
+    """
+
+    Calculates average of displacement at given maximum indices.
+
+    Arguments:
+        maxima - list of indices
+        disp_t - displacement over time
+        plt_pr - plotting properties dictionary
+        plt_id - identity for value of interest, used for plotting
+
+    Returns:
+        Average displacement
+
+    """
 
     disp_scaled = scale*disp_t
 
     if plt_pr[plt_id]["plot"]:
-        hb.plot_maxima(disp_scaled, maxima, plt_pr[plt_id]["idt"], \
-                plt_pr[plt_id]["title"], plt_pr[plt_id]["Tmax"], \
-                plt_pr[plt_id]["yscale"])
+        hb.plot_maxima(disp_scaled, maxima, plt_pr, plt_id)
     
     return np.mean(np.array([disp_t[m] for m in maxima]))
 
 
-def _calc_an_projection(maxima, disp_xy, e_i, plt_pr, plt_id, scale):
-
-    an_xy = an.calc_projection_vectors(disp_xy, e_i, over_time=True)
-    """
-    T, X, Y = disp_xy.shape[:3]
-
-    for t in range(T):
-        scale = 0
-        for x in range(X):
-            for y in range(Y):
-                if(np.linalg.norm(an_xy[t, x, y]) > 1E-14):
-                    scale = scale + 1
-        if(scale==0):
-            print("Data: ", an_xy[t])
-            print("Only zero values; maybe consider this?")
-        else:
-            an_xy[t] = 1/scale*an_xy[t]
+def _calc_an_projection(maxima, data_xy, e_i, plt_pr, plt_id, scale):
     """
 
+    Calculates average of projectet values at given maximum indices.
+
+    Arguments:
+        maxima - list of indices
+        data_t - given data over time
+        plt_pr - plotting properties dictionary
+        plt_id - identity for value of interest, used for plotting
+
+    Returns:
+        Average value of projection values
+
+    """
+
+    an_xy = an.calc_projection_vectors(data_xy, e_i, over_time=True)
     an_motion = op.calc_norm_over_time(an_xy)
    
     an_scaled = scale*an_motion
 
     if plt_pr[plt_id]["plot"]:
-        hb.plot_maxima(an_scaled, maxima, plt_pr[plt_id]["idt"], \
-                plt_pr[plt_id]["title"], plt_pr[plt_id]["Tmax"], \
-                plt_pr[plt_id]["yscale"])
+        hb.plot_maxima(an_scaled, maxima, plt_pr, plt_id)
 
     return np.mean(np.array([an_motion[m] for m in maxima]))
 
@@ -117,10 +150,11 @@ def _calc_prevalence(maxima, disp_data, threshold, plt_pr, plt_id):
         disp_data - displacement, numpy array of dimensions
             T x X x Y x 2
         threshold - should be scaled to unit scales 
+        plt_pr - plotting properties dictionary
+        plt_id - identity for value of interest, used for plotting
 
     Returns:
-        prevalence over time, normalized with respect to X and Y;
-        numpy array of dimensions T-1 x X x Y x 2
+        Average prevalence
 
     """
 
@@ -135,20 +169,30 @@ def _calc_prevalence(maxima, disp_data, threshold, plt_pr, plt_id):
         prevalence[t] = scale*np.sum(prev_xy[t])
 
     if plt_pr[plt_id]["plot"]:
-        hb.plot_maxima(prevalence, maxima, plt_pr[plt_id]["idt"], \
-                plt_pr[plt_id]["title"], plt_pr[plt_id]["Tmax"], \
-                plt_pr[plt_id]["yscale"])
+        hb.plot_maxima(prevalence, maxima, plt_pr, plt_id)
 
     return np.mean(np.array([prevalence[m] for m in maxima]))
     
 
 def _calc_principal_strain(maxima, pr_strain_xy, plt_pr, plt_id):
+    """
+
+    Calculates average of principal strain at given maximum indices.
+
+    Arguments:
+        maxima - list of indices
+        data_t - given data over time
+        plt_pr - plotting properties dictionary
+        plt_id - identity for value of interest, used for plotting
+
+    Returns:
+        Average value of principal strain.
+
+    """
     pr_strain = op.calc_norm_over_time(pr_strain_xy)
 
     if plt_pr[plt_id]["plot"]:
-        hb.plot_maxima(pr_strain, maxima, plt_pr[plt_id]["idt"], \
-                plt_pr[plt_id]["title"], plt_pr[plt_id]["Tmax"], \
-                plt_pr[plt_id]["yscale"])
+        hb.plot_maxima(pr_strain, maxima, plt_pr, plt_id)
 
     return np.mean(np.array([pr_strain[m] for m in maxima]))
     
@@ -212,7 +256,10 @@ def get_numbers_of_interest(disp_data, ind_list, scale, dt, plt_pr):
         print("Empty sequence – no intervals found")
         return []
 
-    plt_ids = range(8)
+    #plt_ids = range(8)
+    plt_ids = [mp.get_pr_id(x) for x in \
+            ["beat_rate", "displacement", "xmotion", "ymotion",
+            "prevalence", "prstrain", "xprstrain", "yprstrain"]]
 
     # calculate and gather relevant information ...
 

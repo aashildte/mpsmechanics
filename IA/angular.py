@@ -54,12 +54,12 @@ def calc_direction_vectors(disp, plt_pr, mu=1E-14):
 
     e_alpha = np.linalg.norm(dir_v)*dir_v
     e_beta  = np.array([-e_alpha[1], e_alpha[0]])
-    """
+    
     if(plt_pr["visual check"]):
         dimensions = plt_pr["dims"]
         _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta,
                 plt_pr["idt"], dimensions)
-    """
+    
     return e_alpha, e_beta
 
 

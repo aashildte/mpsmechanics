@@ -1,9 +1,9 @@
 
 """
 
-    Calculates beat rate + gives interval splitting based on maxima
+Calculates beat rate + gives interval splitting based on maxima
 
-    Aashild Telle / Simula Research Labratory / 2018-2019
+Aashild Telle / Simula Research Labratory / 2018-2019
 
 """
 
@@ -12,6 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import io_funs as io
+import metrics as mt
+import metric_plotting as mp
 import operations as op
 
 def _get_local_intervals(disp_norm, eps):
@@ -207,10 +209,9 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
     plt.savefig("Figures" + de + idt + "_mean.svg")
 
     plt.clf()
-         
 
 
-def plot_maxima(values, maxima, idt, description, T_max, y_interval=None):
+def plot_maxima(values, maxima, plt_pr, plt_id):
     """
 
     Plots values and maxima for visual check.
@@ -218,21 +219,20 @@ def plot_maxima(values, maxima, idt, description, T_max, y_interval=None):
     Plots are saved as [idt]_[suffix].png and [idt]_[suffix].svg in 
     a folder named Figures
 
+    TODO option of (not) including maxima??
+
     Arguments:
         values      - data over time
         maxima      - list of maxima indices
-        idt         - filename idt
-        T_max       - last time value
-        description - title
-        y_interval  - optional, 2-tuple like, gives y scale for plot
+        plt_pr      - dictionary giving plotting properties
+        plt_id      - id for extracting dictionary values
 
     """
- 
-    de = io.get_os_delimiter()
 
-    subpath = "Figures" + de
-    path = de.join((subpath + idt).split(de)[:-1])
-    io.make_dir_structure(path)
+    description = plt_pr[plt_id]["title"]
+    T_max = plt_pr[plt_id]["Tmax"]
+    y_interval = plt_pr[plt_id]["yscale"]
+    idt = plt_pr[plt_id]["idt"]
 
     t = np.linspace(0, T_max, len(values)) 
     #m_t = [t[m] for m in maxima]
@@ -247,9 +247,11 @@ def plot_maxima(values, maxima, idt, description, T_max, y_interval=None):
 
     if y_interval is not None:
         plt.ylim(y_interval[0], y_interval[1])
-    
-    plt.savefig(subpath + idt + ".png")
-    plt.savefig(subpath + idt + ".svg")
+
+    de = io.get_os_delimiter()
+
+    plt.savefig(plt_pr["path"] + de + idt + ".png")
+    plt.savefig(plt_pr["path"] + de + idt + ".svg")
 
     plt.clf()
 
@@ -261,20 +263,21 @@ if __name__ == "__main__":
     except:
         print("Error reading file. Give file name as first argument.")
         exit(-1)
+
+    de = io.get_os_delimiter()
     
     data, scale = io.read_disp_file(f_in, 1)
     T = data.shape[0]
-    ppl = {}
-    for i in range(8):
-        ppl[int(i)] = {"plot" : False}
-    
-    ppl["idt"] = "unit_tests"
-    ppl["visual check"] = False
+
+    # some default parameters for plotting properties
+
+    p_id = mp.get_pr_id("displacement")
+    plt_pr = mp.get_default_parameters(p_id, "heart beat", T)
+
     disp = op.calc_norm_over_time(data)
 
-    assert(calc_beat_maxima_time(disp, 1, T, ppl) is not None)
-    assert(calc_beat_maxima_2D(data, 1, T, ppl) is not None)
-    plot_maxima(disp, calc_beat_maxima_time(disp, 1, T, ppl), \
-            "unit_tests", "Displacement", T)    # no return value
+    assert(calc_beat_maxima_time(disp, 1, T, plt_pr) is not None)
+    assert(calc_beat_maxima_2D(data, 1, T, plt_pr) is not None)
+    plot_maxima(disp, calc_beat_maxima_time(disp, 1, T, plt_pr), plt_pr, p_id)
 
     print("All checks passed for heart_beat.py")

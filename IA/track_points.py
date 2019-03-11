@@ -133,6 +133,17 @@ def track_pillars_over_time(data, pillars, dimensions, path):
     scale = 6/dimensions[0]
     dims_scaled = (dimensions[0]*scale, dimensions[1]*scale)
 
+    x_pos = np.zeros(T)
+    y_pos = np.zeros(T)
+
+    x_org = np.zeros(T)
+    y_org = np.zeros(T)
+
+    x_ind = int(X/4)
+    y_ind = int(Y/4)
+
+    track_pt = np.array((xs[x_ind], ys[y_ind]))
+
     for t in range(T):
         Xs = xscale*data[t,:,:,0].transpose()  #???? check with someone
         Ys = yscale*data[t,:,:,1].transpose()  #????
@@ -140,7 +151,7 @@ def track_pillars_over_time(data, pillars, dimensions, path):
         fn_x = interpolate.interp2d(xs, ys, Xs, kind='cubic')
         fn_y = interpolate.interp2d(xs, ys, Ys, kind='cubic')
         
-        fn = lambda x, y: np.array([x, y]) + \
+        fn = lambda x, y: 0*np.array([x, y]) + \
             np.array([fn_x(x, y)[0], fn_y(x, y)[0]])
 
         # check
@@ -157,7 +168,7 @@ def track_pillars_over_time(data, pillars, dimensions, path):
         x_vals = new_values[t, :, :, 0].flatten()
         y_vals = new_values[t, :, :, 1].flatten()
 
-
+        
         fg = plt.figure(t, figsize=dims_scaled)
         t_id = "%04d" % t
         
@@ -165,6 +176,28 @@ def track_pillars_over_time(data, pillars, dimensions, path):
         plt.savefig(path + de + "state_" + t_id + ".png")
 
         plt.close()
+        
+
+        x_org[t] = data[t, x_ind, y_ind, 0]
+        y_org[t] = data[t, x_ind, y_ind, 1]
+
+        z = fn(*track_pt)
+        x_pos[t] = z[0]
+        y_pos[t] = z[1]
+
+    # for output check - TODO remove once we know it works
+
+    ts = np.linspace(0, T, T)
+
+    plt.figure(0)
+    plt.plot(ts, x_pos, ts, y_pos)
+    plt.legend(["New x", "New y"])
+
+    plt.figure(1)
+    plt.plot(ts, x_org, ts, y_org)
+    plt.legend(["Org x", "Org y"])
+
+    plt.show()
 
     return new_values
     

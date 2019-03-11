@@ -28,94 +28,146 @@ Need to discuss output values.
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import interpolate
 
 import io_funs as io
 import preprocessing as pp
 
 
 def read_pt_file(f_in):
+    """
+
+    Reads in values for pillar coordinates + radii.
+
+    Arguments:
+        f_in - Filename
+
+    Returns;
+        Numpy array of dimensions P x 3, P being the number of
+            points; entries being x, y, radius for all points.
+
+    """
 
     f = open(f_in, "r")
 
-    lines = f.read().split("\n")
+    lines = f.read().split("\n")[1:]
 
     if(len(lines[-1])==0):
         lines = lines[:-1]      # ignore last line if empty
 
+    p_values = [[float(x) for x in line.split(",")] \
+                        for line in lines]
 
-    points = np.array([[float(x) for x in line.split(", ")] \
-                        for line in lines])
+    # flip x and y; temporal solution due to two different conventions
+    # used. TODO - change this into one convention
+
+
+    for i in range(len(p_values)):
+        x, y, r = p_values[i]
+        p_values[i] = [y, x, r]
+
+    p_values = np.array(p_values)
 
     f.close()
 
-    return points
+    return p_values
 
-def find_mesh_pts(data, dimensions):
 
-    X, Y = data.shape[1:3]
+def define_pillars(p_values, N=100):
+    """
+
+    Transforms x, y, r values to mesh values.
+
+    Arguments:
+        p_values - list like structure of dimensions P x 3
+        N - number of mesh points used
+
+    Returns:
+        p_values - mesh points on the circumsphere of the circle
+            defined by x, y, z
+
+    """
+
+    P = len(p_values)
+    pillars = np.zeros((P, N, 2))
+
+    angles = np.linspace(0, 2*np.pi, N)
+
+    for i in range(P):
+        x, y, r = p_values[i]
+        for j in range(N):
+            pillars[i, j, 0] = x + r*np.cos(angles[j])
+            pillars[i, j, 1] = y + r*np.sin(angles[j])
+
+    return pillars
+
+
+ 
+
+def track_pillars_over_time(data, pillars, dimensions, path):
+    """
+
+    Tracks position of mesh poinds defined for pillars over time, based
+    on the displacement data.
+
+    Arguments:
+        data - displacement data, numpy array of size T x X x Y x 2
+        pillars - mesh points
+        path - save output values here
+
+    """
+
+    de = io.get_os_delimiter()
+
+    T, X, Y = data.shape[:3]
+    P, N = pillars.shape[:2]
 
     xs = np.linspace(0, dimensions[0], X)
     ys = np.linspace(0, dimensions[1], Y)
 
-    return np.array([xs, ys])
+    new_values = np.zeros((T, P, N, 2))
 
-
-def find_nbhs(xs, pt):
-    """
+    xscale = dimensions[0]/X
+    yscale = dimensions[1]/Y
     
-    Finds indices of x point which is just below pt.
-
-    Arguments:
-        xs - list of mesh points in a given direction
-        pt - float, assumed to be > xs[0] and < xs[-1]
-
-    Returns:
-        i - index of mesh point just *below* pt
-
-    """
-
-    i = 0
-
-    while(i < (len(xs)-1) and xs[i+1] < pt):
-        i = i+1
- 
-    return i
- 
-
-def track_point_over_time(data, pt, xs, ys):
-    
-    i = find_nbhs(xs, pt[0])
-    j = find_nbhs(ys, pt[1])
-
-    T, X, Y = data.shape[:3]
-
-    x_disp = np.zeros(T)
-    y_disp = np.zeros(T)
-
-    w1 = (pt[0] - xs[i])/(xs[i+1] - xs[i])
-    w2 = (pt[1] - ys[j])/(ys[j+1] - ys[j])
+    scale = 6/dimensions[0]
+    dims_scaled = (dimensions[0]*scale, dimensions[1]*scale)
 
     for t in range(T):
-        x = (1 - w2)*((1 - w1)*data[t, i, j, 0] + \
-                            w1*data[t, i+1, j, 0]) + \
-                 w2*((1 - w1)*data[t, i, j+1, 0] + \
-                         w1*data[t, i+1, j+1, 0])
+        Xs = xscale*data[t,:,:,0].transpose()  #???? check with someone
+        Ys = yscale*data[t,:,:,1].transpose()  #????
+
+        fn_x = interpolate.interp2d(xs, ys, Xs, kind='cubic')
+        fn_y = interpolate.interp2d(xs, ys, Ys, kind='cubic')
         
-        y = (1 - w2)*((1 - w1)*data[t, i, j, 1] + \
-                           w1*data[t, i+1, j, 1]) + \
-                 w2*((1 - w1)*data[t, i, j+1, 1] + \
-                           w1*data[t, i+1, j+1, 1])
+        fn = lambda x, y: np.array([x, y]) + \
+            np.array([fn_x(x, y)[0], fn_y(x, y)[0]])
 
-        x_disp[t] = x
-        y_disp[t] = y
+        # check
+        """
+        for x in range(X):
+            for y in range(Y):
+                z = fn(xs[x], ys[y])
+                print("compare: ", data[t, x, y] + np.array([xs[x], ys[y]]), z)
+        """
+        for p in range(P):
+            for n in range(N):
+                new_values[t, p, n] = fn(pillars[p, n, 0], pillars[p, n, 1])
 
-    ts = np.linspace(0, T, T)
+        x_vals = new_values[t, :, :, 0].flatten()
+        y_vals = new_values[t, :, :, 1].flatten()
 
-    plt.figure()
 
-    plt.plot(ts, x_disp, ts, y_disp)
-    plt.legend(["xs", "ys"])
-    plt.xlabel("Time")
+        fg = plt.figure(t, figsize=dims_scaled)
+        t_id = "%04d" % t
+        
+        plt.scatter(x_vals, y_vals, s=0.01)
+        plt.savefig(path + de + "state_" + t_id + ".png")
+
+        plt.close()
+
+    return new_values
+    
 
 try:
     f_in1 = sys.argv[1]
@@ -126,17 +178,23 @@ except:
     exit(-1)
 
 
-dimensions = np.array((664.30, 381.55))
 unit = 1E-6
-xlen=dimensions[0]*unit
-data, scale = io.read_disp_file(f_in1, xlen)
-data = pp.do_diffusion(data, 0.75, 5)
+dimensions = unit*np.array((664.30, 381.55))
+xlen=dimensions[0]
 
-xs, ys = find_mesh_pts(scale*data, unit*dimensions)
+data, scale = io.read_disp_file(f_in1, xlen)
+data = scale*data
+#data = data[:5]
+data = pp.do_diffusion(data, 0.75, 5, over_time=True)
+
+#ip_values = calc_ip_values(scale*data, unit*dimensions)
 
 points = unit*read_pt_file(f_in2)
 
-for pt in points:
-    track_point_over_time(data, pt, xs, ys)
+pillars = define_pillars(points)
 
-plt.show()
+de = io.get_os_delimiter()
+path = "Figures" + de + "Track points"
+io.make_dir_structure(path)
+
+track_pillars_over_time(data, pillars, dimensions, path)

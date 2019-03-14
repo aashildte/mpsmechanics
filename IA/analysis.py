@@ -92,7 +92,9 @@ def get_cl_input():
     # we assume only one . in the filename itself, and ignore
     # any relative paths (i.e. they are stripped of all .'s)
 
-    idt = f_in.split(".")[-2]
+    de = io.get_os_delimiter()
+
+    idt = f_in.split(de)[-1].split(".")[-2]
 
     print("Analysing data set: ", idt)
 
@@ -139,8 +141,13 @@ def get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax):
    
     de = io.get_os_delimiter()
 
+    # strip f_in for all relative paths
+    while("..") in f_in:
+        f_in = de.join(f_in.split(de)[1:])
+
     subpath = "Figures" + de + "Analysis" + de
     path = subpath + de.join(f_in.split("/")[:-1])
+    print("path: ", path)
     io.make_dir_structure(path)
 
     # get information specificly for metrics

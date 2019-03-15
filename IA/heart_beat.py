@@ -135,16 +135,17 @@ def calc_beat_maxima_time(data, scale, T_max, plt_pr):
     return maxima
 
 
-def calc_beat_maxima_2D(data, scale, T_max, plt_pr):
+def calc_beat_maxima_2D(data, scale=1, T_max=1, \
+        plt_pr = {"visual_check" : False}):
     """
 
     From data on displacement over space and time, this function
     calculates the indices of the maxima of each beat.
 
     Arguments:
-        data - T x X x Y x 2 numpy array, displacement values
-        T_max     - last time value
-        plt_pr - dictionary defining visual output
+        data   - T x X x Y x 2 numpy array, displacement values
+        T_max  - last time value, optional
+        plt_pr - dictionary defining visual output, optional
 
     Returns:
         list of maxima indices

@@ -92,8 +92,8 @@ def read_pt_file(f_in):
     if(len(lines[-1])==0):
         lines = lines[:-1]      # ignore last line if empty
 
-    p_values = [[float(x) for x in line.split(",")] \
-                        for line in lines]
+    p_values = [[int(x) for x in line.split(",")] \
+                        for line in lines]  # or float???
 
     # flip x and y; temporal solution due to two different
     # conventions used. TODO - use same everywhere
@@ -137,7 +137,7 @@ def define_pillars(p_values, N=100):
     return pillars
 
 
-def interpolate_step(xs, ys, org_data, pillars):
+def interpolate_step(xs, ys, org_data):
     """
 
     Interpolates given data; defines functions based on this.
@@ -154,15 +154,14 @@ def interpolate_step(xs, ys, org_data, pillars):
 
     """
 
-
-    Xs = data[:,:,0].transpose()
-    Ys = data[:,:,1].transpose()
+    Xs = org_data[:,:,0].transpose()
+    Ys = org_data[:,:,1].transpose()
 
     fn_x = interpolate.interp2d(xs, ys, Xs, kind='cubic')
     fn_y = interpolate.interp2d(xs, ys, Ys, kind='cubic')
     
     fn1 = lambda x, y: np.array([fn_x(x, y)[0], fn_y(x, y)[0]])
-    fn2 = lambda x, y: np.array([x, y]) + fn(x, y)
+    fn2 = lambda x, y: np.array([x, y]) + fn1(x, y)
    
     return fn1, fn2
 
@@ -217,16 +216,16 @@ def write_all_values_to_file(all_values, coords, path):
     for p in range(P):
         coords = mpoints[p]
         filename = path + de + "pillar_" + str(coords[0]) + "_" + \
-                str(coords[1]) + ".png"
+                str(coords[1]) + ".csv"
 
         f = open(filename, "w")
 
-        f.write(str(T) + ", " + str(N))
+        f.write(str(T) + ", " + str(N) + "\n")
 
         for t in range(T):
             for n in range(N):
                 x, y = all_values[t, p, n]
-                f.write(str(x) + ", " + str(y))
+                f.write(str(x) + ", " + str(y) + "\n")
 
         f.close()
 
@@ -280,15 +279,17 @@ def write_max_disp_to_file(mid_values, max_indices, coords, path):
     filename = path + de + "at_maxima.csv"
     f = open(filename, "w")
 
-    max_str = ", ," + ", ".join([str(m) for m in max_indices])
+    max_str = ", ," + ", , ".join([str(m) \
+            for m in max_indices]) + "\n"
     f.write(max_str)
     
-    for p in coords:
+    for p in range(len(coords)):
         m_values = [mid_values[m,p] for m in max_indices]
 
-        pos_str = str(coords[0]) + ", " + str(coords[1]) + ", " + \
-            ", ".join([str(m) for m in m_values])
-        
+        pos_str = str(coords[p,0]) + ", " + str(coords[p,1]) + \
+                ", " + ", ".join([str(m[0]) + ", " + str(m[1]) \
+                for m in m_values]) + "\n"
+
         f.write(pos_str)
 
     f.close()
@@ -329,33 +330,33 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
 
     for t in range(T):
 
-        fn1, fn2 = interpolate_step(xs, ys, data[t], pillars)
+        fn1, fn2 = interpolate_step(xs, ys, data[t])
         
         # all points
 
         for p in range(P):
             for n in range(N):
-                all_values[t, p, n] = fn1(pillars[p, n, 0], \
+                all_values[t, p, n] = fn2(pillars[p, n, 0], \
                         pillars[p, n, 1])
 
         if(plot_values):
-            plot_x_y_coordinates(all_values[t], dimensions, t, path)
+            plot_x_y_coordinates(all_values[t], dimensions, t, path_p)
 
         # midpoints
         for p in range(P):
-            mid_values[t, p] = fn2(*mpoints[p])
+            mid_values[t, p] = fn1(*mpoints[p])
 
     # save values
 
-    write_all_values_to_file(all_values, coords)
+    write_all_values_to_file(all_values, mpoints, path_o)
 
     # find values at maximum displacement
-    max_indices = hb.calc_beat_maximum_2D(data)
+    max_indices = hb.calc_beat_maxima_2D(data)
 
-    write_max_disp_to_file(mid_values, max_indices, coords, path)
+    write_max_disp_to_file(mid_values, max_indices, mpoints, path)
     
     if(plot_values):
-        plot_over_time(mid_values, mpoints, path)
+        plot_over_time(mid_values, mpoints, path_p)
 
 try:
     f_in1 = sys.argv[1]
@@ -395,9 +396,15 @@ pillars = define_pillars(points)
 de = io.get_os_delimiter()
 idt = f_in1.split(de)[-1].split(".")[0]
 
-path = "Figures" + de + "Track points" + de + idt
-io.make_dir_structure(path)
+path_p = "Figures" + de + "Track points" + de + idt
+path_o = "Output" + de + "Track points" + de + idt
+
+for path in (path_p, path_o):
+    io.make_dir_structure(path)
 
 # track values
 
-track_pillars_over_time(data, pillars, dimensions, path, plot_values)
+mpoints = np.array([(x, y) for (x, y, r) in points])
+
+track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
+        plot_values=plot_values, path_p=path_p)

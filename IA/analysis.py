@@ -7,10 +7,10 @@ Run script as (with python 3)
 
     python analysis.py [input file] [indices]
 
-where the input file is a csv file containing displacement data, and
-[indices] is a string which indicates which properties should be
-recorded, e.g. given as "2 3 5". Quotation marks required if more
-than one integer is given. Current supported id's:
+where the input file is a csv file OR a nd2 file containing
+displacement data, and [indices] is a string which indicates which
+properties should be recorded, e.g. given as "2 3 5". Quotation marks
+required if more than one integer is given. Current supported id's:
     - average beat rate (0)
     - average displacement (1)
     - average x motion (2)
@@ -54,6 +54,7 @@ The attribute corresponds to the properties being plotted.
 
 import sys
 import numpy as np
+
 from optparse import OptionParser
 
 import io_funs as io
@@ -151,7 +152,6 @@ def get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax):
     io.make_dir_structure(path)
 
     # get information specificly for metrics
-
     mp.add_plt_information(ppl, idt, Tmax)
 
     # other properties
@@ -209,7 +209,14 @@ f_in, idt, calc_ids, plt_ids = get_cl_input()
 
 # read + preprocess data
 
-disp_data, scale = io.read_disp_file(f_in, dimensions[0])
+if(".csv" in f_in):
+    disp_data, scale = io.read_file_csv(f_in, dimensions[0])
+elif(".nd2" in f_in):
+    disp_data, scale = io.read_file_nd2(f_in, dimensions[0])
+else:
+    print("Error: File formate unknown")
+    exit(-1)
+
 disp_data = pp.do_diffusion(disp_data, alpha, N_d)
 
 # create dictionary with plotting properties

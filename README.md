@@ -18,7 +18,7 @@ Perform an analysis by running the script as
 
     python3 analysis.py [input file] indices -p indices
 
-where the input file is a csv file as specified, and indices a string of integers (e.g. "1 3 6 7", quotation marks included) specifying what properties we want to compute. The integers correspond to one of the following numbers / properties:
+where the input file is a csv file as specified (OR a nd2 file), and indices a string of integers (e.g. "1 3 6 7", quotation marks included) specifying what properties we want to compute. The integers correspond to one of the following numbers / properties:
     - 0: average beat rate
     - 1: average displacement
     - 2: average x motion

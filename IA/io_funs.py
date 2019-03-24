@@ -12,8 +12,38 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+import mps
 
-def read_disp_file(filename, xlen):
+def read_file_nd2(filename, xlen):
+
+    mps_data = mps.MPS(filename)
+    motion = mps.MotionTracking(mps_data)
+    motion.run()
+    motion.GetContractionData(datatype="Disp")
+    data = motion.results["MotionBioFormatsStrainInterval"]["motionVect"]
+
+    print(data.shape)
+
+    # reshape; t as outer dimension - or??
+
+    X, Y, D, T = data.shape
+
+    dx = xlen/X
+
+    data_disp = np.zeros((T, X, Y, D))
+
+    for t in range(T):
+        for x in range(X):
+            for y in range(Y):
+                for d in range(D):
+                    data_disp[t, x, y, d] = dx*data[x, y, d, t]
+
+    scale = _get_scale(data_disp)
+
+    return scale*data_disp, 1./scale
+
+
+def read_file_csv(filename, xlen):
     """
 
     Reads the input file, where the file is assumed to be a csv file on
@@ -64,7 +94,7 @@ def read_disp_file(filename, xlen):
 
     # omit first value; reference configuration
 
-    return scale*data[1:], 1./scale
+    return scale*data, 1./scale
 
 
 def _get_scale(data):

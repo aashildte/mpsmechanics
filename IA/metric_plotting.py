@@ -111,12 +111,11 @@ def add_plt_information(ppl, idt, Tmax):
     suffixes = get_pr_types()
     titles = get_pr_headers()
 
-    yscales = [None, (0, 1), (0, 1), (0, 1), (0, 1), None, (0, 1), \
-            (0, 1)]
+    yscales = [None, None, None, None, (0, 1), None, None, None]
 
     for i in range(8):
         if i in ppl.keys():
-            ppl[i]["idt"] = idt + suffixes[i]
+            ppl[i]["idt"] = idt + "_" + suffixes[i]
             ppl[i]["title"] = titles[i]
             ppl[i]["yscale"] = yscales[i]
             ppl[i]["Tmax"] = Tmax

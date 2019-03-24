@@ -136,7 +136,7 @@ def calc_beat_maxima_time(data, scale, T_max, plt_pr):
 
 
 def calc_beat_maxima_2D(data, scale=1, T_max=1, \
-        plt_pr = {"visual_check" : False}):
+        plt_pr = {"visual check" : False}):
     """
 
     From data on displacement over space and time, this function
@@ -155,6 +155,7 @@ def calc_beat_maxima_2D(data, scale=1, T_max=1, \
     disp_norm = op.calc_norm_over_time(data)
     
     return calc_beat_maxima_time(disp_norm, scale, T_max, plt_pr)
+
 
 def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
     """
@@ -211,50 +212,6 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
 
     plt.clf()
 
-
-def plot_maxima(values, maxima, plt_pr, plt_id):
-    """
-
-    Plots values and maxima for visual check.
-
-    Plots are saved as [idt]_[suffix].png and [idt]_[suffix].svg in 
-    a folder named Figures
-
-    TODO option of (not) including maxima??
-
-    Arguments:
-        values      - data over time
-        maxima      - list of maxima indices
-        plt_pr      - dictionary giving plotting properties
-        plt_id      - id for extracting dictionary values
-
-    """
-
-    description = plt_pr[plt_id]["title"]
-    T_max = plt_pr[plt_id]["Tmax"]
-    y_interval = plt_pr[plt_id]["yscale"]
-    idt = plt_pr[plt_id]["idt"]
-
-    t = np.linspace(0, T_max, len(values)) 
-    #m_t = [t[m] for m in maxima]
-
-    plt.plot(t, values)
-    #max_vals = [values[m] for m in maxima]
-    #plt.scatter(m_t, max_vals, color='red')
-
-    #plt.legend([description, 'Maxima'], loc=4)
-    plt.xlabel('Time (s)')
-    plt.title(description)
-
-    if y_interval is not None:
-        plt.ylim(y_interval[0], y_interval[1])
-
-    de = io.get_os_delimiter()
-
-    plt.savefig(plt_pr["path"] + de + idt + ".png")
-    plt.savefig(plt_pr["path"] + de + idt + ".svg")
-
-    plt.clf()
 
 
 if __name__ == "__main__":

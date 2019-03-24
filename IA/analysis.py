@@ -83,8 +83,7 @@ def get_cl_input():
     except:
         print("Give file name + integers indicationg values of " +
                 "interests as arguments (see the README file); " +
-                " optionally '-p all' or 'p -disp' for a visual" +
-                "output.")
+                " optionally '-p [indices]'to plot values as well.")
         exit(-1)
 
     calc_properties.sort()

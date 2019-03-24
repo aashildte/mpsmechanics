@@ -138,17 +138,17 @@ def get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax):
         ppl[i]["plot"] = True
    
     # strip f_in for all relative paths
-
-    while("..") in f_in:
-        p_folders = os.path.split(f_in)
-        f_in = os.path.join(p_folders[1:])
-
-    subpath = os.path.join("Figures", "Analysis")
-    path = subpath
     
-    for folder in os.path.split(f_in):
-        path = os.path.join(path, folder)
+    while(".." in f_in):
+        r_ind = f_in.find("..") + 3
+        f_in = f_in[r_ind:]
 
+    # and for file type
+
+    r_ind = f_in.find(".")
+    f_in = f_in[:r_ind]
+
+    path = os.path.join(os.path.join("Figures", "Analysis"), f_in) 
     io.make_dir_structure(path)
 
     # get information specificly for metrics
@@ -211,14 +211,7 @@ f_in, idt, calc_ids, plt_ids = get_cl_input()
 
 # read + preprocess data
 
-if(".csv" in f_in):
-    disp_data, scale = io.read_file_csv(f_in, dimensions[0])
-elif(".nd2" in f_in):
-    disp_data, scale = io.read_file_nd2(f_in, dimensions[0])
-else:
-    print("Error: File formate unknown")
-    exit(-1)
-
+disp_data, scale = io.read_file(f_in, dimensions[0])
 disp_data = pp.do_diffusion(disp_data, alpha, N_d)
 
 # create dictionary with plotting properties

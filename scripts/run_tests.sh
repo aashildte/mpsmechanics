@@ -14,4 +14,6 @@ echo 'plot_disp_str'
 python3 IA/plot_disp_str.py $f 9 150
 echo 'find_range'
 python3 IA/find_range.py $f
+echo 'track_pillars'
+echo 'TODO'
 

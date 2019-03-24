@@ -14,6 +14,18 @@ import matplotlib.pyplot as plt
 
 import mps
 
+
+def read_file(filename, scale):
+
+    if(".nd2" in filename):
+        return read_file_nd2(filename, xlen)
+    elif(".csv" in filename):
+        return read_file_csv(filename, xlen)
+    else:
+        print("Uknown file formate")
+        exit(-1)
+
+
 def read_file_nd2(filename, xlen):
 
     mps_data = mps.MPS(filename)
@@ -21,8 +33,6 @@ def read_file_nd2(filename, xlen):
     motion.run()
     motion.GetContractionData(datatype="Disp")
     data = motion.results["MotionBioFormatsStrainInterval"]["motionVect"]
-
-    print(data.shape)
 
     # reshape; t as outer dimension - or??
 
@@ -148,9 +158,9 @@ def make_dir_structure(path):
 
     """
 
-    dirs = os.path.split(path)
-
-    acc_d = "."
+    dirs = os.path.normpath(path).split(os.path.sep)
+    
+    acc_d = ""
 
     for d in dirs:
         acc_d = os.path.join(acc_d, d)

@@ -66,9 +66,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 
-import io_funs as io
-import preprocessing as pp
-import heart_beat as hb
+import dothemaths.io_funs as io
+import dothemaths.preprocessing as pp
+import dothemaths.heart_beat as hb
 
 
 def read_pt_file(f_in):

@@ -64,8 +64,8 @@ cb1 = mpl.colorbar.ColorbarBase(ax,
                                 orientation='horizontal')
 cb1.set_label('Displacement')
 
-plt.savefig(path + de + "Displacement.svg")
-plt.savefig(path + de + "Displacement.png")
+plt.savefig(path + de + "Displacement.png", dpi=1000)
+#plt.savefig(path + de + "Displacement.svg")
 
 plt.clf()
 
@@ -74,5 +74,5 @@ cb1 = mpl.colorbar.ColorbarBase(ax,
                                 orientation='horizontal')
 cb1.set_label('Principal strain')
 
-plt.savefig(path + de + "Strain.svg")
-plt.savefig(path + de + "Strain.png")
+plt.savefig(path + de + "Strain.png", dpi=1000)
+#plt.savefig(path + de + "Strain.svg")

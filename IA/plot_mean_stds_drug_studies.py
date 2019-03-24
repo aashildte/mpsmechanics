@@ -28,8 +28,8 @@ metric.
 The output is saved as [idt].csv in 'Gather analysis data' in a
 subfolder of 'Output'.
 
-The plots are saved as [idt].png and [idt].svg in 'Gather analysis
-data' in a subfolder of 'Figures'.
+The plots are saved as [idt].png in 'Gather analysis data', in a
+subfolder of 'Figures'.
 
 Åshild Telle / Simula Research Labratory / 2019
 
@@ -136,8 +136,7 @@ def plot_mean_std(means, stds, doses, title):
         plt.errorbar(range(N_f), means[:,j], yerr=stds[:,j], xerr=None, ls='none')
         plt.title(labels[j])
         #plt.xscale('log')
-        plt.savefig(idt + prefixes[j] + "_iso.png")
-        plt.savefig(idt + prefixes[j] + "_iso.svg")
+        plt.savefig(idt + prefixes[j] + "_iso.png", dpi=1000)
         plt.clf() 
     """
 

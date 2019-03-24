@@ -60,7 +60,7 @@ def get_pr_headers():
 
     return ["Beat rate", "Displacement", "X-motion", "Y-motion",
             "Prevalence", "Principal strain",
-            "Principal strain, x projection", "Principal strain, y projection"]
+            "Principal strain - x projection", "Principal strain - y projection"]
 
 def get_pr_types():
     """

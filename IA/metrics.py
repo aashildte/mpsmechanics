@@ -9,8 +9,7 @@ values for a number of features: Average of each of
     - principal strain
 
 Figures for alignment as well as all the characteristic values are
-plotted and saved in "Plots"; each is saved both as a png and as a
-svg file.
+plotted and saved in "Plots"; each is saved as a png file.
 
 Åshild Telle / Simula Research Labratory / 2019
 
@@ -170,8 +169,7 @@ def plot_metric_values(values, maxima, plt_pr, plt_id, mark_maxima=""):
 
     Plots values and maxima for visual output.
 
-    Plots are saved as [idt]_[suffix].png and [idt]_[suffix].svg in 
-    a folder named Figures
+    Plots are saved as [idt]_[suffix].png in a folder named Figures
 
     Arguments:
         values      - data over time
@@ -212,8 +210,7 @@ def plot_metric_values(values, maxima, plt_pr, plt_id, mark_maxima=""):
     # save as ...
     de = io.get_os_delimiter()
 
-    plt.savefig(plt_pr["path"] + de + idt + ".png")
-    plt.savefig(plt_pr["path"] + de + idt + ".svg")
+    plt.savefig(plt_pr["path"] + de + idt + ".png", dpi=1000)
 
     plt.clf()
 

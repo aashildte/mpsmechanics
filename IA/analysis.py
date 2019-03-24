@@ -34,14 +34,13 @@ The *output* of the calculations is saved as
 in a folder called 'Analysis' being a subfolder of 'Output'.
 This which will be single line, with entries starting with
 the identity of the data set; then (in increasing order) the
-plotting properties as given above.
+plotting properties as given above (description given).
 
 ---
 
-The (optional) plots will be saved as both a png and svg file,
+The (optional) plots will be saved as a png file
 
     [input file name/path] + [attribute].png
-    [input file name/path] + [attribute].svg
 
 in a folder called 'Analysis' being a subfolder of 'Figures'.
 The attribute corresponds to the properties being plotted.
@@ -177,12 +176,11 @@ def save_output(idt, calc_idts, values):
     # interleave calc_idts, values
 
     output_vals = []
+    descriptions_all = mp.get_pr_headers()
+    descriptions_loc = [descriptions_all[i] for i in calc_idts]
 
-    for (i, val) in zip(calc_idts, values):
-        output_vals.append(i)
-        output_vals.append(val)
-
-    values_str = ", ".join([idt] + list(map(str, output_vals))) + "\n"
+    headers_str = ", " + ", ".join(descriptions_loc) + "\n"
+    values_str = ", ".join([idt] + list(map(str, values))) + "\n"
 
     de = io.get_os_delimiter()
 
@@ -191,6 +189,7 @@ def save_output(idt, calc_idts, values):
     io.make_dir_structure(path)
 
     fout = open(subpath + idt + ".csv", "w")
+    fout.write(headers_str)
     fout.write(values_str)
     fout.close()
 

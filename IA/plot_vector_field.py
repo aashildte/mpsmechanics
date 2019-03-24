@@ -109,8 +109,8 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
 
     de = io.get_os_delimiter()
 
-    plt.savefig(path + de + idt + "_direction_magnitude.png")
-    plt.savefig(path + de + idt + "_direction_magnitude.svg")
+    plt.savefig(path + de + idt + "_direction_magnitude.png", dpi=1000)
+    #plt.savefig(path + de + idt + "_direction_magnitude.svg")
     #plt.show()
     plt.clf()
 
@@ -141,8 +141,8 @@ def plot_magnitude(vector_fields, norms, dimensions, titles, \
    
     de = io.get_os_delimiter()
 
-    plt.savefig(path + de + idt + "_magnitude.png")
-    plt.savefig(path + de + idt + "_magnitude.svg")
+    plt.savefig(path + de + idt + "_magnitude.png", dpi=1000)
+    #plt.savefig(path + de + idt + "_magnitude.svg")
     #plt.show()
     plt.clf()
 

@@ -165,7 +165,6 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
 
     Plots are saved as 
         idt + _mean.png
-        idt + _pean.svg
     in a folder called "Figures".
 
     Arguments:
@@ -207,8 +206,7 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
     path = de.join(("Figures" + de + idt).split(de)[:-1])
     io.make_dir_structure(path)
 
-    plt.savefig("Figures" + de + idt + "_mean.png")
-    plt.savefig("Figures" + de + idt + "_mean.svg")
+    plt.savefig("Figures" + de + idt + "_mean.png", dpi=1000)
 
     plt.clf()
 

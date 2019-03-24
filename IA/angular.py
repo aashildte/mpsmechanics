@@ -70,7 +70,6 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions):
 
     Figures saved as
         idt + _alignment.png
-        idt + _alignment.svg
     in a folder called Figures
 
     Arguments:
@@ -116,8 +115,7 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions):
     path = de.join(("Figures" + de + idt).split(de)[:-1])
     io.make_dir_structure(path)
 
-    plt.savefig("Figures" + de + idt + "_alignment.png")
-    plt.savefig("Figures" + de + idt + "_alignment.svg")
+    plt.savefig("Figures" + de + idt + "_alignment.png", dpi=1000)
 
     plt.figure()
     plt.clf()

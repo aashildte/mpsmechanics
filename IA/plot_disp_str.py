@@ -1,19 +1,20 @@
 
+import os
 import sys
 import numpy as np
 import matplotlib.colors as cl
 
-import operations as op
-import preprocessing as pp
-import mechanical_properties as mc
-import plot_vector_field as pl
-import io_funs as io
+import dothemaths.operations as op
+import dothemaths.preprocessing as pp
+import dothemaths.mechanical_properties as mc
+import dothemaths.plot_vector_field as pl
+import iofuns.io_funs as io
 
 def read_values(f_in):
 
     xlen = 664.30
 
-    disp_data, scale = io.read_disp_file(f_in, xlen)
+    disp_data, scale = io.read_file_csv(f_in, xlen)
     
     time_step = op.calc_max_ind(op.calc_norm_over_time(disp_data))
     disp_t = disp_data[time_step]
@@ -34,8 +35,7 @@ except:
 
 max1, max2 = map(float, sys.argv[2:])
 
-de = io.get_os_delimiter()
-path = "Figures" + de + "Plot disp str"
+path = os.path.join("Figures", "Plot disp str")
 io.make_dir_structure(path)
 
 alpha = 0.75

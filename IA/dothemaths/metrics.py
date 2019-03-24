@@ -15,17 +15,17 @@ plotted and saved in "Plots"; each is saved as a png file.
 
 """
 
+import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-import io_funs as io
-import preprocessing as pp
-import operations as op
-import angular as an
-import heart_beat as hb
-import mechanical_properties as mc
-import metric_plotting as mp
+import dothemaths.preprocessing as pp
+import dothemaths.operations as op
+import dothemaths.angular as an
+import dothemaths.heart_beat as hb
+import dothemaths.mechanical_properties as mc
+import dothemaths.metric_plotting as mp
 
 
 def _calc_beat_rate(maxima, disp_t, plt_pr, plt_id):
@@ -208,9 +208,8 @@ def plot_metric_values(values, maxima, plt_pr, plt_id, mark_maxima=""):
         plt.ylim(y_interval[0], y_interval[1])
     
     # save as ...
-    de = io.get_os_delimiter()
-
-    plt.savefig(plt_pr["path"] + de + idt + ".png", dpi=1000)
+    filename = os.path.join(plt_pr["path"], idt + ".png")
+    plt.savefig(filename, dpi=1000)
 
     plt.clf()
 
@@ -304,15 +303,8 @@ def get_numbers_of_interest(disp_data, ind_list, scale, dt, plt_pr):
 
 if __name__ == "__main__":
 
-    try:
-        f_in = sys.argv[1]
-    except:
-        print("Error reading file. Give file name as first argument.")
-        exit(-1)
+    data = np.random.rand(3, 3, 3, 2)
     
-    data, scale = io.read_disp_file(f_in, 1)
-    T = data.shape[0]
-
     ppl = {}
 
     for i in range(8):
@@ -324,7 +316,6 @@ if __name__ == "__main__":
 
     indices = range(8)
 
-    assert(get_numbers_of_interest(data, indices, scale, 1, ppl) \
+    assert(get_numbers_of_interest(data, indices, 1, 1, ppl) \
             is not None)
     print("All checks passed for metrics.py")
-

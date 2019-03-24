@@ -50,16 +50,17 @@ The attribute corresponds to the properties being plotted.
 
 """
 
-
+import os
 import sys
 import numpy as np
 
 from optparse import OptionParser
 
-import io_funs as io
-import preprocessing as pp
-import metrics as mt
-import metric_plotting as mp
+import iofuns.io_funs as io
+import dothemaths.preprocessing as pp
+import dothemaths.heart_beat as hb
+import dothemaths.metric_plotting as mp
+import dothemaths.metrics as mt
 
 def get_cl_input():
     """
@@ -92,9 +93,7 @@ def get_cl_input():
     # we assume only one . in the filename itself, and ignore
     # any relative paths (i.e. they are stripped of all .'s)
 
-    de = io.get_os_delimiter()
-
-    idt = f_in.split(de)[-1].split(".")[-2]
+    idt = os.path.split(f_in)[-1].split(".")[-2]
 
     print("Analysing data set: ", idt)
 
@@ -139,15 +138,18 @@ def get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax):
     for i in plt_ids:
         ppl[i]["plot"] = True
    
-    de = io.get_os_delimiter()
-
     # strip f_in for all relative paths
-    while("..") in f_in:
-        f_in = de.join(f_in.split(de)[1:])
 
-    subpath = "Figures" + de + "Analysis" + de
-    path = subpath + de.join(f_in.split("/")[:-1])
-    print("path: ", path)
+    while("..") in f_in:
+        p_folders = os.path.split(f_in)
+        f_in = os.path.join(p_folders[1:])
+
+    subpath = os.path.join("Figures", "Analysis")
+    path = subpath
+    
+    for folder in os.path.split(f_in):
+        path = os.path.join(path, folder)
+
     io.make_dir_structure(path)
 
     # get information specificly for metrics
@@ -182,13 +184,15 @@ def save_output(idt, calc_idts, values):
     headers_str = ", " + ", ".join(descriptions_loc) + "\n"
     values_str = ", ".join([idt] + list(map(str, values))) + "\n"
 
-    de = io.get_os_delimiter()
+    path = os.path.join("Output", "Analysis")
+    
+    for f in os.path.split(idt)[:-1]:
+        path = os.path.join(path, f)
 
-    subpath = "Output" + de + "Analysis" + de
-    path = subpath + de.join(idt.split("/")[:-1])
     io.make_dir_structure(path)
-
-    fout = open(subpath + idt + ".csv", "w")
+    
+    filename = os.path.join(path, idt + ".csv")
+    fout = open(filename, "w")
     fout.write(headers_str)
     fout.write(values_str)
     fout.close()
@@ -223,8 +227,7 @@ disp_data = pp.do_diffusion(disp_data, alpha, N_d)
 T = disp_data.shape[0]
 Tmax = dt*T
 
-plt_prop = get_plotting_properties(plt_ids, f_in, idt, dimensions, \
-        Tmax)
+plt_prop = get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax)
 
 # calculations
 

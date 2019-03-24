@@ -13,8 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as st
 
-import io_funs as io
-import operations as op
+import dothemaths.operations as op
 
 def calc_direction_vectors(disp, plt_pr, mu=1E-14):
     """
@@ -198,15 +197,9 @@ def flip_values(data, over_time):
 
 if __name__ == "__main__":
 
-    try:
-        f_in = sys.argv[1]
-    except:
-        print("Error: Give displacement file name as first argument.")
-        exit(-1)
-    
-    data, scale = io.read_disp_file(f_in, 1)
-    idt = f_in.split("/")[-1].split(".")[0]
-    de = io.get_os_delimiter()
+    # unit tests
+
+    data = np.random.rand(3, 3, 3, 2)
 
     ppl = {}
     for i in range(8):
@@ -218,7 +211,6 @@ if __name__ == "__main__":
 
     # unit tests:
     
-    T, X, Y = data.shape[:3] 
     e_a, e_b = calc_direction_vectors(data, ppl)
 
     assert((e_a, e_b) is not None)

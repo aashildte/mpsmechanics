@@ -15,10 +15,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import io_funs as io
-import operations as op
-
-
+import dothemaths.operations as op
 
 def calc_prevalence(movement, threshold):
     """
@@ -158,15 +155,7 @@ def calc_principal_strain(data, over_time):
 
 if __name__ == "__main__":
 
-    try:
-        f_in = sys.argv[1]
-    except:
-        print("Error: Give displacement file name as first argument")
-        exit(-1)
-    
-    data, scale = io.read_disp_file(f_in, 1)
-
-    T, X, Y = data.shape[:3]
+    data = np.random.rand(3, 3, 3, 2)
     threshold = 2*1E-6
 
     assert(calc_prevalence(data, threshold) is not None)

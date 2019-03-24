@@ -18,9 +18,8 @@ import matplotlib.colors as cl
 import matplotlib as mpl
 from math import ceil
 
-import operations as op
-import preprocessing as pp
-import io_funs as io
+import dothemaths.operations as op
+import dothemaths.preprocessing as pp
 
 def plot_vector_field(filename, title, xs, ys, U, V, arrow):
     """
@@ -107,10 +106,9 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
 
         plt.pcolor(yc, xc, data_m, norm=norms[i], linewidth=0)
 
-    de = io.get_os_delimiter()
-
-    plt.savefig(path + de + idt + "_direction_magnitude.png", dpi=1000)
-    #plt.savefig(path + de + idt + "_direction_magnitude.svg")
+    filename = os.path.join(path, idt + "_direction_magnitude.png")
+    plt.savefig(filename, dpi=1000)
+    
     #plt.show()
     plt.clf()
 
@@ -146,3 +144,7 @@ def plot_magnitude(vector_fields, norms, dimensions, titles, \
     #plt.show()
     plt.clf()
 
+
+if __name__ == "__main__":
+
+    print("TODO - unit tests?")

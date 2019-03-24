@@ -12,7 +12,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import io_funs as io
 import operations as op
 import preprocessing as pp
 import angular as an
@@ -109,16 +108,10 @@ def find_vector_field(data, M, N, basis_type, dimensions):
 
 if __name__ == "__main__":
 
-    try:
-        f_in, M, N, X, Y = sys.argv[1:6]
-        M, N, X, Y = int(M), int(N), int(X), int(Y)
-    except:
-        print("Error: Give input file, M, N, length and height as arguments")
-        exit(-1)
+    # unit tests
 
-    x_len = 664E-6
-
-    data, scale = io.read_disp_file(f_in, x_len)
+    M = N = X = Y = 3
+    data = np.random.rand(3, 3, 3, 2)
     assert(find_vector_field(data, M, N, "trig", [X, Y]) is not None)
 
     print("All checks passed for fibre_direction.py")

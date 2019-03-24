@@ -18,8 +18,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as st
 
-import io_funs as io
-
 
 def perform_xy_operation(A, fn):
     """
@@ -183,17 +181,8 @@ def normalize_values(data, over_time):
 
 if __name__ == "__main__":
 
-    try:
-        f_in = sys.argv[1]
-    except:
-        print("Error: Give displacement file name as first positional argument.")
-        exit(-1)
-    
     # unit tests
-
-    data, scale = io.read_disp_file(f_in, 1)
-    # idt = f_in.split("/")[-1].split(".")[0]  TODO do we maybe need this?? part of plotting properties
-
+    data = np.random.rand(3, 3, 3, 2)
     idt_fn = lambda x, i, j : x
     
     assert(perform_xy_operation(data[0], idt_fn) is not None)

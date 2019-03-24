@@ -20,15 +20,16 @@ as input being used as an identity.
 
 """
 
+import os
 import sys
 import numpy as np
 import matplotlib.colors as cl
 
-import operations as op
-import preprocessing as pp
-import mechanical_properties as mc
-import plot_vector_field as pl
-import io_funs as io
+import dothemaths.operations as op
+import dothemaths.preprocessing as pp
+import dothemaths.mechanical_properties as mc
+import dothemaths.plot_vector_field as pl
+import iofuns.io_funs as io
 
 def find_max_values(f_in):
     """
@@ -47,7 +48,7 @@ def find_max_values(f_in):
     
     xlen = 664.30
 
-    disp_data, scale = io.read_disp_file(f_in, xlen)
+    disp_data, scale = io.read_file_csv(f_in, xlen)
     
     time_step = op.calc_max_ind(op.calc_norm_over_time(disp_data))
     disp_t = disp_data[time_step]
@@ -62,17 +63,16 @@ except:
     print("Give file name as first positional argument.")
     exit(-1)
 
-de = io.get_os_delimiter()
 
 f_in = sys.argv[1]
-idt = f_in.split(de)[-1].split(".")[0]
+idt = os.path.split(f_in)[-1].split(".")[0]
 
 max1, max2 = find_max_values(f_in)
 
 # save values
 
-path = "Output" + de + "Find_range"
+path = os.path.join("Output", "Find_range")
 io.make_dir_structure(path)
-fout = open(path + de + "range_" + idt + ".csv", "w")
+fout = open(os.path.join(path, "range_" + idt + ".csv"), "w")
 fout.write(str(max1) + ", " + str(max2) + ", ")
 fout.close()

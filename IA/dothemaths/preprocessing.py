@@ -16,8 +16,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as st
 
-import io_funs as io
-
 
 def _diffusion_step(data, alpha, N_diff):
     """
@@ -93,16 +91,9 @@ def do_diffusion(data, alpha, N_diff, over_time=True):
 
 if __name__ == "__main__":
 
-    try:
-        f_in = sys.argv[1]
-    except:
-        print("Error: Give displacement file name as first positional argument.")
-        exit(-1)
-    
-    data, scale = io.read_disp_file(f_in, 1)
+    # unit tests
 
-    # unit tests:
-    
+    data = np.random.rand(3, 3, 3, 2)
     assert(do_diffusion(data, 0.75, 2) is not None)
 
     print("All checks passed for preprocessing.py")

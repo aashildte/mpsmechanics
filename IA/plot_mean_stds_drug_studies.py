@@ -42,8 +42,8 @@ import matplotlib.pyplot as plt
 from optparse import OptionParser
 from collections import defaultdict
 
-import metric_plotting as mp
-import io_funs as io
+import dothemaths.metric_plotting as mp
+import iofuns.io_funs as io
 
 def create_folder_structure(idt):
     de = io.get_os_delimiter()

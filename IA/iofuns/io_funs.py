@@ -127,9 +127,9 @@ def _get_scale(data):
 
     return scale
 
-
-def get_os_delimiter():
     """
+
+    def get_os_delimiter():
     
     Gets file directory delimiter for a specific OS system.
 
@@ -137,8 +137,8 @@ def get_os_delimiter():
         \ if the OS is Windows
         / otherwise
 
-    """
     return "\\" if os.name=="nt" else "/"
+    """
 
 
 def make_dir_structure(path):
@@ -148,14 +148,12 @@ def make_dir_structure(path):
 
     """
 
-    de = get_os_delimiter()
-
-    dirs = path.split(de)
+    dirs = os.path.split(path)
 
     acc_d = "."
 
     for d in dirs:
-        acc_d = acc_d + de + d
+        acc_d = os.path.join(acc_d, d)
         if not (os.path.exists(acc_d)):
             os.mkdir(acc_d)
 
@@ -168,8 +166,7 @@ if __name__ == "__main__":
         print("Give file name as first argument")
         exit(-1)
 
-    assert(read_disp_file(f_in, 1) is not None)
-    assert(get_os_delimiter() is not None)
+    assert(read_file_csv(f_in, 1) is not None)
     make_dir_structure("Figures")         # no return value
 
     print("All tests passed for io_funs.py")

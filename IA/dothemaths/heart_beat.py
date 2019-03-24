@@ -11,10 +11,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-import io_funs as io
-import metrics as mt
-import metric_plotting as mp
-import operations as op
+import dothemaths.operations as op
 
 def _get_local_intervals(disp_norm, eps):
     """
@@ -107,7 +104,8 @@ def _get_beat_maxima(disp_norm, local_intervals):
     return maxima
 
 
-def calc_beat_maxima_time(data, scale, T_max, plt_pr):
+def calc_beat_maxima_time(data, scale, T_max, \
+        plt_pr = {"visual check" : False}):
     """
 
     From data on displacement over time only, this function
@@ -214,26 +212,10 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
 
 if __name__ == "__main__":
 
-    try:
-        f_in = sys.argv[1]
-    except:
-        print("Error reading file. Give file name as first argument.")
-        exit(-1)
-
-    de = io.get_os_delimiter()
-    
-    data, scale = io.read_disp_file(f_in, 1)
+    data = np.random.rand(3, 3, 3, 2)
     T = data.shape[0]
 
-    # some default parameters for plotting properties
-
-    p_id = mp.get_pr_id("displacement")
-    plt_pr = mp.get_default_parameters(p_id, "heart beat", T)
-
-    disp = op.calc_norm_over_time(data)
-
-    assert(calc_beat_maxima_time(disp, 1, T, plt_pr) is not None)
-    assert(calc_beat_maxima_2D(data, 1, T, plt_pr) is not None)
-    plot_maxima(disp, calc_beat_maxima_time(disp, 1, T, plt_pr), plt_pr, p_id)
+    assert(calc_beat_maxima_time(op.calc_norm_over_time(data), 1, T) is not None)
+    assert(calc_beat_maxima_2D(data, 1, T) is not None)
 
     print("All checks passed for heart_beat.py")

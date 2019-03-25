@@ -35,7 +35,7 @@ Output given as
            _, _ , m1, _ , m2, _, m3, _, ...
        and the remaning lines contains the following values:
            original x position of pillar
-           original y position of pillar, 
+           original y position of pillar
            x position at index m1
            y position at index m1
            x position at index m2
@@ -60,13 +60,13 @@ All plots are saved in are saved in
 
 """
 
-
+import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 
-import dothemaths.io_funs as io
+import iofuns.io_funs as io
 import dothemaths.preprocessing as pp
 import dothemaths.heart_beat as hb
 
@@ -95,12 +95,16 @@ def read_pt_file(f_in):
     p_values = [[int(x) for x in line.split(",")] \
                         for line in lines]  # or float???
 
+    # using standard radius instead of input; by choice
+
+    r_standard = 1990/664*10       # pixel coords / length * radius
+    
     # flip x and y; temporal solution due to two different
     # conventions used. TODO - use same everywhere
 
     for i in range(len(p_values)):
         x, y, r = p_values[i]
-        p_values[i] = [y, x, r]
+        p_values[i] = [y, x, r_standard]
 
     p_values = np.array(p_values)
 
@@ -194,7 +198,7 @@ def plot_x_y_coordinates(values, dimensions, t, path):
     plt.ylim(0, dimensions[1])
 
     plt.scatter(x_vals, y_vals, s=0.01)
-    plt.savefig(path + de + "state_" + t_id + ".png", dpi=300)
+    plt.savefig(path + de + "state_" + t_id + ".png", dpi=1000)
 
     plt.close()
 
@@ -215,8 +219,8 @@ def write_all_values_to_file(all_values, coords, path):
 
     for p in range(P):
         coords = mpoints[p]
-        filename = path + de + "pillar_" + str(coords[0]) + "_" + \
-                str(coords[1]) + ".csv"
+        filename = os.path.join(path, "pillar_" + str(coords[0]) + "_" + \
+                str(coords[1]) + ".csv")
 
         f = open(filename, "w")
 
@@ -275,8 +279,7 @@ def write_max_disp_to_file(mid_values, max_indices, coords, path):
 
     """
 
-    de = io.get_os_delimiter()
-    filename = path + de + "at_maxima.csv"
+    filename = os.path.join(path, "at_maxima.csv")
     f = open(filename, "w")
 
     max_str = ", ," + ", , ".join([str(m) \
@@ -344,7 +347,11 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
 
         # midpoints
         for p in range(P):
-            mid_values[t, p] = fn1(*mpoints[p])
+            mean = 0
+            for n in range(N):
+                mean += fn1(*pillars[p, n])
+            mean /= N
+            mid_values[t, p] = mean
 
     # save values
 
@@ -372,7 +379,7 @@ except:
 dimensions = np.array((1990, 958))
 xlen=dimensions[0]
 
-data, scale = io.read_disp_file(f_in1, xlen)
+data, scale = io.read_file(f_in1, xlen)
 
 # scale back to "picture" units
 
@@ -393,11 +400,10 @@ pillars = define_pillars(points)
 
 # setup for saving things
 
-de = io.get_os_delimiter()
-idt = f_in1.split(de)[-1].split(".")[0]
+f_path = os.path.join("Track_points", io.get_path(f_in1))
 
-path_p = "Figures" + de + "Track points" + de + idt
-path_o = "Output" + de + "Track points" + de + idt
+path_p = os.path.join("Figures", f_path)
+path_o = os.path.join("Output", f_path)
 
 for path in (path_p, path_o):
     io.make_dir_structure(path)

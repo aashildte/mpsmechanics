@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import mps
 
 
-def read_file(filename, scale):
+def read_file(filename, xlen):
 
     if(".nd2" in filename):
         return read_file_nd2(filename, xlen)
@@ -137,19 +137,37 @@ def _get_scale(data):
 
     return scale
 
+
+def get_path(filename):
     """
 
-    def get_os_delimiter():
-    
-    Gets file directory delimiter for a specific OS system.
+    Remove relative paths + file suffix
 
-    Returns:
-        \ if the OS is Windows
-        / otherwise
-
-    return "\\" if os.name=="nt" else "/"
     """
 
+    # strip f_in for all relative paths
+
+    while(".." in f_in):
+        r_ind = f_in.find("..") + 3
+        f_in = f_in[r_ind:]
+
+    # and for file type
+
+    r_ind = f_in.find(".")
+    f_in = f_in[:r_ind]
+
+    return f_in
+
+
+def get_idt(filename):
+    """
+
+    Strip path + file suffix
+
+    """
+
+    filename = os.path.normpath(path).split(os.path.sep)[-1]
+    return filename.split(".")[0]
 
 def make_dir_structure(path):
     """

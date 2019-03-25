@@ -137,18 +137,9 @@ def get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax):
     for i in plt_ids:
         ppl[i]["plot"] = True
    
-    # strip f_in for all relative paths
-    
-    while(".." in f_in):
-        r_ind = f_in.find("..") + 3
-        f_in = f_in[r_ind:]
+    f_path = io.get_path(f_in)
 
-    # and for file type
-
-    r_ind = f_in.find(".")
-    f_in = f_in[:r_ind]
-
-    path = os.path.join(os.path.join("Figures", "Analysis"), f_in) 
+    path = os.path.join(os.path.join("Figures", "Analysis"), f_path) 
     io.make_dir_structure(path)
 
     # get information specificly for metrics

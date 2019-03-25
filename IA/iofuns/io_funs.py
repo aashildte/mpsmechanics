@@ -147,16 +147,16 @@ def get_path(filename):
 
     # strip f_in for all relative paths
 
-    while(".." in f_in):
-        r_ind = f_in.find("..") + 3
-        f_in = f_in[r_ind:]
+    while(".." in filename):
+        r_ind = filename.find("..") + 3
+        filename = filename[r_ind:]
 
-    # and for file type
+    # and for file type / suffix
 
-    r_ind = f_in.find(".")
-    f_in = f_in[:r_ind]
+    r_ind = filename.find(".")
+    filename = filename[:r_ind]
 
-    return f_in
+    return filename
 
 
 def get_idt(filename):
@@ -166,8 +166,9 @@ def get_idt(filename):
 
     """
 
-    filename = os.path.normpath(path).split(os.path.sep)[-1]
+    filename = os.path.normpath(filename).split(os.path.sep)[-1]
     return filename.split(".")[0]
+
 
 def make_dir_structure(path):
     """

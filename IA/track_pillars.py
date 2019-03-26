@@ -187,7 +187,6 @@ def plot_x_y_coordinates(values, dimensions, t, path):
 
     scale = 6/dimensions[0]
     dims_scaled = (dimensions[0]*scale, dimensions[1]*scale)
-    de = io.get_os_delimiter()
 
     x_vals = values[:, :, 0].flatten()
     y_vals = values[:, :, 1].flatten()
@@ -198,7 +197,7 @@ def plot_x_y_coordinates(values, dimensions, t, path):
     plt.ylim(0, dimensions[1])
 
     plt.scatter(x_vals, y_vals, s=0.01)
-    plt.savefig(path + de + "state_" + t_id + ".png", dpi=1000)
+    plt.savefig(os.path.join(path, "state_" + t_id + ".png"), dpi=1000)
 
     plt.close()
 
@@ -251,9 +250,8 @@ def plot_over_time(values, coords, path):
     Tmax = T/fps
     ts = np.linspace(0, Tmax, T)
     
-    de = io.get_os_delimiter()
-    filenames = [path + de + "all_time_steps_x.png", \
-            path + de + "all_time_steps_y.png"]
+    filenames = [os.path.join(path, "all_time_steps_x.png"), \
+            os.path.join(path, "all_time_steps_y.png")]
     titles = ["Displacement over time (x values)", \
               "Displacement over time (y values)"]
 
@@ -400,7 +398,7 @@ pillars = define_pillars(points)
 
 # setup for saving things
 
-f_path = os.path.join("Track_points", io.get_path(f_in1))
+f_path = os.path.join("Track_pillars", io.get_path(f_in1))
 
 path_p = os.path.join("Figures", f_path)
 path_o = os.path.join("Output", f_path)

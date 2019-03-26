@@ -259,7 +259,7 @@ def plot_over_time(values, coords, path):
         for p in range(P):
             plt.plot(ts, values[:,p,i])
 
-        plt.legend([str(x[i]) for x in coords])
+        plt.legend([("(" + str(x[0]) + ", " + str(x[1]) + ")") for x in coords])
         plt.savefig(filenames[i], dpi=1000) 
         plt.close()
 

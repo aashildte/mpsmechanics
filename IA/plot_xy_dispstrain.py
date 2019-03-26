@@ -1,28 +1,62 @@
+"""
 
+Calculate + plot values related to x / y fraction of displacement
+and principal strain – might still be useful?
+
+Run as
+
+    python3 plot_xy_diststrain.py [files]
+
+e.g. as
+
+    python3 plot_xy_diststrain.py ../data/H1.csv ../data/H2.csv
+
+or
+
+    python3 plot_xy_diststrain.py ../data/*
+
+where files is a list of csv or nd2 files (ref. README) containing
+displacement data.
+
+"""
+
+import os
 import sys
 import numpy as np
 import matplotlib.colors as cl
 import matplotlib.pyplot as plt
 
-import operations as op
-import preprocessing as pp
-import mechanical_properties as mc
-import plot_vector_field as pl
-import io_funs as io
-import angular as an
+import dothemaths.operations as op
+import dothemaths.preprocessing as pp
+import dothemaths.mechanical_properties as mc
+import dothemaths.plot_vector_field as pl
+import iofuns.io_funs as io
+import dothemaths.angular as an
 
-def read_values(f_in, idt, dimensions):
+def read_values(f_in, dimensions):
+    """
+
+    Get values of interest.
+
+    Arguments:
+        Filename - csv or nd2 file, ref. README
+        dimensions - dimensions of each frame in um
+
+    Returns:
+        displacement - X x Y x 2 numpy array
+        principal strain - X x Y x 2 numpy array
+        e_alpha - direction of most detected movement
+        e_beta - perpendicular direction vector
+
+    """
 
     xlen = 664.30*1E-6
 
-    disp_data, scale = io.read_disp_file(f_in, xlen)
-
-    alpha = 0.75
-    N_d = 5
-    
+    disp_data, scale = io.read_file(f_in, xlen)
     time_step = op.calc_max_ind(op.calc_norm_over_time(disp_data))
 
-    e_alpha, e_beta = an.calc_direction_vectors(disp_data, dimensions)
+    alpha, N_d = 0.75, 5
+    e_alpha, e_beta = an.calc_direction_vectors(disp_data)
 
     disp_data_t = pp.do_diffusion(disp_data[time_step], alpha, N_d, \
             over_time=False)
@@ -32,45 +66,65 @@ def read_values(f_in, idt, dimensions):
     return scale*disp_data_t, strain_data_t, e_alpha, e_beta
 
 
-def rotate(v, angle):
-    return np.array([np.cos(angle)*v[0] - np.sin(angle)*v[1],
-        np.sin(angle)*v[0] + np.cos(angle)*v[1]])
+def plot_angle_distribution(data, e_ref, p_value, p_label, path, \
+        title, idt):
+    """
+    
+    Histogram plot, angular distribution for values with magnutide over
+    given threshold
 
-def plot_angle_distribution(data, e_alpha, p_value, p_label, path, title, idt):
+    TODO maybe separate functions for calculations and plotting?
+    - if needed other places too.
+
+    Arguments:
+        data - X x Y x 2 numpy array
+        e_ref - direction vector, "0 angle"
+        p_value - threshold
+        p_label - corresponding label
+        path - save here
+        title - description
+        idt - attribute for plots
+
+    """
+
     X, Y = data.shape[:2]
 
     values = []
-
-    count1 = 0
-    count2 = 0
 
     for x in range(X):
         for y in range(Y):
             norm = np.linalg.norm(data[x, y])
             if(norm > p_value and norm > 1E-14):
-                ip = np.dot(data[x, y], e_alpha)/norm
-                ip = max(min(ip, 1), -1)      # eliminate small overflow - due to rounding errors (?)
+                ip = np.dot(data[x, y], e_ref)/norm
+                ip = max(min(ip, 1), -1)      # eliminate small overflow
                 angle = np.arccos(ip)
                 values.append(angle)
-                count1 = count1+1
-                pm = 0.436332313   # 25 degrees
-                if(angle>(np.pi/2 - pm) and angle<(np.pi/2 + pm)):
-                    count2 = count2 + 1
-
-    print("Fraction within +- 25 degrees: ", count2/count1)
 
     num_bins=100
-    #plt.yscale('log')
     plt.hist(values, num_bins, density=True, alpha=0.5)
     plt.title(title)
     plt.xlim((0, np.pi))
-    plt.savefig(path + "/" + idt + "_angle_distribution_" + p_label + ".png")
+    plt.savefig(os.path.join(path, idt + "_angle_distribution_" + \
+            p_label + ".png"))
     plt.clf()    
 
 
-def plot_distribution(values, per_values, per_labels, path, title, idt):
+def plot_thresholds(values, per_values, fractions, path, title, idt):
+    """
+    Plot value distribution (based on magnitude) and threshold; for
+    visual check / description.
 
-    for (p, l) in zip(per_values, per_labels):
+    Arguments:
+        values - data, X x Y numpy array
+        per_value - thersholds; calculated percentage values
+        fractions  corresponding fractions; for labeling
+        path - save here
+        title - description
+        idt - file identity
+
+    """
+
+    for (p, l) in zip(per_values, fractions):
         label = "%.1f" % l
         plt.axvline(x=p, label=label)
 
@@ -78,11 +132,23 @@ def plot_distribution(values, per_values, per_labels, path, title, idt):
     plt.hist(values, num_bins, alpha=0.5, density=True)
     plt.title(title)
     plt.legend()
-    plt.savefig(path + "/" + idt + "_distribution.png")
+    plt.savefig(os.path.join(path,idt + "_distribution.png"))
     plt.clf()
 
 
 def plot_original_values(x_part, y_part, lognorm, path, idt, dimensions):
+    """
+
+    Plots x, y components; original magnitude.
+
+    Arguments:
+        x_part - x projection
+        y_part - y projection
+        lognorm - boolean value; plot on logscale or not
+        path - save here
+        idt - using this attribute
+        dimensions - picture dimensions, for scaling of plots
+    """
 
     max_val = max(np.max(x_part), np.max(y_part))
     
@@ -90,23 +156,11 @@ def plot_original_values(x_part, y_part, lognorm, path, idt, dimensions):
         norm = cl.LogNorm(0.1, max_val + 0.1)
     else:
         norm = cl.Normalize(0.0, max_val)
-    
+        
     titles = ["X component", "Y component"]
-    filename = path + "/" + idt + "_original_values.png"
 
     pl.plot_magnitude([x_part, y_part], 2*[norm], dimensions, \
-            titles, filename)
-
-
-def find_components(data, e_alpha, e_beta):
-
-    # TODO implement in pp instead
-    
-    return [op.calc_magnitude(pp.calc_projection_vectors(data, \
-            e, time_dependent=False), time_dependent=False) \
-            for e in [e_alpha, e_beta]]
-
-
+            titles, path, idt + "_original_values")
 
 def calc_percentile_values(org, z_dir, per_value):
     
@@ -122,93 +176,119 @@ def calc_percentile_values(org, z_dir, per_value):
     return new
     
 
-def plot_percentile_values(org, x_frac, y_frac, percentiles, \
-        per_values, lognorm, dimensions, titles, path, idt):
+def plot_percentile_values(org, x_frac, y_frac, p_value, p_label, \
+        lognorm, dimensions, title, path, idt):
+    """
 
-    for i in range(len(percentiles)):
-        x_part, y_part = [calc_percentile_values(org, z, per_values[i]) \
+    Finding -> plotting colour maps for given values; x and y
+    directions combined.
+
+    Arguments:
+        original data
+        x_frac - x projection
+        y_frac - y projection
+        p_value - threshold for movement
+        p_label - corresponding label (fraction)
+        lognorm - boolean; use log scale or not
+        dimensions - of original picture, used to scale plots
+        title - description
+        path - save here
+        idt - using this attribute
+
+    """
+
+    x_part, y_part = [calc_percentile_values(org, z, p_value) \
                 for z in [x_frac, y_frac]]
 
-        max_val = max(np.max(x_part), np.max(y_part))
+    max_val = max(np.max(x_part), np.max(y_part))
 
-        if(lognorm):
-            norm = cl.LogNorm(0.1, max_val + 0.1)
-        else:
-            norm = cl.Normalize(0.0, max_val)
+    if(lognorm):
+        norm = cl.LogNorm(0.1, max_val + 0.1)
+    else:
+        norm = cl.Normalize(0.0, max_val)
 
-        pl.plot_magnitude([x_part, y_part], 2*[norm], dimensions, \
-            titles, path, idt + "_" + str(percentiles[i]))
+    titles = [title + " X fraction", title + " Y fraction"]
+
+    pl.plot_magnitude([x_part, y_part], 2*[norm], dimensions, \
+            titles, path, idt + "_" + p_label)
 
 
-def plot_values(values, e_alpha, e_beta, path, idt, \
-        dimensions, title, lognorm):
+def plot_values(values, e_alpha, e_beta, path, idt, dimensions, \
+        title, lognorm):
+    """
 
-    X, Y = disp.shape[:2]
+    Plots values of interest for given data set; this includes
+        * angle distribution: histogram
+        * 
 
-    values_m = op.calc_magnitude(values, \
-            over_time=False).reshape(X*Y)
+    Arguments:
+        values - values for given property; X x Y x 2 numpy array
+        e_alpha - vector aligned with most detected movement
+        e_beta - perpendicular vector
+        path - save here
+        idt - use as attribute when saving files
+        dimensions - dimensions of recorded image, to scale plots
+        title - description for plotting
+        lognorm - boolean value; plot on a log scale or not
 
-    # plot distribution + percentiles
-    fractions = np.linspace(0, 1, 11)[:3]
- 
-    # try fraction instead ...
+    """
+
+    X, Y = values.shape[:2]
+
+    # calculate relevant data
+    values_m = op.calc_magnitude(values, over_time=False)
+
+    x_values, y_values = [op.calc_magnitude(\
+            an.calc_projection_vectors(values, e, over_time=False), \
+            over_time=False) \
+            for e in [e_alpha, e_beta]]
+
+    # find thresholds
+    N = 5
+    fractions = np.linspace(0, .4, N)
     max_v = np.max(values_m)
     min_v = np.min(values_m)
 
-    per_values = np.array([min_v + x*(max_v - min_v) for x in fractions])
+    per_values = np.array([min_v + x*(max_v - min_v) \
+            for x in fractions])
+    
+    plot_thresholds(values_m.reshape(X*Y), per_values, fractions, \
+            path, title, idt)
+    plot_original_values(x_values, y_values, lognorm, path, idt, \
+            dimensions)
 
-    for i in range(len(fractions)):
+    for i in range(N):
         p_label = str(int(100*fractions[i]))
-        plot_angle_distribution(values, -e_beta, per_values[i], p_label, path, \
-            title, idt)
 
-    plot_distribution(values_m, per_values, fractions, path, \
-            title, idt)
-     
-    # first find x, y components
-    x_values, y_values = find_components(values, e_alpha, e_beta)
-    # plot original values
-    
-    plot_original_values(x_values, y_values, lognorm, path, \
-            idt, dimensions)
-    
-    plot_angle_distribution(values, e_alpha, 0, '0', path, \
-            title, idt)
-    
-    # plot perecentile 
-    titles = [title + ", X fraction", \
-              title + ", Y fraction"]
+        # angle distribution, based on thersholds from above
+        plot_angle_distribution(values, -e_beta, per_values[i], \
+                p_label, path, title, idt)
 
+        # colour maps
+        plot_percentile_values(values, x_values, y_values, \
+                per_values[i], p_label, lognorm, dimensions, \
+                title, path, idt)
 
-    # TODO: Rewrite to same formate as below
-
-    plot_percentile_values(values, x_values, y_values, \
-            fractions, per_values, lognorm, \
-            dimensions, titles, path, idt)
-
-    for i in range(len(fractions)):
-        p_label = str(int(100*fractions[i]))
-        plot_angle_distribution(values, e_alpha, per_values[i], p_label, path, \
-            title, idt)
-    
 
 try:
-    f_in = sys.argv[1]
+    assert(len(sys.argv)>1)
 except:
     print("Give file name as arguments.")
     exit(-1)
 
-de = io.get_os_delimiter()
-path = "Figures" + de + "Plot disp str"
-io.make_dir_structure(path)
-
-last_fn = f_in.split("/")[-1].split(".")
-prefix, suffix = last_fn
+path = os.path.join("Figures", "Plot_xy_dispstrain")
 dimensions = (664.30, 381.55)
- 
-disp, strain, e_alpha, e_beta = read_values(f_in, prefix, dimensions)
 
-plot_values(disp, e_alpha, e_beta, path, prefix + "_disp", \
+for f_in in sys.argv[1:]:
+    f_path = os.path.join(path, io.get_path(f_in))
+    io.make_dir_structure(f_path)
+    
+    idt = io.get_idt(f_in)
+    print("Plotting values for data set ", idt)
+ 
+    disp, strain, e_alpha, e_beta = read_values(f_in, dimensions)
+
+    plot_values(disp, e_alpha, e_beta, f_path, idt + "_disp", \
         dimensions, "Displacement", False)
-plot_values(strain, e_alpha, e_beta, path, prefix + "_strain", \
+    plot_values(strain, e_alpha, e_beta, f_path, idt + "_strain", \
         dimensions, "Principal strain", True)

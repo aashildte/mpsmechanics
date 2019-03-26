@@ -116,6 +116,19 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
 
 def plot_magnitude(vector_fields, norms, dimensions, titles, \
         path, idt):
+    """
+   
+    Gives magnitude plots for given vector fields.
+
+    Arguments:
+        vector_fields - list of numpy arrays
+        norms - list of colormap norms
+        dimensions - scale each colour map accordingly
+        titles - descriptions
+        path - save here
+        idt - using this attribute
+
+    """
 
     scale = 10/dimensions[0]
     dimensions = (scale*dimensions[0], scale*dimensions[1])
@@ -136,11 +149,8 @@ def plot_magnitude(vector_fields, norms, dimensions, titles, \
         plt.title(titles[n])
 
     plt.colorbar()
-   
-    de = io.get_os_delimiter()
-
-    plt.savefig(path + de + idt + "_magnitude.png", dpi=1000)
-    #plt.savefig(path + de + idt + "_magnitude.svg")
+    filename = os.path.join(path, idt + "_magnitude.svg")
+    plt.savefig(filename)
     #plt.show()
     plt.clf()
 

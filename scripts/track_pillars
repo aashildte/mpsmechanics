@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 """
 
@@ -5,7 +6,7 @@ Tracks given points for a given data set over time.
 
 Run as
 
-    python track_points.py [filename displacement] [filename points] 
+    python pillar_tracking.py [filename displacement] [filename points] 
 
 where the displacement file is a csv file of displacement coordinates
 (starting with T, X, Y; then a list of T x X x Y x 2 displacement
@@ -363,52 +364,53 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
     if(plot_values):
         plot_over_time(mid_values, mpoints, path_p)
 
-try:
-    f_in1 = sys.argv[1]
-    f_in2 = sys.argv[2]
+if __name__ == "__main__":
+    try:
+        f_in1 = sys.argv[1]
+        f_in2 = sys.argv[2]
 
-    plot_values = "--plot" in sys.argv
-except:
-    print("Give displacement file and position file as first and" +
-            "second positional argument.")
-    exit(-1)
+        plot_values = "--plot" in sys.argv
+    except:
+        print("Give displacement file and position file as first and" +
+                "second positional argument.")
+        exit(-1)
 
 
-dimensions = np.array((1990, 958))
-xlen=dimensions[0]
+    dimensions = np.array((1990, 958))
+    xlen=dimensions[0]
 
-data, scale = io.read_file(f_in1, xlen)
+    data, scale = io.read_file(f_in1, xlen)
 
-# scale back to "picture" units
+    # scale back to "picture" units
 
-dx = xlen/data.shape[1]
-data = (scale/dx)*data
+    dx = xlen/data.shape[1]
+    data = (scale/dx)*data
 
-T, X, Y = data.shape[:3]
+    T, X, Y = data.shape[:3]
 
-# averaging process - adjustable values
-alpha = 0.75
-N_diff = 5
-data = pp.do_diffusion(data, alpha, N_diff, over_time=True)
+    # averaging process - adjustable values
+    alpha = 0.75
+    N_diff = 5
+    data = pp.do_diffusion(data, alpha, N_diff, over_time=True)
 
-# points of interest
+    # points of interest
 
-points = read_pt_file(f_in2)
-pillars = define_pillars(points)
+    points = read_pt_file(f_in2)
+    pillars = define_pillars(points)
 
-# setup for saving things
+    # setup for saving things
 
-f_path = os.path.join("Track_pillars", io.get_path(f_in1))
+    f_path = os.path.join("Track_pillars", io.get_path(f_in1))
 
-path_p = os.path.join("Figures", f_path)
-path_o = os.path.join("Output", f_path)
+    path_p = os.path.join("Figures", f_path)
+    path_o = os.path.join("Output", f_path)
 
-for path in (path_p, path_o):
-    io.make_dir_structure(path)
+    for path in (path_p, path_o):
+        io.make_dir_structure(path)
 
-# track values
+    # track values
 
-mpoints = np.array([(x, y) for (x, y, r) in points])
+    mpoints = np.array([(x, y) for (x, y, r) in points])
 
-track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
-        plot_values=plot_values, path_p=path_p)
+    track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
+            plot_values=plot_values, path_p=path_p)

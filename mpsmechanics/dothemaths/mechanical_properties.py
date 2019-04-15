@@ -15,7 +15,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import dothemaths.operations as op
+from . import operations as op
 
 def calc_prevalence(movement, threshold):
     """

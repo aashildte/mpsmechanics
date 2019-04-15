@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 
 Given data on displacement, this script finds average and overall values
@@ -5,7 +7,7 @@ for a number of features.
 
 Run script as (with python 3)
 
-    python analysis.py [input file] [indices]
+    python mechanical_analysis.py [input file] [indices]
 
 where the input file is a csv file OR a nd2 file containing
 displacement data, and [indices] is a string which indicates which
@@ -56,11 +58,14 @@ import numpy as np
 
 from optparse import OptionParser
 
-import iofuns.io_funs as io
-import dothemaths.preprocessing as pp
-import dothemaths.heart_beat as hb
-import dothemaths.metric_plotting as mp
-import dothemaths.metrics as mt
+import mpsmechanics as mc
+
+#import mpsmechanics.folder_structure as fd
+#import mpsmechanics.motion_data as md
+#import mpsmechanics.dothemaths.preprocessing as pp
+#import mpsmechanics.dothemaths.heartbeat as hb
+#import mpsmechanics.dothemaths.metric_plotting as mp
+#import mpsmechanics.dothemaths.metrics as mt
 
 def get_cl_input():
     """
@@ -137,13 +142,13 @@ def get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax):
     for i in plt_ids:
         ppl[i]["plot"] = True
    
-    f_path = io.get_path(f_in)
+    f_path = mc.get_path(f_in)
 
     path = os.path.join(os.path.join("Figures", "Analysis"), f_path) 
-    io.make_dir_structure(path)
+    mc.make_dir_structure(path)
 
     # get information specificly for metrics
-    mp.add_plt_information(ppl, idt, Tmax)
+    mc.add_plt_information(ppl, idt, Tmax)
 
     # other properties
     ppl["path"] = path    
@@ -168,7 +173,7 @@ def save_output(idt, calc_idts, values):
     # interleave calc_idts, values
 
     output_vals = []
-    descriptions_all = mp.get_pr_headers()
+    descriptions_all = mc.get_pr_headers()
     descriptions_loc = [descriptions_all[i] for i in calc_idts]
 
     headers_str = ", " + ", ".join(descriptions_loc) + "\n"
@@ -179,7 +184,7 @@ def save_output(idt, calc_idts, values):
     for f in os.path.split(idt)[:-1]:
         path = os.path.join(path, f)
 
-    io.make_dir_structure(path)
+    mc.make_dir_structure(path)
     
     filename = os.path.join(path, idt + ".csv")
     fout = open(filename, "w")
@@ -188,38 +193,40 @@ def save_output(idt, calc_idts, values):
     fout.close()
 
 
-# set some parameters
+if __name__ == "__main__":
 
-alpha = 0.75
-N_d = 5
-dt = 1./100                          # cl arguments? fps
-threshold = 2E-6                     # meters per second
-dimensions = (664.30E-6, 381.55E-6)  # picture length/height
+    # set some parameters
 
-# get input parameters
+    alpha = 0.75
+    N_d = 5
+    dt = 1./100                          # cl arguments? fps
+    threshold = 2E-6                     # meters per second
+    dimensions = (664.30E-6, 381.55E-6)  # picture length/height
 
-f_in, idt, calc_ids, plt_ids = get_cl_input()
+    # get input parameters
 
-# read + preprocess data
+    f_in, idt, calc_ids, plt_ids = get_cl_input()
 
-disp_data, scale = io.read_file(f_in, dimensions[0])
-disp_data = pp.do_diffusion(disp_data, alpha, N_d)
+    # read + preprocess data
 
-# create dictionary with plotting properties
+    disp_data, scale = mc.read_file(f_in, dimensions[0])
+    disp_data = mc.do_diffusion(disp_data, alpha, N_d)
 
-T = disp_data.shape[0]
-Tmax = dt*T
+    # create dictionary with plotting properties
 
-plt_prop = get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax)
+    T = disp_data.shape[0]
+    Tmax = dt*T
 
-# calculations
+    plt_prop = get_plotting_properties(plt_ids, f_in, idt, dimensions, Tmax)
 
-values = mt.get_numbers_of_interest(disp_data, calc_ids, \
-        scale, dt, plt_prop)
+    # calculations
 
-# save as ...
+    values = mc.get_numbers_of_interest(disp_data, calc_ids, \
+            scale, dt, plt_prop)
 
-save_output(idt, calc_ids, values)
+    # save as ...
 
-print("Analysis finished, output saved in Output -> Analysis; " + \
-        "plots (if applicable) in Figures -> Analysis.")
+    save_output(idt, calc_ids, values)
+
+    print("Analysis finished, output saved in Output -> Analysis; " + \
+            "plots (if applicable) in Figures -> Analysis.")

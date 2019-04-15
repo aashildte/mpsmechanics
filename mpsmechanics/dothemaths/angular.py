@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as st
 
-import dothemaths.operations as op
+from . import operations as op
 
 def calc_direction_vectors(disp, plt_pr, mu=1E-14):
     """

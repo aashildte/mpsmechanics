@@ -11,7 +11,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-import dothemaths.operations as op
+from . import operations as op
 
 def _get_local_intervals(disp_norm, eps):
     """

@@ -16,9 +16,9 @@ if sys.version_info < (3, 5):
     sys.exit(1)
 
 VERSION = "0.1"
-NAME = "IA"
+NAME = "mpsmechanics"
 
-scripts = glob.glob("scripts/*.py")
+scripts = glob.glob("scripts/*")
 
 if platform.system() == "Windows" or "bdist_wininst" in sys.argv:
     # In the Windows command prompt we can't execute Python scripts
@@ -49,9 +49,9 @@ def run_install():
         author=AUTHORS,
         license="...",
         author_email="aashild@simula.no",
-        platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+        platforms=["Windows", "Linux", "Mac OS-X"],
         packages=find_packages("."),
-        package_dir={"IA": "IA"},
+        package_dir={"mpsmechanics": "mpsmechanics"},
         install_requires=[],
         # Additional build targets
         scripts=scripts,

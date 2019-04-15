@@ -18,15 +18,15 @@ import mps
 def read_file(filename, xlen):
 
     if(".nd2" in filename):
-        return read_file_nd2(filename, xlen)
+        return _read_file_nd2(filename, xlen)
     elif(".csv" in filename):
-        return read_file_csv(filename, xlen)
+        return _read_file_csv(filename, xlen)
     else:
         print("Uknown file formate")
         exit(-1)
 
 
-def read_file_nd2(filename, xlen):
+def _read_file_nd2(filename, xlen):
 
     mps_data = mps.MPS(filename)
     motion = mps.MotionTracking(mps_data)
@@ -53,7 +53,7 @@ def read_file_nd2(filename, xlen):
     return scale*data_disp, 1./scale
 
 
-def read_file_csv(filename, xlen):
+def _read_file_csv(filename, xlen):
     """
 
     Reads the input file, where the file is assumed to be a csv file on
@@ -136,55 +136,6 @@ def _get_scale(data):
         scale = scale*10
 
     return scale
-
-
-def get_path(filename):
-    """
-
-    Remove relative paths + file suffix
-
-    """
-
-    # strip f_in for all relative paths
-
-    while(".." in filename):
-        r_ind = filename.find("..") + 3
-        filename = filename[r_ind:]
-
-    # and for file type / suffix
-
-    r_ind = filename.find(".")
-    filename = filename[:r_ind]
-
-    return filename
-
-
-def get_idt(filename):
-    """
-
-    Strip path + file suffix
-
-    """
-
-    filename = os.path.normpath(filename).split(os.path.sep)[-1]
-    return filename.split(".")[0]
-
-
-def make_dir_structure(path):
-    """
-
-    Makes a directory structure based on a given path.
-
-    """
-
-    dirs = os.path.normpath(path).split(os.path.sep)
-    
-    acc_d = ""
-
-    for d in dirs:
-        acc_d = os.path.join(acc_d, d)
-        if not (os.path.exists(acc_d)):
-            os.mkdir(acc_d)
 
 
 if __name__ == "__main__":

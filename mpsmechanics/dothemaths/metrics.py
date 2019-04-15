@@ -20,12 +20,12 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-import dothemaths.preprocessing as pp
-import dothemaths.operations as op
-import dothemaths.angular as an
-import dothemaths.heart_beat as hb
-import dothemaths.mechanical_properties as mc
-import dothemaths.metric_plotting as mp
+from . import preprocessing as pp
+from . import operations as op
+from . import angular as an
+from . import heartbeat as hb
+from . import mechanical_properties as mc
+from . import metric_plotting as mp
 
 
 def _calc_beat_rate(maxima, disp_t, plt_pr, plt_id):

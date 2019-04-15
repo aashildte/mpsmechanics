@@ -10,11 +10,11 @@ useful for plotting and output descriptions.
 import sys
 import numpy as np
 
-import dothemaths.preprocessing as pp
-import dothemaths.operations as op
-import dothemaths.angular as an
-import dothemaths.heart_beat as hb
-import dothemaths.mechanical_properties as mc
+from . import preprocessing as pp
+from . import operations as op
+from . import angular as an
+from . import heartbeat as hb
+from . import mechanical_properties as mc
 
     
 def get_default_parameters(p_id, test_file, T):

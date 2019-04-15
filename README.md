@@ -1,26 +1,52 @@
 # Motivation
 
-Project for image processing -> value in itself, input other models
+Project for image processing/analysis to analyze mechanical properties -> value in itself, input other models
 
-# Input files
+# Setup
 
-All scripts handle displacement data sets. The input files are either nd2 files (better description needed) or csv files. For the csv files, the first three numbers give T, X and Y; then we have T x X x Y lines of two components - x and y displacement for each time step and each spacial coordinate. The displacement data are relative to number of points we're given; each number determines how many blocks in x/y direction a given macroblock has moved.
+## Dependencies
 
-# Fibre orientation
+Depends on numpy, scipy and matplotlib – install these manually for now; we can do it properly later maybe – as well as Henrik's MPS script. Eventually it will also depend on David's script for finding the pillars (?).
 
-Calculate vector field representing movement / direction script as
+## Initializing git
 
-    python3 fibre_direction.py [input file] [M] [N] [X] [Y]
+To download the code for the relevant scripts you can use git's 'pull' command. In order to have access to the code you need to tell git who you are, and tell bitbucket that you are allowed to pull the code from a given computer.
 
-where input file is a csv file, M x N the desired size of the function space, X x Y the dimensions of the image corresponding to the input file, e.g. as
-    
-    python3 fibre_direction.py H12.csv 255 144 40 340
+Set up git by entering
 
-# Analysis
+    git config --global user.name "Your Name"
+    git config --global user.email your@email.com
+    git init
+
+Locate your ssh key, or generate it (check e.g. https://help.github.com/en/articles/connecting-to-github-with-ssh for how) and add it to the list of known ssh keys in the bitbucket repository – either for all your projects (Account settings -> Security -> SSH keys) or for this one only (Repository settings -> General -> Access keys).
+
+## Installing the scripts
+
+To install the module and the relevant scripts run
+
+    python setup.py install
+
+which can be done either globally (you might want to be in sudo mode) or in a local environment. You can specify where to install it using the "--prefix" option and you might want to update your PYTHONPATH variable to point to the given location.
+
+You should now be able to access the code in mpsmechanics as a module (import it in your python script) or run the scripts located in the "scripts" folder anywhere.
+
+# Running the script
+
+At the moment the two scripts developed are *analyze_mechanics* and *track_pillars*. We might add others eventually, feel free to suggest new ones if you have any ideas.
+
+## Input files
+
+Both scripts handle displacement data sets; *track_pillars* also takes a csv file for inital position of the pillars as input.
+
+The displacement files are either nd2 files (better description needed) or csv files. For the csv files, the first three numbers give T, X and Y; then we have T x X x Y lines of two components - x and y displacement for each time step and each spacial coordinate. The displacement data are relative to number of points we're given; each number determines how many blocks in x/y direction a given macroblock has moved.
+
+The initial position of the pillars are given as csv files, having numbers for x position, y position and radius at each line.
+
+## Analysis
 
 Perform an analysis by running the script as
 
-    python3 analysis.py [input file] indices -p indices
+    analyze_mechanics [input file] indices -p indices
 
 where the input file is a csv file or a nd2 file as specified, and indices a string of integers (e.g. "1 3 6 7", quotation marks included) specifying what properties we want to compute. The integers correspond to one of the following numbers / properties:
     - 0: average beat rate
@@ -36,29 +62,14 @@ and the list after "-p" indicates which of these that are to be plotted similtan
 
 Example:
 
-    python3 analysis.py test.csv "0 1 2 3 7" -p "2 3"
+    analyze_mechanics test.csv "0 1 2 3 7" -p "2 3"
 
 The output will be saved in Output -> Analysis, plots will be saved in Figures -> Analysis.
 
-# Displacement and strain
-
-Run as
-
-    python3 plot_disp_str.py [list of output files]
-
-where list of output files are as given in get\_range.py; typically something like
-    "Output/get_range/*"
-
-(at least on mac/linux).
-
-For x/y component plots, run
-
-    python3 plot_xy_dispstrain.py [list of output files]
-
-# Tracking points
+## Tracking pillars
 
 Run
 
-    python3 track_points.py [file1] [file2]
+    track_pillars.py [file1] [file2]
 
 where file1 give displacement, file2 points of interest. See test\_input.csv, test\_points.csv for examples.

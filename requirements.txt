@@ -1,5 +1,0 @@
-
-
-Dependencies:
-- numpy, matplotlib, scipy, ...?
-- mps

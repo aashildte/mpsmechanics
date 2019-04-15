@@ -67,10 +67,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 
-import iofuns.io_funs as io
-import dothemaths.preprocessing as pp
-import dothemaths.heart_beat as hb
-
+import mpsmechanics as mc
 
 def read_pt_file(f_in):
     """
@@ -357,7 +354,7 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
     write_all_values_to_file(all_values, mpoints, path_o)
 
     # find values at maximum displacement
-    max_indices = hb.calc_beat_maxima_2D(data)
+    max_indices = mc.calc_beat_maxima_2D(data)
 
     write_max_disp_to_file(mid_values, max_indices, mpoints, path)
     
@@ -379,7 +376,7 @@ if __name__ == "__main__":
     dimensions = np.array((1990, 958))
     xlen=dimensions[0]
 
-    data, scale = io.read_file(f_in1, xlen)
+    data, scale = mc.read_file(f_in1, xlen)
 
     # scale back to "picture" units
 
@@ -391,7 +388,7 @@ if __name__ == "__main__":
     # averaging process - adjustable values
     alpha = 0.75
     N_diff = 5
-    data = pp.do_diffusion(data, alpha, N_diff, over_time=True)
+    data = mc.do_diffusion(data, alpha, N_diff, over_time=True)
 
     # points of interest
 
@@ -400,13 +397,13 @@ if __name__ == "__main__":
 
     # setup for saving things
 
-    f_path = os.path.join("Track_pillars", io.get_path(f_in1))
+    f_path = os.path.join("Track_pillars", mc.get_path(f_in1))
 
     path_p = os.path.join("Figures", f_path)
     path_o = os.path.join("Output", f_path)
 
     for path in (path_p, path_o):
-        io.make_dir_structure(path)
+        mc.make_dir_structure(path)
 
     # track values
 

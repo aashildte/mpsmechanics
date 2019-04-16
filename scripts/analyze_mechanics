@@ -120,7 +120,7 @@ def save_output(calc_idts, values, path_num):
     headers_str = ", " + ", ".join(descriptions_loc) + "\n"
     values_str = ", ".join([idt] + list(map(str, values))) + "\n"
 
-    filename = os.path.join(path, "metrics_average.csv")
+    filename = os.path.join(path_num, "metrics_average.csv")
     fout = open(filename, "w")
     fout.write(headers_str)
     fout.write(values_str)

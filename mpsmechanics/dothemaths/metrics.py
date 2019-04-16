@@ -72,7 +72,7 @@ def _calc_displacement(maxima, disp_t, plt_pr, plt_id, scale):
 
     """
 
-    disp_scaled = scale*disp_t
+    disp_scaled = disp_t
 
     if plt_pr[plt_id]["plot"]:
         plot_metric_values(disp_scaled, maxima, plt_pr, plt_id)
@@ -251,7 +251,7 @@ def get_numbers_of_interest(disp_data, ind_list, scale, dt, plt_pr):
     T, X, Y = disp_data.shape[:3]
     T_max = dt*T
     threshold = 2*10E-6*dt/scale
-    scale_overall = 1/(X*Y)
+    scale_overall = 1/(X*Y)                  # scale? filter?
 
     # find some basis data
     

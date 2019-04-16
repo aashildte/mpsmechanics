@@ -31,7 +31,7 @@ def get_cl_input():
     options = vars(options)
 
     try:
-        assert(len(args)>2)
+        assert(len(args)>1)
     except:
         print("Give files name and integers indicationg values of " +
                 "interests as arguments (see the README file); " +

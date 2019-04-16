@@ -20,7 +20,7 @@ from .dothemaths import preprocessing
 from .dothemaths.preprocessing import do_diffusion
 
 from .iofuns import folder_structure
-from .iofuns.folder_structure import get_path, get_idt, make_dir_structure
+from .iofuns.folder_structure import get_input_properties, make_dir_structure
 
 from .iofuns import motion_data
 from .iofuns.motion_data import read_file

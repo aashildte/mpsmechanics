@@ -6,22 +6,15 @@ Tracks given points for a given data set over time.
 
 Run as
 
-    python pillar_tracking.py [filename displacement] [filename points] 
+    python track_pillars.py [displacement] [points] [indices]
 
-where the displacement file is a csv file of displacement coordinates
-(starting with T, X, Y; then a list of T x X x Y x 2 displacement
-values, one for each T x X x Y coordinate, in x and one in y direction;
-and the points are given as one pair per line, as in
+where displacement is a csv/nd2 file with displacement data, points 
+a csv file giving pillar positions + radii, and indices a string
+indicating which value to track, "0", "1" or "0 1" (corresponding
+to output outlined below):
 
-    x0 y0
-    x1 y1
-
-    ...
-
-Optionally add the argument --plot to get a visual output.
-
-Output given as
-    1) a set of files on the form pt[X]_[Y].csv, saved in where the
+Output given as (if indicated)
+    0) a set of files on the form pt[X]_[Y].csv, saved in where the
        *first* line give number of time steps, number of tracking
        points for that pillar:
            T, N
@@ -31,7 +24,7 @@ Output given as
        which gives the position of the n'th point at time step t;
        all positions first listed for time step 0, then for time
        step 1, etc.
-    2) one file called at_maxima.csv, where the first line give
+    1) one file called at_maxima.csv, where the first line give
        the maximum indices:
            _, _ , m1, _ , m2, _, m3, _, ...
        and the remaning lines contains the following values:
@@ -44,18 +37,16 @@ Output given as
            ...
 
 All files for numerical output are saved in
-    Output -> Track pillars -> File idt
+    same directory as the displacement file ->
+        folder with same name as the displacement file ->
+            "track_pillars" ->
+                "numerical_output" ->
+                    for 0) subfolder named "positions_all_time_steps"
+                    for 1) subfolder named "displacement_maxima"
 
-If --plot is given as an argument, we're plotting the values at each
-time step, saving them as state_[t].png, as well as the x and y
-position over all time step, as an average of all points along the
-circle representing the pillar – so one plot per pillar. These
-are saved as
-    all_time_steps_x.png
-    all_time_steps_y.png
-
-All plots are saved in are saved in
-    Figures -> Track pillars -> File idt
+Optionally add -p [indices] as an argument to plot corresponding
+values. Plots are saved as the numerical output, but in a subfolder
+named "plots" instead.
 
 Åshild Telle / Simula Research Labratory / 2019
 
@@ -294,8 +285,8 @@ def write_max_disp_to_file(mid_values, max_indices, coords, path):
     f.close()
 
 
-def track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
-        path_p=None, plot_values=False):
+def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
+        plot_ids, paths):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
@@ -305,9 +296,9 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
         data - displacement data, numpy array of size T x X x Y x 2
         pillars - mesh points; on a circle around each middle point
         mpoints - mesh points; center of each pillar
-        path_o - save output values here
-        path_p - save plots here
-        plot_values - boolean - plot values or not
+        calc_ids - output values
+        plot_ids - plotting values
+        paths - save output, plots here
 
     """
 
@@ -338,8 +329,8 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
                 all_values[t, p, n] = fn2(pillars[p, n, 0], \
                         pillars[p, n, 1])
 
-        if(plot_values):
-            plot_x_y_coordinates(all_values[t], dimensions, t, path_p)
+        if("0" in plot_ids):
+            plot_x_y_coordinates(all_values[t], dimensions, t, paths["plt_all"])
 
         # midpoints
         for p in range(P):
@@ -351,27 +342,24 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
 
     # save values
 
-    write_all_values_to_file(all_values, mpoints, path_o)
+    if ("0" in calc_ids):
+        write_all_values_to_file(all_values, mpoints, paths["num_all"])
 
     # find values at maximum displacement
-    max_indices = mc.calc_beat_maxima_2D(data)
-
-    write_max_disp_to_file(mid_values, max_indices, mpoints, path)
     
-    if(plot_values):
-        plot_over_time(mid_values, mpoints, path_p)
+    if("1" in calc_ids):
+        max_indices = mc.calc_beat_maxima_2D(data)
+
+        write_max_disp_to_file(mid_values, max_indices, mpoints, \
+                paths["num_max"])
+    
+        if("1" in plot_ids):
+            plot_over_time(mid_values, mpoints, paths["plt_max"])
 
 if __name__ == "__main__":
-    try:
-        f_in1 = sys.argv[1]
-        f_in2 = sys.argv[2]
-
-        plot_values = "--plot" in sys.argv
-    except:
-        print("Give displacement file and position file as first and" +
-                "second positional argument.")
-        exit(-1)
-
+    
+    input_files, calc_ids, plt_ids = mc.get_cl_input()
+    f_in1, f_in2 = input_files
 
     dimensions = np.array((1990, 958))
     xlen=dimensions[0]
@@ -397,17 +385,36 @@ if __name__ == "__main__":
 
     # setup for saving things
 
-    f_path = os.path.join("Track_pillars", mc.get_path(f_in1))
+    path, idt, ext = mc.get_input_properties(f_in1)
+    
+    print("Tracking pillars for data set: ", idt)
 
-    path_p = os.path.join("Figures", f_path)
-    path_o = os.path.join("Output", f_path)
+    path_num, path_plots = \
+            mc.make_default_structure(path, "track_pillars", idt)
 
-    for path in (path_p, path_o):
-        mc.make_dir_structure(path)
+    paths = []
+
+    for p in [path_num, path_plots]:
+        for a in ["positions_all_time_step", "displacement_maxima"]:
+            pt = os.path.join(p, a)
+            mc.make_dir_structure(pt)
+            paths.append(pt)
+
+    paths_dir = {}
+    paths_dir["num_all"] = paths[0]
+    paths_dir["num_max"] = paths[1]
+    paths_dir["plt_all"] = paths[2]
+    paths_dir["plt_max"] = paths[3]
 
     # track values
 
     mpoints = np.array([(x, y) for (x, y, r) in points])
 
-    track_pillars_over_time(data, pillars, mpoints, dimensions, path_o, \
-            plot_values=plot_values, path_p=path_p)
+    track_pillars_over_time(data, pillars, mpoints, dimensions, \
+            calc_ids, plt_ids, paths_dir)
+
+    print("Pillar tracking for " + idt + " finished:")
+    print(" * Output saved in '" + path_num + "'")
+
+    if(len(plt_ids)>0):
+        print(" * Specified plots saved in '" + path_plots + "'")

@@ -8,42 +8,61 @@ import sys
 import os
 
 
-def get_path(filename):
+def get_input_properties(filename):
     """
 
-    Remove relative paths + file suffix
+    Splits file into three parts: Path, filename, extension
 
-    """
+    Arguments:
+        filename - full path including filename
 
-    # strip f_in for all relative paths
-
-    while(".." in filename):
-        r_ind = filename.find("..") + 3
-        filename = filename[r_ind:]
-
-    # and for file type / suffix
-
-    r_ind = filename.find(".")
-    filename = filename[:r_ind]
-
-    return filename
-
-
-def get_idt(filename):
-    """
-
-    Strip path + file suffix
+    Returns:
+        path - path to filename
+        filename - filename in that directory
+        ext - file extension
 
     """
 
-    filename = os.path.normpath(filename).split(os.path.sep)[-1]
-    return filename.split(".")[0]
+    path, tail = os.path.split(filename)
+    filename, ext = tail.split(".")
+
+    return path, filename, ext
+
+def make_default_structure(path, subfolder, idt):
+    """
+
+    Define/create structure for
+        output path -> subfolder -> idt
+    and two subfolders, "numerical output" and "figures"
+    in the last one.
+
+    Returns:
+        path to numerical output
+        path to plots
+
+    """
+
+    f_path = os.path.join(\
+        os.path.join(path, idt), \
+        subfolder)
+
+    path_num = os.path.join(f_path, "numerical_output")
+    path_plots = os.path.join(f_path, "figures")
+
+    make_dir_structure(path_num)
+    make_dir_structure(path_plots)
+
+    return path_num, path_plots
 
 
 def make_dir_structure(path):
     """
 
-    Makes a directory structure based on a given path.
+    Makes a directory structure based on a given path; for every
+    directory specified it's created unless it already exists.
+
+    Arguments:
+        path, final "/" not needed
 
     """
 
@@ -55,5 +74,3 @@ def make_dir_structure(path):
         acc_d = os.path.join(acc_d, d)
         if not (os.path.exists(acc_d)):
             os.mkdir(acc_d)
-
-

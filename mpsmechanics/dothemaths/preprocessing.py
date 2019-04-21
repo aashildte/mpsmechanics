@@ -59,7 +59,7 @@ def _diffusion_step(data, alpha, N_diff):
     return d1
 
 
-def do_diffusion(data, alpha, N_diff, over_time=True):
+def do_diffusion(data, alpha, N_diff, over_time):
     """
     Performs a moving averaging algorithm of given data, using
     auxilary function _diffusion_step.
@@ -87,6 +87,20 @@ def do_diffusion(data, alpha, N_diff, over_time=True):
 
     return new_data
 
+
+def calc_filter(data, threshold):
+
+    T, X, Y = data.shape[:3]
+
+    movement = np.full((X, Y), False)
+
+    for t in range(T): 
+        for x in range(X):
+            for y in range(Y):
+                if(np.linalg.norm(data[t, x, y]) >= threshold):
+                    movement[x, y] = True
+
+    return movement
 
 
 if __name__ == "__main__":

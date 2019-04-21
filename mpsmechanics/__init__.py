@@ -11,7 +11,7 @@ from .dothemaths.operations import perform_xy_operation, perform_operation, \
         calc_norm_over_time, calc_max_ind, calc_magnitude, normalize_values
 
 from .dothemaths import preprocessing
-from .dothemaths.preprocessing import do_diffusion
+from .dothemaths.preprocessing import do_diffusion, calc_filter
 
 from .iofuns import command_line
 from .iofuns.command_line import get_cl_input

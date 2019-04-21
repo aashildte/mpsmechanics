@@ -15,7 +15,7 @@ import scipy.stats as st
 
 from . import operations as op
 
-def calc_direction_vectors(disp, plt_pr, mu=1E-14):
+def calc_direction_vectors(disp, plt_pr, movement_filter):
     """
 
     From the given displacement, this function finds the
@@ -28,24 +28,26 @@ def calc_direction_vectors(disp, plt_pr, mu=1E-14):
     Arguments:
         disp - T x X x Y x 2 dimensional numpy array
         plt_pr - directory for plotting options
-        mu - optional argument, threshold for movement detection
+        movement_filter - boolean numpy array of size X x Y
 
     Returns:
 	e_alpha - vector in 1st or 4th quadrant along most movement
-	e_beta  - e_alpha rotatet pi/2 anti-clockwise
+	e_beta  - e_alpha rotated pi/2 anti-clockwise
 
     """
-    T, X, Y = disp.shape[:3]
+
+    _, X, Y, _ = disp.shape
 
     xs = []
     ys = []
 
-    for t in range(T): 
-        for x in range(X):
-            for y in range(Y):
-                if(np.linalg.norm(disp[t, x, y]) >= mu):
-                    xs.append(x)
-                    ys.append(y)
+    for x in range(X):
+        for y in range(Y):
+            if(movement_filter[x, y]):
+                xs.append(x)
+                ys.append(y)
+
+    xs, ys = np.array(xs), np.array(ys)
 
     slope = st.linregress(xs, ys)[0]
 
@@ -53,16 +55,14 @@ def calc_direction_vectors(disp, plt_pr, mu=1E-14):
 
     e_alpha = np.linalg.norm(dir_v)*dir_v
     e_beta  = np.array([-e_alpha[1], e_alpha[0]])
-    
+ 
     if(plt_pr["visual check"]):
-        dimensions = plt_pr["dims"]
-        _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta,
-                plt_pr["idt"], dimensions)
+        _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, plt_pr)
     
     return e_alpha, e_beta
 
 
-def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions):
+def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, plt_pr):
     """
 
     Plots data points along with direction vectors.
@@ -78,47 +78,39 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, idt, dimensions):
         Y  - number of data points in y direction
         e_alpha - main direction
         e_beta  - perpendicular vector
-        idt - idt for plots
-        dimensions - pair of dimensions (x, y)
+        plt_pr - plotting properties dictionary
 
     """
     # scale dimensions to standard size in x direction
 
+    dimensions = plt_pr["dims"]
     scale = 6.4/dimensions[0]
     dimensions_scaled = (scale*dimensions[0], scale*dimensions[1])
 
+    eps_x = 0.05*dimensions[0]
+    eps_y = 0.05*dimensions[1]
+
     plt.figure(figsize=dimensions_scaled)
+    plt.xlim(-eps_x, dimensions[0] + eps_x)
+    plt.ylim(-eps_y, dimensions[1] + eps_y)
     plt.xlabel('$\mu m$')
     plt.ylabel('$\mu m$')
 
-    # downsample data for plotting - only plot each value once
-
-    pairs = list(set([(x, y) for (x, y) in zip(xs, ys)]))
-
-    p_x = np.array([p[0] for p in pairs])
-    p_y = np.array([p[1] for p in pairs])
-
     # scale
-
-    p_x = dimensions[0]/X*p_x
-    p_y = dimensions[1]/Y*p_y
+    p_x = dimensions[0]/X*xs
+    p_y = dimensions[1]/Y*ys
 
     plt.scatter(p_x, p_y, color='gray')
-
-    sc = [0.1*max(p_x), 0.1*max(p_y)]
+    
+    sc = [0.2*max(p_x), 0.2*max(p_y)]
 
     for e in [e_alpha, e_beta]:
-        plt.plot([0, sc[0]*e[0]], [0, sc[1]*e[1]], color='red')
+        plt.arrow(eps_x/2, eps_y/2,
+                sc[0]*e[0], sc[1]*e[1], \
+                width=0.005*dimensions[0], color='red')
 
-    de = io.get_os_delimiter()
-    path = de.join(("Figures" + de + idt).split(de)[:-1])
-    io.make_dir_structure(path)
-
-    plt.savefig("Figures" + de + idt + "_alignment.png", dpi=1000)
-
-    plt.figure()
-    plt.clf()
-
+    plt.savefig(os.path.join(plt_pr["path"], "alignment.png"), dpi=1000)
+    plt.close()
 
 def calc_projection_vectors(data, e_i, over_time):
     """

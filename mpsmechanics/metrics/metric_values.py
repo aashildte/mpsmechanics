@@ -19,7 +19,7 @@ from ..dothemaths import heartbeat as hb
 from . import metric as mt
 from . import metric_xy as mt_xy
 
-def calc_metrics(disp_data, ind_list, scale, dt, plt_pr):
+def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, movement):
     """
 
     Arguments:
@@ -31,6 +31,7 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr):
         dt - temporal difference
         dx - spacial difference
         plt_pr - dictionary determining visual output
+        movement - movement filter; numpy boolean array
 
     Returns:
         List of values:
@@ -61,7 +62,7 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr):
     disp_time = op.calc_norm_over_time(disp_data)
     maxima = hb.calc_beat_maxima_time(disp_time, scale, T_max, \
             plt_pr)
-    e_alpha, e_beta = an.calc_direction_vectors(disp_data, plt_pr)
+    e_alpha, e_beta = an.calc_direction_vectors(disp_data, plt_pr, movement)
     
     e_alpha = (e_alpha, "x_projection", "X projection")
     e_beta = (e_beta, "y_projection", "Y projection")

@@ -126,9 +126,9 @@ def calc_beat_maxima_time(data, scale, T_max, \
     local_intervals = _get_local_intervals(data, eps)
     maxima = _get_beat_maxima(data, local_intervals)
     
-    if(plt_pr["visual check"]):
-        idt = plt_pr["idt"]
-        _plot_disp_thresholds(data, scale, maxima, eps, idt, T_max)
+    #if(plt_pr["visual check"]):
+    #    idt = plt_pr["idt"]
+    #    _plot_disp_thresholds(data, scale, maxima, eps, idt, T_max)
 
     return maxima
 

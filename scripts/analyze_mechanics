@@ -93,7 +93,7 @@ def get_plotting_properties(plt_ids, path_plots, idt, dimensions, Tmax):
     # other properties
     plt_p["path"] = path_plots
     plt_p["dims"] = dimensions     # size of plots over height/length
-    plt_p["visual check"] = False  # extra plots if applicable
+    plt_p["visual check"] = True   # extra plots if applicable
 
     return plt_p
 
@@ -152,7 +152,7 @@ if __name__ == "__main__":
         # read + preprocess data
 
         disp_data, scale = mc.read_file(f_in, dimensions[0])
-        disp_data = mc.do_diffusion(disp_data, alpha, N_d)
+        disp_data = mc.do_diffusion(disp_data, alpha, N_d, over_time=True)
         
         # for plotting?
         T = disp_data.shape[0]
@@ -167,8 +167,10 @@ if __name__ == "__main__":
 
         # calculations
 
+        movement = mc.calc_filter(disp_data, 1E-10)
+
         descriptions, values = mc.calc_metrics(disp_data, calc_ids, \
-            scale, dt, plt_prop)
+            scale, dt, plt_prop, movement)
 
         # save as ...
 

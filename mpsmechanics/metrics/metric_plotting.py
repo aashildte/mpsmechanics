@@ -3,6 +3,8 @@
 File connected to metrics.py. These functions gather information
 useful for plotting and output descriptions.
 
+TODO - lots of state variables; make class instead?
+
 Åshild Telle / Simula Research Labratory / 2019
 
 """
@@ -57,24 +59,52 @@ def get_pr_headers():
     Array of all titles.
     """
 
-    return ["Beat rate", "Displacement", "X-motion", "Y-motion",
-            "Prevalence", "Principal strain",
-            "Principal strain - x projection", "Principal strain - y projection"]
+    return ["Beat rate",
+            "Prevalence",
+            "Displacement",
+            "Displacement - x projection",
+            "Displacement - y projection",
+            "Velocity",
+            "Velocity - x projection",
+            "Velocity - y projection",
+            "Principal strain",
+            "Principal strain - x projection",
+            "Principal strain - y projection"]
 
 def get_pr_types():
     """
     Array of all property identities
     """
-    pr_types = ["beat_rate", "displacement", "xmotion", "ymotion",
-            "prevalence", "prstrain", "xprstrain", "yprstrain"]
+    pr_types = ["beat_rate",
+                "prevalence",
+                "displacement",
+                "displacement_x",
+                "displacement_y",
+                "velocity",
+                "velocity_x",
+                "velocity_y",
+                "prstrain",
+                "prstrain_x",
+                "prstrain_y"]
 
     return pr_types
+
+def get_scales():
+    """
+    For over time plots.
+    """
+
+    scales = [None]*11
+
+    return scales
 
 def get_pr_id(pr_type):
     """
 
     From a string to an integer. Just a 1-1 thing but might be useful
     to avoid mistakes based on different properties.
+
+    TODO create dictionary instead
 
     Argument:
         pr_type - possible ones given in pr_types
@@ -110,7 +140,7 @@ def add_plt_information(ppl, idt, Tmax):
     suffixes = get_pr_types()
     titles = get_pr_headers()
 
-    yscales = [None, None, None, None, (0, 1), None, None, None]
+    yscales = get_scales()
 
     for i in range(8):
         if i in ppl.keys():

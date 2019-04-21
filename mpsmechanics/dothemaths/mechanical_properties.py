@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 from . import operations as op
 
-def calc_prevalence(movement, threshold):
+def calc_prevalence(data, threshold):
     """
     Computes a true/false array for whether the displacement surpasses 
     a given threshold.
@@ -25,7 +25,7 @@ def calc_prevalence(movement, threshold):
     This property only makes sense over time.
 
     Arguments:
-        movement - T x X x Y x 2 numpy array
+        data - T x X x Y x 2 numpy array
         threshold - cut-of value, in space/time units; should be scaled
             already - meaning that the movement can be compared on a
             unit scale
@@ -33,11 +33,11 @@ def calc_prevalence(movement, threshold):
             should be included or not
 
     Returns:
-        prevalence - (T - 1) x X x Y x 2 numpy boolean array
+        prevalence - T x X x Y x 2 numpy boolean array
 
     """
  
-    dxdt = np.diff(movement, axis=0)
+    dxdt = np.gradient(data, axis=0)
 
     f_th = lambda x, i, j, th=threshold: (np.linalg.norm(x) > th)    
 

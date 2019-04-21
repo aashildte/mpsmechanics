@@ -100,7 +100,6 @@ def calc_norm_over_time(data):
     Returns:
         Sum array - numpy array of dimension T  
 
-    T, X, Y = data.shape[:3]
     """
 
     T, X, Y = data.shape[:3]

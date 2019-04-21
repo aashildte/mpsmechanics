@@ -15,17 +15,21 @@ properties should be recorded, e.g. given as "2 3 5". Quotation marks
 required if more than one integer is given. Current supported id's:
     - average beat rate (0)
     - average displacement (1)
-    - average x motion (2)
-    - average y motion (3)
-    - average prevalence (4)
-    - average principal strain (5)
-    - average principal strain in x direction (x strain) (6)
-    - average principal strain in y direction (y strain) (7)
+    - average motion in x direction (2)
+    - average motion in y direction (3)
+    - average velocity (4)
+    - average velocity in x direction (5)
+    - average velocity in y direction (6)
+    - average principal strain (7)
+    - average principal strain in x direction (8)
+    - average principal strain in y direction (9)
+    - average prevalence (10)
 
 Optionally add
-    -p [indices]          (e.g. -p "3 5 6")
-for plotting specific properties. Must be a subset of the index set
-given above.
+    -p [indices]          (e.g. -p "0 2 5 8")
+for plotting specific properties over time (over all spacial
+coordinates), These must be a subset of the set of properties
+specified as the second argument.
 
 ---
 
@@ -41,11 +45,8 @@ in
 
 ---
 
-The (optional) plots will be saved as png files called
-
-    [attribute].png
-
-following the same structure as above, with "numerical_output"
+The (optional) plots over time and space will be saved as png files
+in a folder i the same folder hierarchy, with "numerical_output"
 replaced with "figures".
 
 Åshild Telle / Simula Research Labratory / 2019
@@ -78,35 +79,33 @@ def get_plotting_properties(plt_ids, path_plots, idt, dimensions, Tmax):
 
     """
 
-    ppl = {}
+    plt_p = {}
 
     # optional argument; default false
-    for i in range(8):
-        ppl[int(i)] = {"plot" : False}
+    for i in range(11):
+        plt_p[int(i)] = {"plot" : False}
 
     for i in plt_ids:
-        ppl[i]["plot"] = True
+        plt_p[i]["plot"] = True
    
     # get information specificly for metrics
-    mc.add_plt_information(ppl, idt, Tmax)
 
     # other properties
-    ppl["path"] = path_plots
-    ppl["dims"] = dimensions     # size of plots over height/length
-    ppl["visual check"] = False  # extra plots if applicable
+    plt_p["path"] = path_plots
+    plt_p["dims"] = dimensions     # size of plots over height/length
+    plt_p["visual check"] = False  # extra plots if applicable
 
-    return ppl
+    return plt_p
 
 
-def save_output(calc_idts, values, path_num):
+def save_output(idt, descriptions, values, path_num):
     """
 
     Saves output to file.
 
     Arguments:
-        idt - string with unique identity
-        calc_idts - list of identities of interest
-        values - list of corresponding output values
+        idt    - filename
+        values - dictionary of corresponding output values
         path_num - where to save given output
 
     """
@@ -114,10 +113,8 @@ def save_output(calc_idts, values, path_num):
     # interleave calc_idts, values
 
     output_vals = []
-    descriptions_all = mc.get_pr_headers()
-    descriptions_loc = [descriptions_all[i] for i in calc_idts]
 
-    headers_str = ", " + ", ".join(descriptions_loc) + "\n"
+    headers_str = ", ".join([" "] + descriptions) + "\n"
     values_str = ", ".join([idt] + list(map(str, values))) + "\n"
 
     filename = os.path.join(path_num, "metrics_average.csv")
@@ -139,7 +136,7 @@ if __name__ == "__main__":
 
     # get input parameters
 
-    input_files, calc_ids, plt_ids = mc.get_cl_input()
+    input_files, calc_ids, plt_ids, f_ids = mc.get_cl_input()
 
     # TODO in parallel
 
@@ -170,12 +167,12 @@ if __name__ == "__main__":
 
         # calculations
 
-        values = mc.get_numbers_of_interest(disp_data, calc_ids, \
+        descriptions, values = mc.calc_metrics(disp_data, calc_ids, \
             scale, dt, plt_prop)
 
         # save as ...
 
-        save_output(calc_ids, values, path_num)
+        save_output(idt, descriptions, values, path_num)
 
         print("Analysis of " + idt + " finished:")
         print(" * Output saved in '" + path_num + "'")

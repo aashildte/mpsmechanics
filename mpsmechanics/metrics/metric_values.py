@@ -19,7 +19,8 @@ from ..dothemaths import heartbeat as hb
 from . import metric as mt
 from . import metric_xy as mt_xy
 
-def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, movement):
+def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \
+        threshold, movement):
     """
 
     Arguments:
@@ -31,6 +32,7 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, movement):
         dt - temporal difference
         dx - spacial difference
         plt_pr - dictionary determining visual output
+        threshold - for prevalence
         movement - movement filter; numpy boolean array
 
     Returns:
@@ -56,12 +58,10 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, movement):
     T, X, Y = disp_data.shape[:3]
     T_max = dt*T
     time = np.linspace(0, T_max, T)
-    threshold = 2*10E-6*dt/scale
 
     # and some useful variables - TODO these might be stored in a "cache"?
     disp_time = op.calc_norm_over_time(disp_data, movement)
-    maxima = hb.calc_beat_maxima_time(disp_time, scale, T_max, \
-            plt_pr)
+    maxima = hb.calc_beat_maxima_time(disp_time, scale, plt_pr)
     e_alpha, e_beta = an.calc_direction_vectors(disp_data, plt_pr, movement)
     
     e_alpha = (e_alpha, "x_projection", "X projection")

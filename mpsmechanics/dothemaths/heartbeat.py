@@ -7,6 +7,7 @@ Aashild Telle / Simula Research Labratory / 2018-2019
 
 """
 
+import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -104,7 +105,7 @@ def _get_beat_maxima(disp_norm, local_intervals):
     return maxima
 
 
-def calc_beat_maxima_time(data, scale, T_max, \
+def calc_beat_maxima_time(data, scale, \
         plt_pr = {"visual check" : False}):
     """
 
@@ -113,7 +114,6 @@ def calc_beat_maxima_time(data, scale, T_max, \
 
     Arguments:
         data - numpy array, displacement values over time
-        T_max     - last time value
         plt_pr - dictionary defining visual output
 
     Returns:
@@ -126,14 +126,13 @@ def calc_beat_maxima_time(data, scale, T_max, \
     local_intervals = _get_local_intervals(data, eps)
     maxima = _get_beat_maxima(data, local_intervals)
     
-    #if(plt_pr["visual check"]):
-    #    idt = plt_pr["idt"]
-    #    _plot_disp_thresholds(data, scale, maxima, eps, idt, T_max)
+    if(plt_pr["visual check"]):
+        _plot_disp_thresholds(data, scale, maxima, eps, plt_pr)
 
     return maxima
 
 
-def calc_beat_maxima_2D(data, movement, scale=1, T_max=1, \
+def calc_beat_maxima_2D(data, movement, scale=1, Tmax=1, \
         plt_pr = {"visual check" : False}):
     """
 
@@ -142,7 +141,7 @@ def calc_beat_maxima_2D(data, movement, scale=1, T_max=1, \
 
     Arguments:
         data   - T x X x Y x 2 numpy array, displacement values
-        T_max  - last time value, optional
+        Tmax  - last time value, optional
         plt_pr - dictionary defining visual output, optional
 
     Returns:
@@ -152,10 +151,10 @@ def calc_beat_maxima_2D(data, movement, scale=1, T_max=1, \
 
     disp_norm = op.calc_norm_over_time(data, movement)
     
-    return calc_beat_maxima_time(disp_norm, scale, T_max, plt_pr)
+    return calc_beat_maxima_time(disp_norm, scale, plt_pr)
 
 
-def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
+def _plot_disp_thresholds(disp_norm, scale, maxima, eps, plt_pr):
     """
 
     Plots values, maxima, mean value and mean value*(1+eps) for a 
@@ -170,12 +169,14 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
         scale     - scale to get in SI units
         maxima    - time steps for maxima values
         eps       - buffer value
-        idt       - filename idt
-        T_max     - last time value
+        plt_pr    - gives general values
+
     """
-    
+   
+    path = plt_pr["path"]
+    Tmax = plt_pr["Tmax"]
  
-    t = np.linspace(0, T_max, len(disp_norm))
+    t = np.linspace(0, Tmax, len(disp_norm))
    
     disp_scaled = scale*disp_norm
 
@@ -199,12 +200,8 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, idt, T_max):
 
     plt.xlabel('Time (s)')
 
-    # make plot dir if it doesn't already exist
-    de = io.get_os_delimiter()
-    path = de.join(("Figures" + de + idt).split(de)[:-1])
-    io.make_dir_structure(path)
-
-    plt.savefig("Figures" + de + idt + "_mean.png", dpi=1000)
+    filename = os.path.join(path, "mean.png")
+    plt.savefig(filename, dpi=1000)
 
     plt.clf()
 

@@ -15,18 +15,17 @@ import matplotlib.pyplot as plt
 import mps
 
 
-def read_file(filename, xlen):
-
+def read_file(filename):
     if(".nd2" in filename):
-        return _read_file_nd2(filename, xlen)
+        return _read_file_nd2(filename)
     elif(".csv" in filename):
-        return _read_file_csv(filename, xlen)
+        return _read_file_csv(filename)
     else:
         print("Uknown file formate")
         exit(-1)
 
 
-def _read_file_nd2(filename, xlen):
+def _read_file_nd2(filename):
 
     mps_data = mps.MPS(filename)
     motion = mps.MotionTracking(mps_data)
@@ -37,23 +36,18 @@ def _read_file_nd2(filename, xlen):
     # reshape; t as outer dimension - or??
 
     X, Y, D, T = data.shape
-
-    dx = xlen/X
-
     data_disp = np.zeros((T, X, Y, D))
 
     for t in range(T):
         for x in range(X):
             for y in range(Y):
                 for d in range(D):
-                    data_disp[t, x, y, d] = dx*data[x, y, d, t]
+                    data_disp[t, x, y, d] = data[x, y, d, t]
 
-    scale = _get_scale(data_disp)
-
-    return scale*data_disp, 1./scale
+    return data_disp
 
 
-def _read_file_csv(filename, xlen):
+def _read_file_csv(filename):
     """
 
     Reads the input file, where the file is assumed to be a csv file on
@@ -76,19 +70,15 @@ def _read_file_csv(filename, xlen):
 
     Arguments:
         filename - csv file
-        xlen - length of picture, in meters
 
     Returns:
         4-dimensional numpy array, of dimensions T x X x Y x 2
-        scale - scale data points with this to get original magnitude
 
     """
 
     f = open(filename, 'r')
 
     T, X, Y = map(int, str.split(f.readline(), ","))
-    dx = xlen/X
-
     data = np.zeros((T, X, Y, 2))
 
     for t in range(T):
@@ -96,58 +86,10 @@ def _read_file_csv(filename, xlen):
             for j in range(Y):
                 str_values = str.split(f.readline().strip(), ",")
                 d = list(map(float, str_values))
-                data[t, i, j] = dx*np.array(d)
+                data[t, i, j] = np.array(d)
     
     f.close()
 
-    scale = _get_scale(data)
-
     # omit first value; reference configuration
 
-    return scale*data, 1./scale
-
-
-def _get_scale(data):
-    """
-
-    Scales data such that the middle value is on standard form, i.e.
-    in the range [0.1, 1]
-
-    """
-
-
-    # get maximum and minimum; scale middle value
-
-    mmax = abs(np.max(data))
-    mmin = abs(np.min(data))
-
-    mid = 0.5*(mmax + mmin)
-
-    # scale from above or below; dependin on scale
-
-    scale = 1
-
-    while(mid > 1):
-        mid = mid/10
-        scale = scale/10
-
-    while(mid < 1E-1):
-        mid = mid*10
-        scale = scale*10
-
-    return scale
-
-
-if __name__ == "__main__":
-    
-    try:
-        f_in = sys.argv[1]
-    except:
-        print("Give file name as first argument")
-        exit(-1)
-
-    assert(read_file_csv(f_in, 1) is not None)
-    make_dir_structure("Figures")         # no return value
-
-    print("All tests passed for io_funs.py")
-
+    return data

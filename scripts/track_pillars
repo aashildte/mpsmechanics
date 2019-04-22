@@ -185,6 +185,9 @@ def plot_x_y_coordinates(values, dimensions, t, path):
     plt.xlim(0, dimensions[0])
     plt.ylim(0, dimensions[1])
 
+    plt.xlabel("$\mu m$")
+    plt.ylabel("$\mu m$")
+
     plt.scatter(x_vals, y_vals, s=0.01)
     plt.savefig(os.path.join(path, "state_" + t_id + ".png"), dpi=1000)
 
@@ -249,7 +252,8 @@ def plot_over_time(values, coords, path):
             plt.plot(ts, values[:,p,i])
 
         plt.legend([("(" + str(x[0]) + ", " + str(x[1]) + ")") for x in coords])
-
+        plt.xlabel("Time ($$)")
+        plt.ylabel("Displacement ($\mu m$)")
         plt.savefig(filenames[i], dpi=1000) 
         plt.close()
 
@@ -363,17 +367,11 @@ if __name__ == "__main__":
     input_files, calc_ids, plt_ids, _ = mc.get_cl_input()
     f_in1, f_in2 = input_files
 
-    dimensions = np.array((1990, 958))
-    xlen=dimensions[0]
+    dimensions_um = np.array((664.30, 381.55))  # um
+    dimensions = np.array((1990, 958))        # pixels??
 
-    data, scale = mc.read_file(f_in1, xlen)
-
-    # scale back to "picture" units
-
-    dx = xlen/data.shape[1]
-    data = (scale/dx)*data
-
-    T, X, Y = data.shape[:3]
+    data = mc.read_file(f_in1)[:5]
+    _, _, X, _ = data.shape
 
     # averaging process - adjustable values
     alpha = 0.75
@@ -384,6 +382,12 @@ if __name__ == "__main__":
 
     points = read_pt_file(f_in2)
     pillars = define_pillars(points)
+
+    # scale data
+
+    scale = dimensions_um[0]/dimensions[0]
+    data = scale*data
+    pillars = scale*pillars
 
     # setup for saving things
 
@@ -412,7 +416,7 @@ if __name__ == "__main__":
 
     mpoints = np.array([(x, y) for (x, y, r) in points])
 
-    track_pillars_over_time(data, pillars, mpoints, dimensions, \
+    track_pillars_over_time(data, pillars, mpoints, dimensions_um, \
             calc_ids, plt_ids, paths_dir)
 
     print("Pillar tracking for " + idt + " finished:")

@@ -53,12 +53,12 @@ def calc_direction_vectors(disp, plt_pr, movement_filter):
 
     dir_v = np.array([1, slope])
 
-    e_alpha = np.linalg.norm(dir_v)*dir_v
+    e_alpha = 1./np.linalg.norm(dir_v)*dir_v
     e_beta  = np.array([-e_alpha[1], e_alpha[0]])
  
     if(plt_pr["visual check"]):
         _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, plt_pr)
-    
+
     return e_alpha, e_beta
 
 

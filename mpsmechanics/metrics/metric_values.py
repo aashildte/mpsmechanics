@@ -67,6 +67,10 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \
     e_alpha = (e_alpha, "x_projection", "X projection")
     e_beta = (e_beta, "y_projection", "Y projection")
 
+    # scale threshold for prevalence
+
+    threshold *= scale
+
     # check if this is a useful data set or not
     
     if(len(maxima)<=1):

@@ -138,9 +138,9 @@ class Prevalence(Metric_xy):
     def calc_over_time(self):
         # Q: how do we scale prevalence?
 
-        #scale = 1./np.sum(np.sum(self.movement))
-        _, X, Y = self.metric_data.shape
-        scale = 1./(X*Y)
+        scale = 1./np.sum(np.sum(self.movement))
+        #_, X, Y = self.metric_data.shape
+        #scale = 1./(X*Y)
  
         return scale*np.sum(self.metric_data, axis=(1, 2))
 

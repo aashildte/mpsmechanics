@@ -252,7 +252,7 @@ def plot_over_time(values, coords, path):
             plt.plot(ts, values[:,p,i])
 
         plt.legend([("(" + str(x[0]) + ", " + str(x[1]) + ")") for x in coords])
-        plt.xlabel("Time ($$)")
+        plt.xlabel("Time ($s$)")
         plt.ylabel("Displacement ($\mu m$)")
         plt.savefig(filenames[i], dpi=1000) 
         plt.close()

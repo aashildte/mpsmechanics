@@ -70,6 +70,11 @@ The output will be saved in Output -> Analysis, plots will be saved in Figures -
 
 Run
 
-    track_pillars.py [file1] [file2]
+    track_pillars.py [file1] [file2] [indices]
 
-where file1 give displacement, file2 points of interest. See test\_input.csv, test\_points.csv for examples.
+where file1 give displacement (csv or nd2), file2 points of interest (csv) and [indices] is a
+string with integer values ("0", "1" or "0 1") indicating values of interest. Optionally add
+    -p [indices]
+e.g.
+    -p "1"
+to plot corresponding values.

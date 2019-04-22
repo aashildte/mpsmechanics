@@ -368,9 +368,9 @@ if __name__ == "__main__":
     f_in1, f_in2 = input_files
 
     dimensions_um = np.array((664.30, 381.55))  # um
-    dimensions = np.array((1990, 958))        # pixels??
+    dimensions = np.array((1990, 958))          # pixels??
 
-    data = mc.read_file(f_in1)[:5]
+    data = mc.read_file(f_in1)
     _, _, X, _ = data.shape
 
     # averaging process - adjustable values

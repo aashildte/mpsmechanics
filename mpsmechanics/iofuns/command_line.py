@@ -53,17 +53,17 @@ def get_cl_input():
 
     try:
         assert(len(args)>1)
+        
+        input_files = args[:-1]
+    
+        calc_properties = list(map(int, args[-1].split(" ")))
+        calc_properties.sort()
     except:
         print("Give files name and integers indicationg values of " +
                 "interests as arguments (see the README file); " +
                 " optionally '-p [indices]' and / or '-f [indices]'" +
                 " to plot values as well.")
         exit(-1)
-
-    input_files = args[:-1]
-
-    calc_properties = list(map(int, args[-1].split(" ")))
-    calc_properties.sort()
 
     plt_p, plt_f = [_get_plt_properties(options, key, \
                     calc_properties) for key in ("p", "f")]

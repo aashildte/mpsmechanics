@@ -249,6 +249,7 @@ def plot_over_time(values, coords, path):
             plt.plot(ts, values[:,p,i])
 
         plt.legend([("(" + str(x[0]) + ", " + str(x[1]) + ")") for x in coords])
+
         plt.savefig(filenames[i], dpi=1000) 
         plt.close()
 
@@ -286,7 +287,7 @@ def write_max_disp_to_file(mid_values, max_indices, coords, path):
 
 
 def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
-        plot_ids, paths):
+        plt_ids, paths):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
@@ -297,7 +298,7 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
         pillars - mesh points; on a circle around each middle point
         mpoints - mesh points; center of each pillar
         calc_ids - output values
-        plot_ids - plotting values
+        plt_ids - plotting values
         paths - save output, plots here
 
     """
@@ -317,7 +318,7 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
     # for force measurements
 
     mid_values = np.zeros((T, P, 2))
-
+    
     for t in range(T):
 
         fn1, fn2 = interpolate_step(xs, ys, data[t])
@@ -329,7 +330,7 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
                 all_values[t, p, n] = fn2(pillars[p, n, 0], \
                         pillars[p, n, 1])
 
-        if("0" in plot_ids):
+        if(0 in plt_ids):
             plot_x_y_coordinates(all_values[t], dimensions, t, paths["plt_all"])
 
         # midpoints
@@ -342,23 +343,24 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
 
     # save values
 
-    if ("0" in calc_ids):
+    if (0 in calc_ids):
         write_all_values_to_file(all_values, mpoints, paths["num_all"])
 
     # find values at maximum displacement
     
-    if("1" in calc_ids):
-        max_indices = mc.calc_beat_maxima_2D(data)
+    if(1 in calc_ids):
+        movement = mc.calc_filter(data, 1E-10)
+        max_indices = mc.calc_beat_maxima_2D(data, movement)
 
         write_max_disp_to_file(mid_values, max_indices, mpoints, \
                 paths["num_max"])
     
-        if("1" in plot_ids):
+        if(1 in plt_ids):
             plot_over_time(mid_values, mpoints, paths["plt_max"])
 
 if __name__ == "__main__":
     
-    input_files, calc_ids, plt_ids = mc.get_cl_input()
+    input_files, calc_ids, plt_ids, _ = mc.get_cl_input()
     f_in1, f_in2 = input_files
 
     dimensions = np.array((1990, 958))

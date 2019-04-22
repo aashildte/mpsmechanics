@@ -102,11 +102,11 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, plt_pr):
 
     plt.scatter(p_x, p_y, color='gray')
     
-    sc = [0.2*max(p_x), 0.2*max(p_y)]
+    sc = 0.15*max(p_x)
 
     for e in [e_alpha, e_beta]:
         plt.arrow(eps_x/2, eps_y/2,
-                sc[0]*e[0], sc[1]*e[1], \
+                sc*e[0], sc*e[1], \
                 width=0.005*dimensions[0], color='red')
 
     plt.savefig(os.path.join(plt_pr["path"], "alignment.png"), dpi=1000)

@@ -133,7 +133,7 @@ def calc_beat_maxima_time(data, scale, T_max, \
     return maxima
 
 
-def calc_beat_maxima_2D(data, scale=1, T_max=1, \
+def calc_beat_maxima_2D(data, movement, scale=1, T_max=1, \
         plt_pr = {"visual check" : False}):
     """
 
@@ -150,7 +150,7 @@ def calc_beat_maxima_2D(data, scale=1, T_max=1, \
         
     """
 
-    disp_norm = op.calc_norm_over_time(data)
+    disp_norm = op.calc_norm_over_time(data, movement)
     
     return calc_beat_maxima_time(disp_norm, scale, T_max, plt_pr)
 

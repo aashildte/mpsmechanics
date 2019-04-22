@@ -52,7 +52,7 @@ class Beatrate(Metric):
 
         # visual properties
         plt.xlabel('Time (s)')
-        plt.ylabel('Average displacement (um)')
+        plt.ylabel('Average displacement ($\mu m$)')
         plt.title(self.get_header())
 
         # save as ...

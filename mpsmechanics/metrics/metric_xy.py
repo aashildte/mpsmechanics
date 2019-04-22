@@ -17,7 +17,7 @@ from ..dothemaths import heartbeat as hb
 from .metric import Metric
 
 class Metric_xy(Metric):
-    def __init__(self, metric_data, e_alpha):
+    def __init__(self, metric_data, e_alpha, movement):
         if(e_alpha == None):
             self.metric_data = metric_data
         else:
@@ -30,7 +30,8 @@ class Metric_xy(Metric):
 
             self.header += ", " + head
             self.label += "_" + label
-    
+   
+        self.movement = movement 
         self.over_time = self.calc_over_time()
 
     def over_time(self):
@@ -85,55 +86,61 @@ class Metric_xy(Metric):
 
 
 class Displacement(Metric_xy):
-    def __init__(self, disp_data, e_alpha):
+    def __init__(self, disp_data, e_alpha, movement):
         self.header = "Displacement"
-        self.ylabel = "Displacement (um)"
+        self.ylabel = "Average displacement ($\mu m$)"
         self.label = "displacement"
 
-        super().__init__(disp_data, e_alpha)
+        super().__init__(disp_data, e_alpha, movement)
 
     def calc_over_time(self):
-        return op.calc_norm_over_time(self.metric_data) 
+        return op.calc_norm_over_time(self.metric_data, self.movement) 
 
 class Velocity(Metric_xy):
-    def __init__(self, disp_data, e_alpha):
+    def __init__(self, disp_data, e_alpha, movement):
         self.header = "Velocity"
-        self.ylabel = "Velocity (um/s)"
+        self.ylabel = "Average velocity ($\mu m/s$)"
         self.label = "velocity"
 
         velocity = np.gradient(disp_data, axis=0)
-        super().__init__(velocity, e_alpha)
+        super().__init__(velocity, e_alpha, movement)
 
     def calc_over_time(self):
-        return op.calc_norm_over_time(self.metric_data) 
+        return op.calc_norm_over_time(self.metric_data, self.movement) 
 
 
 class Principal_strain(Metric_xy):
-    def __init__(self, disp_data, e_alpha):
+    def __init__(self, disp_data, e_alpha, movement):
 
-         self.header = "Principal strain"
-         self.ylabel = "Strain (-)"
-         self.label = "principal_strain"
+        self.header = "Principal strain"
+        self.ylabel = "Average strain (-)"
+        self.label = "principal_strain"
 
-         pr_strain = mc.calc_principal_strain(disp_data, \
+        pr_strain = mc.calc_principal_strain(disp_data, \
             over_time=True)
-         super().__init__(pr_strain, e_alpha)
+        super().__init__(pr_strain, e_alpha, movement)
 
     def calc_over_time(self):
-        return op.calc_norm_over_time(self.metric_data) 
+        return op.calc_norm_over_time(self.metric_data, self.movement) 
 
 
 class Prevalence(Metric_xy):
-    def __init__(self, disp_data, threshold, e_alpha): 
+    def __init__(self, disp_data, threshold, e_alpha, movement):
 
-         self.header = "Prevalence"
-         self.ylabel = "Prevalence (-)"
-         self.label = "prevalence"
+        self.header = "Prevalence"
+        self.ylabel = "Prevalence (-)"
+        self.label = "prevalence"
 
-         prev_xy = mc.calc_prevalence(disp_data, threshold)
+        prev_xy = mc.calc_prevalence(disp_data, threshold)
          
-         super().__init__(prev_xy, e_alpha)
+        super().__init__(prev_xy, e_alpha, movement)
  
     def calc_over_time(self):
-        return np.sum(self.metric_data, axis=(1, 2)) 
+        # Q: how do we scale prevalence?
+
+        #scale = 1./np.sum(np.sum(self.movement))
+        _, X, Y = self.metric_data.shape
+        scale = 1./(X*Y)
+ 
+        return scale*np.sum(self.metric_data, axis=(1, 2))
 

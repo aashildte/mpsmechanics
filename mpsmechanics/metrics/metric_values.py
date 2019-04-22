@@ -59,7 +59,7 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, movement):
     threshold = 2*10E-6*dt/scale
 
     # and some useful variables - TODO these might be stored in a "cache"?
-    disp_time = op.calc_norm_over_time(disp_data)
+    disp_time = op.calc_norm_over_time(disp_data, movement)
     maxima = hb.calc_beat_maxima_time(disp_time, scale, T_max, \
             plt_pr)
     e_alpha, e_beta = an.calc_direction_vectors(disp_data, plt_pr, movement)
@@ -88,16 +88,16 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, movement):
                mt_xy.Prevalence]
 
     args =    [(),
-               (disp_data, None),
-               (disp_data, e_alpha),
-               (disp_data, e_beta),
-               (disp_data, None),
-               (disp_data, e_alpha),
-               (disp_data, e_beta),
-               (disp_data, None),
-               (disp_data, e_alpha),
-               (disp_data, e_beta),
-               (disp_data, threshold, None)]
+               (disp_data, None, movement),
+               (disp_data, e_alpha, movement),
+               (disp_data, e_beta, movement),
+               (disp_data, None, movement),
+               (disp_data, e_alpha, movement),
+               (disp_data, e_beta, movement),
+               (disp_data, None, movement),
+               (disp_data, e_alpha, movement),
+               (disp_data, e_beta, movement),
+               (disp_data, threshold, None, movement)]
 
     values = []
     headers = []

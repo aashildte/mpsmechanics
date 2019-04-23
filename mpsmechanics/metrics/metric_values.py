@@ -69,7 +69,7 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \
 
     # scale threshold for prevalence
 
-    threshold *= scale
+    threshold /= scale
 
     # check if this is a useful data set or not
     

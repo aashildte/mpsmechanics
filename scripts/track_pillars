@@ -243,20 +243,33 @@ def plot_over_time(values, coords, path):
     ts = np.linspace(0, Tmax, T)
     
     filenames = [os.path.join(path, "all_time_steps_x.png"), \
-            os.path.join(path, "all_time_steps_y.png")]
+            os.path.join(path, "all_time_steps_y.png"), \
+            os.path.join(path, "all_time_steps_norm.png")]
     titles = ["Displacement over time (x values)", \
-              "Displacement over time (y values)"]
+              "Displacement over time (y values)", \
+              "Displacement over time (l2 norm)"]
 
-    for i in range(2):
+    x_values = values[:,:,0]
+    y_values = values[:,:,1]
+
+    overall_values = np.zeros((T, P))
+
+    for t in range(T):
         for p in range(P):
-            plt.plot(ts, values[:,p,i])
+            overall_values[t,p] = np.linalg.norm(values[t, p])
+    
+    d_values = [x_values, y_values, overall_values]
 
+    for i in range(3):
+        for p in range(P):
+            plt.plot(ts, d_values[i][:,p])
+
+        plt.title(titles[i])
         plt.legend([("(" + str(x[0]) + ", " + str(x[1]) + ")") for x in coords])
         plt.xlabel("Time ($s$)")
         plt.ylabel("Displacement ($\mu m$)")
         plt.savefig(filenames[i], dpi=1000) 
         plt.close()
-
 
 def write_max_disp_to_file(mid_values, max_indices, coords, path):
     """

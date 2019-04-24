@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+
+"""
+
+Given data on displacement, this scripts finds the peak values and plots
+spacial distribution of given metrics for these.
+
+Run script as (with python 3)
+
+    visualize_mechanics [input files] [indices]
+
+where the input files are csv/nd2 files containing displacement data,
+(see README) and [indices] is a string which indicates which
+properties should be recorded, e.g. given as "2 3 5". Quotation marks
+required if more than one integer is given.
+
+The id's correspond to the same metric for the analyze_mechanics.
+Each id - except from 0, beat rate - has one or more corresponding
+spacial plots.
+
+For each of the remaning metrics (displacement, velocity,
+principal strain, prevalence) we have
+* For the metric itself: A quiver plot (arrows with magnitude),
+  a direction plot (normalized arrows), a magnitude plot (heatmap).
+* For each of x, y direction: A magnitude plot
+
+
+The resulting plots are saved in
+    the same folder as each input file ->
+        subfolder with same identity as each input file ->
+            "analyze_mechanics" ->
+                "visualization2D"
+
+Åshild Telle / Simula Research Labratory / 2019
+
+"""
+
+
+import os
+import sys
+import numpy as np
+import matplotlib.colors as cl
+import matplotlib.pyplot as plt
+
+import mpsmechanics as mc
+
+
+if __name__ == "__main__":
+
+    # input
+    
+    input_files, calc_ids, plt_ids = mc.get_cl_input()
+
+    # default parameters
+
+    alpha, N_d, dt, threshold_prev, threshold_movement, dimensions = \
+            mc.get_default_parameters()
+
+    # TODO in parallel, based on threads?
+
+    for f_in in input_files:
+        # create directory structure
+        path, idt, _ = mc.get_input_properties(f_in)
+        path_num, path_plots = \
+                mc.make_default_structure(path, \
+                "analyze_mechanics", idt)
+
+        print("Analyzing data set: ", idt)
+
+        # read + preprocess data
+
+        disp_data = mc.read_file(f_in)
+        disp_data = mc.do_diffusion(disp_data, alpha, N_d, over_time=True)
+        
+        _, X, _, _ = disp_data.shape
+        scale = dimensions[0]/X
+        over_time = False
+
+        descriptions, values = mc.plot_metrics2D(disp_data, calc_ids, scale, dt, \
+                threshold_pr, thresold_mv, over_time)

@@ -1,24 +1,10 @@
-"""
-
-Calculate + plot values related to x / y fraction of displacement
-and principal strain – might still be useful?
-
-Run as
-
-    python3 plot_xy_diststrain.py [files]
-
-e.g. as
-
-    python3 plot_xy_diststrain.py ../data/H1.csv ../data/H2.csv
-
-or
-
-    python3 plot_xy_diststrain.py ../data/*
-
-where files is a list of csv or nd2 files (ref. README) containing
-displacement data.
 
 """
+
+Åshild Telle / Simula Research Labratory / 2019
+
+"""
+
 
 import os
 import sys
@@ -26,12 +12,8 @@ import numpy as np
 import matplotlib.colors as cl
 import matplotlib.pyplot as plt
 
-import dothemaths.operations as op
-import dothemaths.preprocessing as pp
-import dothemaths.mechanical_properties as mc
-import dothemaths.plot_vector_field as pl
-import iofuns.io_funs as io
-import dothemaths.angular as an
+import mpsmechanics as mc
+
 
 def read_values(f_in, dimensions):
     """
@@ -268,27 +250,3 @@ def plot_values(values, e_alpha, e_beta, path, idt, dimensions, \
         plot_percentile_values(values, x_values, y_values, \
                 per_values[i], p_label, lognorm, dimensions, \
                 title, path, idt)
-
-
-try:
-    assert(len(sys.argv)>1)
-except:
-    print("Give file name as arguments.")
-    exit(-1)
-
-path = os.path.join("Figures", "Plot_xy_dispstrain")
-dimensions = (664.30, 381.55)
-
-for f_in in sys.argv[1:]:
-    f_path = os.path.join(path, io.get_path(f_in))
-    io.make_dir_structure(f_path)
-    
-    idt = io.get_idt(f_in)
-    print("Plotting values for data set ", idt)
- 
-    disp, strain, e_alpha, e_beta = read_values(f_in, dimensions)
-
-    plot_values(disp, e_alpha, e_beta, f_path, idt + "_disp", \
-        dimensions, "Displacement", False)
-    plot_values(strain, e_alpha, e_beta, f_path, idt + "_strain", \
-        dimensions, "Principal strain", True)

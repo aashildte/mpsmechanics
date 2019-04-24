@@ -364,7 +364,7 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
 
 if __name__ == "__main__":
     
-    input_files, calc_ids, plt_ids, _ = mc.get_cl_input()
+    input_files, calc_ids, plt_ids = mc.get_cl_input()
     f_in1, f_in2 = input_files
 
     dimensions_um = np.array((664.30, 381.55))  # um

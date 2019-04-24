@@ -2,8 +2,6 @@
 
 Module for plotting quiver and magnitude plots.
 
-TODO make more general subplot aux. functions for direction / magnitude resp.
-
 Åshild Telle / Simula Research Labratory / 2018-2019
 
 """
@@ -18,8 +16,8 @@ import matplotlib.colors as cl
 import matplotlib as mpl
 from math import ceil
 
-import dothemaths.operations as op
-import dothemaths.preprocessing as pp
+from ..dothemaths import operations as op
+from ..dothemaths import preprocessing as pp
 
 def plot_vector_field(filename, title, xs, ys, U, V, arrow):
     """
@@ -43,6 +41,48 @@ def plot_vector_field(filename, title, xs, ys, U, V, arrow):
     plt.title(title)
     plt.savefig(filename)
     plt.clf()
+
+
+def plot_magnitude(vector_fields, norms, dimensions, titles, \
+        path, idt):
+    """
+   
+    Gives magnitude plots for given vector fields.
+
+    Arguments:
+        vector_fields - list of numpy arrays
+        norms - list of colormap norms
+        dimensions - scale each colour map accordingly
+        titles - descriptions
+        path - save here
+        idt - using this attribute
+
+    """
+
+    scale = 10/dimensions[0]
+    dimensions = (scale*dimensions[0], scale*dimensions[1])
+    
+    X, Y = vector_fields[0].shape[:2]
+ 
+    xc = np.linspace(0, dimensions[0], X+1)
+    yc = np.linspace(0, dimensions[1], Y+1)
+
+    N = len(vector_fields)
+
+    fig, ax = plt.subplots(N,1,figsize=dimensions)
+
+    for n in range(N):
+        plt.subplot(1, N, n+1)
+        plt.pcolor(yc, xc, vector_fields[n], norm=norms[n], linewidth=0)
+        plt.axis('off')
+        plt.title(titles[n])
+
+    plt.colorbar()
+    filename = os.path.join(path, idt + "_magnitude.svg")
+    plt.savefig(filename)
+    #plt.show()
+    plt.clf()
+
 
 
 def plot_direction_and_magnitude(vector_fields, norms, labels, \
@@ -111,50 +151,3 @@ def plot_direction_and_magnitude(vector_fields, norms, labels, \
     
     #plt.show()
     plt.clf()
-
-
-
-def plot_magnitude(vector_fields, norms, dimensions, titles, \
-        path, idt):
-    """
-   
-    Gives magnitude plots for given vector fields.
-
-    Arguments:
-        vector_fields - list of numpy arrays
-        norms - list of colormap norms
-        dimensions - scale each colour map accordingly
-        titles - descriptions
-        path - save here
-        idt - using this attribute
-
-    """
-
-    scale = 10/dimensions[0]
-    dimensions = (scale*dimensions[0], scale*dimensions[1])
-    
-    X, Y = vector_fields[0].shape[:2]
- 
-    xc = np.linspace(0, dimensions[0], X+1)
-    yc = np.linspace(0, dimensions[1], Y+1)
-
-    N = len(vector_fields)
-
-    fig, ax = plt.subplots(N,1,figsize=dimensions)
-
-    for n in range(N):
-        plt.subplot(1, N, n+1)
-        plt.pcolor(yc, xc, vector_fields[n], norm=norms[n], linewidth=0)
-        plt.axis('off')
-        plt.title(titles[n])
-
-    plt.colorbar()
-    filename = os.path.join(path, idt + "_magnitude.svg")
-    plt.savefig(filename)
-    #plt.show()
-    plt.clf()
-
-
-if __name__ == "__main__":
-
-    print("TODO - unit tests?")

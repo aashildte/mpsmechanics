@@ -47,7 +47,6 @@ def get_cl_input():
 
     parser = OptionParser()
     parser.add_option("-p")
-    parser.add_option("-f")
     (options, args) = parser.parse_args()
     options = vars(options)
 
@@ -65,7 +64,6 @@ def get_cl_input():
                 " to plot values as well.")
         exit(-1)
 
-    plt_p, plt_f = [_get_plt_properties(options, key, \
-                    calc_properties) for key in ("p", "f")]
-    
-    return input_files, calc_properties, plt_p, plt_f
+    plt_p = _get_plt_properties(options, "p", calc_properties)
+ 
+    return input_files, calc_properties, plt_p

@@ -10,8 +10,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Metric:
-    def __init__(self):
-        pass
+    def __init__(self, maxima):
+        self.maxima = maxima
+        self.maximum = max(maxima)
 
     def calc_metric_value(self):
         pass
@@ -21,11 +22,15 @@ class Metric:
 
 
 class Beatrate(Metric):
+    
+    def __init__(self, disp_time, maxima):
+        self.disp_time = disp_time
+        super().__init__(maxima)
 
     def get_header(self):
         return "Beatrate"
 
-    def calc_metric_value(self, maxima):
+    def calc_metric_value(self):
         """
 
         Calculates average of metric data at given maximum indices.
@@ -37,13 +42,17 @@ class Beatrate(Metric):
             Average beatrate
 
         """ 
+        maxima = self.maxima
 
         return np.mean(np.array([(maxima[k] - maxima[k-1]) \
                         for k in range(1, len(maxima))]))
 
     
-    def plot_metric_time(self, time, disp, maxima, path, mark_maxima=False):
+    def plot_metric_time(self, time, path, mark_maxima=False):
         
+        disp = self.disp_time
+        maxima = self.maxima
+
         plt.plot(time, disp)
         
         # maxima 

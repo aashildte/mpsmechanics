@@ -14,13 +14,20 @@ from ..dothemaths import operations as op
 from ..dothemaths import angular as an
 from ..dothemaths import heartbeat as hb
 
+from ..visualization2D import plot_vector_field as pv
+
 from .metric import Metric
 
 class Metric_xy(Metric):
-    def __init__(self, metric_data, e_alpha, movement):
+    def __init__(self, metric_data, e_alpha, movement, maxima):
+        
+        super().__init__(maxima)
+
         if(e_alpha == None):
             self.metric_data = metric_data
         else:
+            self.projected = True
+
             e_dir, label, head = e_alpha 
             
             self.metric_data = \
@@ -32,7 +39,7 @@ class Metric_xy(Metric):
             self.label += "_" + label
    
         self.movement = movement 
-        self.over_time = self.calc_over_time()
+        self.over_time = self.calc_over_time() 
 
     def over_time(self):
         pass
@@ -46,10 +53,12 @@ class Metric_xy(Metric):
     def get_label(self):
         return self.label
 
-    def calc_metric_value(self, maxima):
+    def calc_metric_value(self):
         """
 
         Calculates average of metric data at given maximum indices.
+
+        TODO add std? other values?
 
         Arguments:
             maxima - list of indices
@@ -58,12 +67,14 @@ class Metric_xy(Metric):
             Average at peaks
 
         """         
-        return np.mean([self.over_time[m] for m in maxima])
+        return np.mean([self.over_time[m] for m in self.maxima])
 
 
-    def plot_metric_time(self, time, disp, maxima, path, mark_maxima=False):
+    def plot_metric_time(self, time, path, mark_maxima=False):
  
         values = self.over_time
+        maxima = self.maxima
+
         plt.plot(time, values)
         
         # maxima
@@ -84,33 +95,74 @@ class Metric_xy(Metric):
 
         plt.clf()
 
+    
+    def plot_spacial_dist(self, path, over_time):
+
+        # over_time is time-consuming yet possibly interesting;
+        # having it as an option allows us to make movies
+        # which might be useful, especially for presentations etc.
+
+        data = self.metric_data
+        maximum = self.maximum
+
+        T, X, Y, _ = data.shape
+
+        if(over_time):
+            for t in range(T):
+                self._plot_vector_field_step(data[t], path, t)
+        else:
+            self._plot_vector_field_step(data[maximum], \
+                    path, maximum)
+
+    def _plot_vector_field_step(self, data, path, t):
+
+        proj = self.get_projection_label()
+
+        if(self.projected):
+
+            f_txt = "magnitude_" + proj + "_%4d.png" %t
+
+            filename = os.path.join(path, f_txt)
+            pv.plot_magnitude(data, filename)
+        else:
+            m_txt = "magnitude__%4d.png" %t
+            d_txt = "direction__%4d.png" %t
+            q_txt = "quiver__%4d.png" %t
+
+            filenames = [os.path.join(path, txt) \
+                    for txt in [m_txt, d_txt, q_txt]]
+
+            pv.plot_magnitude(data, filenames[0])
+            pv.plot_direction(data, filenames[1])
+            pv.plot_quiver_plot(data, filenames[2])
+
 
 class Displacement(Metric_xy):
-    def __init__(self, disp_data, e_alpha, movement):
+    def __init__(self, disp_data, e_alpha, movement, maxima):
         self.header = "Displacement"
         self.ylabel = "Average displacement ($\mu m$)"
         self.label = "displacement"
 
-        super().__init__(disp_data, e_alpha, movement)
+        super().__init__(disp_data, e_alpha, movement, maxima)
 
     def calc_over_time(self):
         return op.calc_norm_over_time(self.metric_data, self.movement) 
 
 class Velocity(Metric_xy):
-    def __init__(self, disp_data, e_alpha, movement):
+    def __init__(self, disp_data, e_alpha, movement, maxima):
         self.header = "Velocity"
         self.ylabel = "Average velocity ($\mu m/s$)"
         self.label = "velocity"
 
         velocity = np.gradient(disp_data, axis=0)
-        super().__init__(velocity, e_alpha, movement)
+        super().__init__(velocity, e_alpha, movement, maxima)
 
     def calc_over_time(self):
         return op.calc_norm_over_time(self.metric_data, self.movement) 
 
 
 class Principal_strain(Metric_xy):
-    def __init__(self, disp_data, e_alpha, movement):
+    def __init__(self, disp_data, e_alpha, movement, maxima):
 
         self.header = "Principal strain"
         self.ylabel = "Average strain (-)"
@@ -118,14 +170,14 @@ class Principal_strain(Metric_xy):
 
         pr_strain = mc.calc_principal_strain(disp_data, \
             over_time=True)
-        super().__init__(pr_strain, e_alpha, movement)
+        super().__init__(pr_strain, e_alpha, movement, maxima)
 
     def calc_over_time(self):
         return op.calc_norm_over_time(self.metric_data, self.movement) 
 
 
 class Prevalence(Metric_xy):
-    def __init__(self, disp_data, threshold, e_alpha, movement):
+    def __init__(self, disp_data, threshold, e_alpha, movement, maxima):
 
         self.header = "Prevalence"
         self.ylabel = "Prevalence (-)"
@@ -133,7 +185,7 @@ class Prevalence(Metric_xy):
 
         prev_xy = mc.calc_prevalence(disp_data, threshold)
          
-        super().__init__(prev_xy, e_alpha, movement)
+        super().__init__(prev_xy, e_alpha, movement, maxima)
  
     def calc_over_time(self):
         # Q: how do we scale prevalence?

@@ -16,6 +16,9 @@ from .dothemaths.preprocessing import do_diffusion, calc_filter
 from .iofuns import command_line
 from .iofuns.command_line import get_cl_input
 
+from .iofuns import parameters
+from .iofuns.parameters import get_default_parameters
+
 from .iofuns import folder_structure
 from .iofuns.folder_structure import get_input_properties, \
         make_default_structure, make_dir_structure
@@ -24,4 +27,4 @@ from .iofuns import motion_data
 from .iofuns.motion_data import read_file
 
 from .metrics import metric_values
-from .metrics.metric_values import calc_metrics
+from .metrics.metric_values import calc_metrics, plot_metrics2D

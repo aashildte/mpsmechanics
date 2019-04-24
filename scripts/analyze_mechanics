@@ -7,7 +7,11 @@ for a number of features.
 
 Run script as (with python 3)
 
-    python mechanical_analysis.py [input files] [indices]
+    python analyze_mechanics [input files] [indices]
+
+or install it using the setup file, running it as
+
+    analyze_mechanics [input files] [indices]
 
 where the input files are csv/nd2 files containing displacement data,
 (see README) and [indices] is a string which indicates which
@@ -127,20 +131,16 @@ def save_output(idt, descriptions, values, path_num):
 
 if __name__ == "__main__":
 
-    # set some parameters
+    # input
+    
+    input_files, calc_ids, plt_ids = mc.get_cl_input()
 
-    alpha = 0.75
-    N_d = 5
-    dt = 1./100                          # cl arguments? fps
-    threshold_prev = 2                   # um/s
-    threshold_movement = 1E-10           # [unit]/s
-    dimensions = (664.30, 381.55)        # picture length/height in um
+    # default parameters
 
-    # get input parameters
+    alpha, N_d, dt, threshold_pv, threshold_mv, dimensions = \
+            mc.get_default_parameters()
 
-    input_files, calc_ids, plt_ids, f_ids = mc.get_cl_input()
-
-    # TODO in parallel
+    # TODO in parallel, based on threads? - separate function
 
     for f_in in input_files:
         # create directory structure
@@ -172,10 +172,8 @@ if __name__ == "__main__":
 
         # calculations
 
-        movement = mc.calc_filter(disp_data, threshold_movement)
-
         descriptions, values = mc.calc_metrics(disp_data, calc_ids, \
-            scale, dt, plt_prop, threshold_prev, movement)
+            scale, dt, plt_prop, threshold_pv, threshold_mv)
 
         # save as ...
 

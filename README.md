@@ -49,14 +49,18 @@ Perform an analysis by running the script as
     analyze_mechanics [input file] indices -p indices
 
 where the input file is a csv file or a nd2 file as specified, and indices a string of integers (e.g. "1 3 6 7", quotation marks included) specifying what properties we want to compute. The integers correspond to one of the following numbers / properties:
-    - 0: average beat rate
-    - 1: average displacement
-    - 2: average x motion
-    - 3: average y motion
-    - 4: average prevalence
-    - 5: average principal strain
-    - 6: average principal strain in x direction (x strain)
-    - 7: average principal strain in y direction (y strain)
+
+0. beat rate
+1. displacement
+2. displacement in x direction
+3. displacement in y direction
+4. displacement
+5. displacement in x direction
+6. displacement in y direction
+7. principal strain
+8. principal strain in x direction (x strain)
+9. principal strain in y direction (y strain)
+10. principal strain
 
 and the list after "-p" indicates which of these that are to be plotted similtanously.
 

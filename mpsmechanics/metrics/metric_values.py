@@ -76,8 +76,8 @@ def _metric_setup(disp_data, scale, dt, threshold_pr, threshold_mv, plt_pr):
     return metrics, args, maxima
 
 
-def plot_metrics2D(disp_data, ind_list, scale, dt,
-        threshold_pr, threshold_mv, over_time):
+def plot_metrics2D(disp_data, dimensions, ind_list, scale, dt,
+        threshold_pr, threshold_mv, path, over_time):
 
     plt_pr = {"visual check" : False}
 
@@ -89,7 +89,7 @@ def plot_metrics2D(disp_data, ind_list, scale, dt,
      
     for i in ind_list:
         m = metrics[i](*args[i])
-        m.plot_spacial_dist(path, over_time)
+        m.plot_spacial_dist(dimensions, path, over_time)
 
 
 def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \

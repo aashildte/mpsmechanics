@@ -19,135 +19,92 @@ from math import ceil
 from ..dothemaths import operations as op
 from ..dothemaths import preprocessing as pp
 
-def plot_vector_field(filename, title, xs, ys, U, V, arrow):
+
+def plot_vector_field(data, dimensions, filename):
     """
     
     Gives a quiver plot of a given vector field.
 
     Arguments:
-        filename - save as this file
-        title - give title
-        xs - x indices
-        ys - y indices
-        U, V - x and y components of vector field
-        arrow - boolean value, plot with or without arrows
+        vector_field - X x Y numpy array
+        dimensions - scale each colour map accordingly
+        filename - for saving
 
     """
 
-    headwidth = 3 if arrow else 0
+    X, Y, _ = data.shape
+    
+    # downscale data
 
-    plt.quiver(xs, ys, np.transpose(U), np.transpose(V), \
-           headwidth=headwidth, minshaft=2.5)
-    plt.title(title)
+    x_take, y_take = [[i for i in range(0, d, 2)] for d in (X, Y)]
+
+    xs = np.linspace(0, dimensions[0], X)[x_take]
+    ys = np.linspace(0, dimensions[1], Y)[y_take]
+
+    U = data[:,:,0]
+    U = np.take(U, x_take, axis=0)
+    U = np.take(U, y_take, axis=1)
+    V = data[:,:,1]
+    V = np.take(V, x_take, axis=0)
+    V = np.take(V, y_take, axis=1)
+
+    scale = 10/dimensions[0]
+    figsize = (scale*dimensions[0], scale*dimensions[1])
+    plt.figure(figsize=figsize)
+
+    plt.quiver(xs, ys, np.transpose(U), np.transpose(V))
     plt.savefig(filename)
-    plt.clf()
+    plt.close()
 
 
-def plot_magnitude(vector_fields, norms, dimensions, titles, \
-        path, idt):
+def plot_magnitude(data, dimensions, filename, norm):
     """
    
-    Gives magnitude plots for given vector fields.
+    Gives magnitude plots for given vector field.
 
     Arguments:
-        vector_fields - list of numpy arrays
-        norms - list of colormap norms
+        vector_field - X x Y x 2 numpy array
         dimensions - scale each colour map accordingly
-        titles - descriptions
-        path - save here
-        idt - using this attribute
+        filename - for saving
+        norms - colormap norm
 
     """
+
+    data_normed = op.calc_magnitude(data, False)
+
+    if(norm is None):
+        d_min = np.min(data_normed)
+        d_max = np.max(data_normed)
+        norm = mpl.colors.Normalize(vmin=d_min,vmax=d_max)
 
     scale = 10/dimensions[0]
-    dimensions = (scale*dimensions[0], scale*dimensions[1])
-    
-    X, Y = vector_fields[0].shape[:2]
- 
+    figsize = (scale*dimensions[0], scale*dimensions[1])
+    plt.figure(figsize=figsize)
+
+    X, Y = data.shape[:2]
+
     xc = np.linspace(0, dimensions[0], X+1)
     yc = np.linspace(0, dimensions[1], Y+1)
-
-    N = len(vector_fields)
-
-    fig, ax = plt.subplots(N,1,figsize=dimensions)
-
-    for n in range(N):
-        plt.subplot(1, N, n+1)
-        plt.pcolor(yc, xc, vector_fields[n], norm=norms[n], linewidth=0)
-        plt.axis('off')
-        plt.title(titles[n])
-
+    
+    plt.pcolor(xc, yc, np.transpose(data_normed), norm=norm, linewidth=0)
     plt.colorbar()
-    filename = os.path.join(path, idt + "_magnitude.svg")
     plt.savefig(filename)
-    #plt.show()
-    plt.clf()
+
+    plt.close()
 
 
-
-def plot_direction_and_magnitude(vector_fields, norms, labels, \
-        dimensions, path, idt): 
+def plot_direction(data, dimensions, filename):
     """
 
-    Gives a combined quiver + colour plot for a set of given
-    vector fields, combined in the same subplot.
+    Gives normalized quiver plots for given vector field.
 
     Arguments:
-        vector_fields - list of a set of numpy array, each
-            assumed to have the same dimension X x Y x 2
-        norms - scale for colour plot
-        labels - title given for each entry in the set
-        dimensions - image size, for scaling to realistic
-            x-y relation of the output plots
-        path - save to this location
-        idt - using this identity
+        vector_field - X x Y numpy array
+        dimensions - scale each colour map accordingly
+        filename - for saving
 
     """
 
-    N = len(vector_fields)
-        
-    k = 3
+    data_norm = op.normalize_values(data, over_time=False)
+    plot_vector_field(data_norm, dimensions, filename)
 
-    X, Y = vector_fields[0].shape[:2]
- 
-    xc = np.linspace(0, dimensions[0], X+1)
-    yc = np.linspace(0, dimensions[1], Y+1)
-
-    # scale dimensions to something reasonable
-
-    scale = 10/dimensions[0]
-    dimensions = (scale*dimensions[0], scale*dimensions[1])
-
-    plt.subplots(2*N,1,figsize=dimensions)
-
-
-    for i in range(N):
-        data = vector_fields[i]
-
-        data_d = op.normalize_values(data, over_time=False)
-        data_m = op.calc_magnitude(data, over_time=False)
-        
-        Ud, Vd = data_d[:,:,0], data_d[:,:,1]
-
-        # get ever k value
-        Ud = np.array([[Ud[i, j] for j in range(0, Y, k)] \
-                for i in range(0, X, k)])
-        Vd = np.array([[Vd[i, j] for j in range(0, Y, k)] \
-                for i in range(0, X, k)])
-        
-        plt.subplot(1, 2*N, 1+2*i)
-        plt.axis('off')
-        plt.title(labels[i])
-        plt.quiver(Ud, Vd, headwidth=3)
-
-        plt.subplot(1, 2*N, 2*i+2)
-        plt.axis('off')
-        plt.title(" ")
-
-        plt.pcolor(yc, xc, data_m, norm=norms[i], linewidth=0)
-
-    filename = os.path.join(path, idt + "_direction_magnitude.png")
-    plt.savefig(filename, dpi=1000)
-    
-    #plt.show()
-    plt.clf()

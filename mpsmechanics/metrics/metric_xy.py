@@ -24,7 +24,9 @@ class Metric_xy(Metric):
         super().__init__(maxima)
 
         if(e_alpha == None):
+            self.projected = False
             self.metric_data = metric_data
+            self.projection_label = "norm"
         else:
             self.projected = True
 
@@ -36,8 +38,8 @@ class Metric_xy(Metric):
             
 
             self.header += ", " + head
-            self.label += "_" + label
-   
+            self.projection_label = label
+  
         self.movement = movement 
         self.over_time = self.calc_over_time() 
 
@@ -51,7 +53,10 @@ class Metric_xy(Metric):
         return self.ylabel
 
     def get_label(self):
-        return self.label
+        return self.label + "_" + self.get_projection_label()
+
+    def get_projection_label(self):
+        return self.projection_label
 
     def calc_metric_value(self):
         """
@@ -96,7 +101,7 @@ class Metric_xy(Metric):
         plt.clf()
 
     
-    def plot_spacial_dist(self, path, over_time):
+    def plot_spacial_dist(self, dimensions, path, over_time):
 
         # over_time is time-consuming yet possibly interesting;
         # having it as an option allows us to make movies
@@ -105,36 +110,38 @@ class Metric_xy(Metric):
         data = self.metric_data
         maximum = self.maximum
 
-        T, X, Y, _ = data.shape
+        T = data.shape[0]
 
         if(over_time):
             for t in range(T):
-                self._plot_vector_field_step(data[t], path, t)
+                self._plot_vector_field_step(data[t], \
+                        dimensions, path, t)
         else:
             self._plot_vector_field_step(data[maximum], \
-                    path, maximum)
+                    dimensions, path, maximum)
 
-    def _plot_vector_field_step(self, data, path, t):
 
-        proj = self.get_projection_label()
+    def _plot_vector_field_step(self, data, dimensions, path, t, norm=None):
 
+        label = self.get_label()
+        
         if(self.projected):
-
-            f_txt = "magnitude_" + proj + "_%4d.png" %t
+            f_txt = "magnitude_" + label + "_%04d.png" %t
 
             filename = os.path.join(path, f_txt)
-            pv.plot_magnitude(data, filename)
+            pv.plot_magnitude(data, dimensions, filename, norm)
+
         else:
-            m_txt = "magnitude__%4d.png" %t
-            d_txt = "direction__%4d.png" %t
-            q_txt = "quiver__%4d.png" %t
+            m_txt = "magnitude_" + label + "_%04d.png" %t
+            d_txt = "direction_" + label + "_%04d.png" %t
+            q_txt = "quiver_" + label + "_%04d.png" %t
 
             filenames = [os.path.join(path, txt) \
                     for txt in [m_txt, d_txt, q_txt]]
 
-            pv.plot_magnitude(data, filenames[0])
-            pv.plot_direction(data, filenames[1])
-            pv.plot_quiver_plot(data, filenames[2])
+            pv.plot_magnitude(data, dimensions, filenames[0], norm)
+            pv.plot_direction(data, dimensions, filenames[1])
+            pv.plot_vector_field(data, dimensions, filenames[2])
 
 
 class Displacement(Metric_xy):

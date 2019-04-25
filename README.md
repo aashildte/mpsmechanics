@@ -66,6 +66,14 @@ Example:
 
 The output will be saved in Output -> Analysis, plots will be saved in Figures -> Analysis.
 
+## Visualization
+
+Spacial plots (across X and Y direction, at maximum displacement time step) can be plotted by the script *visualize_mechanics*, run as
+
+    visualize_mechanics [input file] indices
+
+where the input file and the indices are as above. There are no spacial plots associated with metric 0 and 10 (beat rate and prevalence).
+
 ## Tracking pillars
 
 Run

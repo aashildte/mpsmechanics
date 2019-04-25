@@ -28,8 +28,7 @@ principal strain, prevalence) we have
 The resulting plots are saved in
     the same folder as each input file ->
         subfolder with same identity as each input file ->
-            "analyze_mechanics" ->
-                "visualization2D"
+            "visualize_mechanics"
 
 Åshild Telle / Simula Research Labratory / 2019
 
@@ -51,9 +50,13 @@ if __name__ == "__main__":
     
     input_files, calc_ids, plt_ids = mc.get_cl_input()
 
+    if(min(calc_ids) < 1 or max(calc_ids) > 9):
+        print("Give ids in range [1, 9] as input for plotting properties.")
+        exit(-1)
+
     # default parameters
 
-    alpha, N_d, dt, threshold_prev, threshold_movement, dimensions = \
+    alpha, N_d, dt, threshold_pr, threshold_mv, dimensions = \
             mc.get_default_parameters()
 
     # TODO in parallel, based on threads?
@@ -61,11 +64,12 @@ if __name__ == "__main__":
     for f_in in input_files:
         # create directory structure
         path, idt, _ = mc.get_input_properties(f_in)
-        path_num, path_plots = \
-                mc.make_default_structure(path, \
-                "analyze_mechanics", idt)
+        
+        path = os.path.join(os.path.join(path, idt),
+                "visualize_mechanics")
+        mc.make_dir_structure(path)
 
-        print("Analyzing data set: ", idt)
+        print("Creating plots for data set: ", idt)
 
         # read + preprocess data
 
@@ -76,5 +80,7 @@ if __name__ == "__main__":
         scale = dimensions[0]/X
         over_time = False
 
-        descriptions, values = mc.plot_metrics2D(disp_data, calc_ids, scale, dt, \
-                threshold_pr, thresold_mv, over_time)
+        mc.plot_metrics2D(disp_data, dimensions, calc_ids, scale, dt, \
+                threshold_pr, threshold_mv, path, over_time)
+
+        print("Finished plotting, figures located in " + path)

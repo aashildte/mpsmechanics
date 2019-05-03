@@ -7,63 +7,73 @@ Functions related to command line arguments
 
 """
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
-def _get_plt_properties(options, key, calc_properties):
+def _string_to_ints(calc_str):
+    """
 
-    if(options[key] is not None):
-        plt_properties = list(map(int, options[key].split(" ")))
-        plt_properties.sort()
+    Converts a string on the form "2 4 6" to a list [2, 4, 6].
 
-        # check subset
+    Args:
+        calc_str: String with integers separated by spaces
 
-        for idt in plt_properties:
-            if idt not in calc_properties:
-                print("Error: Specified plots needs to be a subset " +\
-                        "of specified metrics.")
-                exit(-1)
-    else:
-        plt_properties = []
+    Returns:
+        Sorted list containing the same integers.
 
-    return plt_properties
+    """
+    if (not calc_str):
+        return []
+
+    calc_str = list(map(int, calc_str.split(" ")))
+    calc_str.sort()
+
+    return calc_str
 
 
-def get_cl_input():
+def get_cl_input(arg_keys=()):
     """
 
     Reads command line and transforms into useful variables.
 
+    Args:
+        arg_keys: Optional, key pairs for options for which
+            to add to argument parser
     Returns:
-        input_files - list of input files
-        calculation identities - list of integers identifying
-            values of interest (which properties to compute)
-        plotting identities - list of integers identifying
-            values of interest (which properties to plot)
+        argument parser structure
 
     """
+
+    parser = ArgumentParser()
     
+    # default arguments
+
+    parser.add_argument("vars", nargs="+")
+
     # optional arguments
-
-    parser = OptionParser()
-    parser.add_option("-p")
-    (options, args) = parser.parse_args()
-    options = vars(options)
-
-    try:
-        assert(len(args)>1)
-        
-        input_files = args[:-1]
+    for op in arg_keys:
+        parser.add_argument(*op[0], **op[1])
     
-        calc_properties = list(map(int, args[-1].split(" ")))
-        calc_properties.sort()
+    args = parser.parse_args()
+     
+    input_files = args.vars[:-1]
+    calc_properties = args.vars[-1]
+    
+    # per default, "p" or "plot" is reserved for ids for all scripts
+    try:
+        args.plot = _string_to_ints(args.plot)
+    except:
+        pass
+
+    try: 
+        assert(len(input_files)>0)
+        calc_properties = _string_to_ints(calc_properties)
+
     except:
         print("Give files name and integers indicationg values of " +
-                "interests as arguments (see the README file); " +
-                " optionally '-p [indices]' and / or '-f [indices]'" +
-                " to plot values as well.")
+                "interests + possibly optional arguments on the " +
+                "command line (see README file and/or top of " + 
+                "given script).")
         exit(-1)
-
-    plt_p = _get_plt_properties(options, "p", calc_properties)
- 
-    return input_files, calc_properties, plt_p
+    
+    return input_files, calc_properties, args

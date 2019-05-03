@@ -68,7 +68,7 @@ def _read_file_csv(filename):
     The displacement is given as *scaled*, i.e. scaled to a range around 0.
     This is to avoid potential problems with numerical precision.
 
-    Arguments:
+    Args:
         filename - csv file
 
     Returns:
@@ -80,7 +80,7 @@ def _read_file_csv(filename):
 
     T, X, Y = map(int, str.split(f.readline(), ","))
     data = np.zeros((T, X, Y, 2))
-
+    
     for t in range(T):
         for i in range(X):
             for j in range(Y):

@@ -44,9 +44,12 @@ All files for numerical output are saved in
                     for 0) subfolder named "positions_all_time_steps"
                     for 1) subfolder named "displacement_maxima"
 
-Optionally add -p [indices] as an argument to plot corresponding
-values. Plots are saved as the numerical output, but in a subfolder
-named "plots" instead.
+Optionally add -p [indices] or --plot [indices] as an argument to
+plot corresponding values. Plots are saved as the numerical output,
+but in a subfolder named "plots" instead.
+
+To get scaled output (in micrometers, not "pixel values"), add the
+option -s or --scale.
 
 Åshild Telle / Simula Research Labratory / 2019
 
@@ -60,12 +63,44 @@ from scipy import interpolate
 
 import mpsmechanics as mc
 
+
+def handle_cl_arguments():
+    """
+    
+    Handles command line arguments for this script, as described
+    above and in the README file.
+
+    Returns:
+        Filename for displacement data
+        Filename for pillar positions data
+        List of integers defining which properties to calculate
+        List of integers defining which properties to plot
+        Boolean value for scaling data to SI units or not
+
+    """
+    
+    arguments = ((("-p", "--plot"), {"default" : ""}),
+            (("-s", "--scale"), {"action" : "store_true"}))
+
+    input_files, calc_properties, args = \
+            mc.get_cl_input(arguments)
+    
+    f_in1, f_in2 = input_files
+
+    assert ((".csv" in f_in1) or (".nd2") in f_in2), \
+            "Displacement file must be a csv or nd2 file"
+    assert (".csv" in f_in2), \
+            "Pillar position file must be a csv file"
+  
+    return f_in1, f_in2, calc_properties, args.plot, args.scale
+
+
 def read_pt_file(f_in):
     """
 
     Reads in values for pillar coordinates + radii.
 
-    Arguments:
+    Args:
         f_in - Filename
 
     Returns;
@@ -107,7 +142,7 @@ def define_pillars(p_values, N=100):
 
     Transforms x, y, r values to mesh values.
 
-    Arguments:
+    Args:
         p_values - list like structure of dimensions P x 3
         N - number of mesh points used
 
@@ -136,7 +171,7 @@ def interpolate_step(xs, ys, org_data):
     Interpolates given data; defines functions based on this.
     First function gives relative displacement; second absolute.
 
-    Arguments:
+    Args:
         xs - x coordinates
         ys - y coordinates
         org_data - displacement data; X x Y x 2 numpy array
@@ -164,7 +199,7 @@ def plot_x_y_coordinates(values, dimensions, t, path):
 
     Scatter plot of coordinates of each tracking point.
 
-    Arguments:
+    Args:
         values to be plotted - three-dimensional numpy array,
             last dimensions being 2 (x and y)
         dimensions - picture dimensions, to match output plot
@@ -194,12 +229,12 @@ def plot_x_y_coordinates(values, dimensions, t, path):
     plt.close()
 
 
-def write_all_values_to_file(all_values, coords, path):
+def write_all_values_to_file(all_values, mpoints, path):
     """
 
     Output to files: T x N values for each pillar
 
-    Arguments:
+    Args:
         all_values - numpy array of dimension T x P x N x 2
         coords - midpoints; numpy array of dimension P x 2
         path - save here
@@ -230,7 +265,7 @@ def plot_over_time(values, coords, path):
 
     Plots tracked values over time.
 
-    Arguments:
+    Args:
         values - numpy array of dimension T x P x 2
         coords - coordinates; (x, y) for P pillars
         path - save figures here
@@ -276,9 +311,9 @@ def write_max_disp_to_file(mid_values, max_indices, coords, path):
 
     Writes values at maximum displacement to a file.
 
-    Arguments:
+    Args:
         mid_values - T x P x 2 numpy array
-        max_indices - list alike structure for indices of maxima
+        max_indices - list-alike structure for indices of maxima
         coords - coordinates of midpoints
         path - save file here
 
@@ -290,32 +325,33 @@ def write_max_disp_to_file(mid_values, max_indices, coords, path):
     max_str = ", ," + ", , ".join([str(m) \
             for m in max_indices]) + "\n"
     f.write(max_str)
-    
+
     for p in range(len(coords)):
         m_values = [mid_values[m,p] for m in max_indices]
 
-        pos_str = str(coords[p,0]) + ", " + str(coords[p,1]) + \
-                ", " + ", ".join([str(m[0]) + ", " + str(m[1]) \
-                for m in m_values]) + "\n"
+        coords_str = str(coords[p,0]) + ", " + str(coords[p, 1])
+        maxima_str = ", ".join([str(m[0]) + ", " + str(m[1]) \
+                for m in m_values])
 
+        pos_str = coords_str + ", " + maxima_str + "\n"
         f.write(pos_str)
 
     f.close()
 
 
-def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
-        plt_ids, paths):
+def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_properties, \
+        plt_properties, paths):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
     on the displacement data.
 
-    Arguments:
+    Args:
         data - displacement data, numpy array of size T x X x Y x 2
         pillars - mesh points; on a circle around each middle point
         mpoints - mesh points; center of each pillar
-        calc_ids - output values
-        plt_ids - plotting values
+        calc_properties - output values
+        plt_properties - plotting values
         paths - save output, plots here
 
     """
@@ -337,7 +373,6 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
     mid_values = np.zeros((T, P, 2))
     
     for t in range(T):
-
         fn1, fn2 = interpolate_step(xs, ys, data[t])
         
         # all points
@@ -347,7 +382,7 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
                 all_values[t, p, n] = fn2(pillars[p, n, 0], \
                         pillars[p, n, 1])
 
-        if(0 in plt_ids):
+        if(0 in plt_properties):
             plot_x_y_coordinates(all_values[t], dimensions, t, paths["plt_all"])
 
         # midpoints
@@ -360,47 +395,69 @@ def track_pillars_over_time(data, pillars, mpoints, dimensions, calc_ids, \
 
     # save values
 
-    if (0 in calc_ids):
+    if (0 in calc_properties):
         write_all_values_to_file(all_values, mpoints, paths["num_all"])
 
     # find values at maximum displacement
     
-    if(1 in calc_ids):
+    if(1 in calc_properties):
         movement = mc.calc_filter(data, 1E-10)
         max_indices = mc.calc_beat_maxima_2D(data, movement)
+        
+        if(1 in plt_properties):
+            plot_over_time(mid_values, mpoints, paths["plt_max"])
 
-        write_max_disp_to_file(mid_values, max_indices, mpoints, \
+        if(len(max_indices)==0):
+            print("No maxima found for this data set.")
+        else:
+            write_max_disp_to_file(mid_values, max_indices, mpoints, \
                 paths["num_max"])
     
-        if(1 in plt_ids):
-            plot_over_time(mid_values, mpoints, paths["plt_max"])
+
 
 if __name__ == "__main__":
     
-    input_files, calc_ids, plt_ids = mc.get_cl_input()
-    f_in1, f_in2 = input_files
+    # command line arguments
+
+    f_in1, f_in2, calc_properties, plt_properties, scale_data = \
+            handle_cl_arguments()
+
+    # some default values --- TODO get from metadata instead
 
     dimensions_um = np.array((664.30, 381.55))  # um
     dimensions = np.array((1990, 958))          # pixels??
 
+    # displacement data
+
     data = mc.read_file(f_in1)
     _, _, X, _ = data.shape
 
-    # averaging process - adjustable values
     alpha = 0.75
     N_diff = 5
     data = mc.do_diffusion(data, alpha, N_diff, over_time=True)
 
     # points of interest
 
-    points = read_pt_file(f_in2)
-    pillars = define_pillars(points)
+    pillars_mpoints = read_pt_file(f_in2)
+    pillars = define_pillars(pillars_mpoints)
 
     # scale data
+    
+    if(scale_data):
+        scale = dimensions_um[0]/dimensions[0]
+        
+        print("Scale conversion: pixels (x, y, r) -> um (x, y, r)")
 
-    scale = dimensions_um[0]/dimensions[0]
-    data = scale*data
-    pillars = scale*pillars
+        for p in pillars_mpoints:
+            print("(%d, %d, %d) -> (%d, %d, %d)" % (p[0], p[1], p[2], \
+                    int(scale*p[0]), int(scale*p[1]), int(scale*p[2])))
+        
+        data = scale*data
+        pillars_mpoints = np.array([(int(scale*x), int(scale*y)) \
+                for (x, y, _) in pillars_mpoints])
+        pillars = scale*pillars
+    else:
+        scale = 1
 
     # setup for saving things
 
@@ -426,14 +483,11 @@ if __name__ == "__main__":
     paths_dir["plt_max"] = paths[3]
 
     # track values
-
-    mpoints = np.array([(x, y) for (x, y, r) in points])
-
-    track_pillars_over_time(data, pillars, mpoints, dimensions_um, \
-            calc_ids, plt_ids, paths_dir)
+    track_pillars_over_time(data, pillars, pillars_mpoints, dimensions_um, \
+            calc_properties, plt_properties, paths_dir)
 
     print("Pillar tracking for " + idt + " finished:")
     print(" * Output saved in '" + path_num + "'")
 
-    if(len(plt_ids)>0):
+    if(len(plt_properties)>0):
         print(" * Specified plots saved in '" + path_plots + "'")

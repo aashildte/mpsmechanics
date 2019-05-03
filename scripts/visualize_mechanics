@@ -48,9 +48,9 @@ if __name__ == "__main__":
 
     # input
     
-    input_files, calc_ids, plt_ids = mc.get_cl_input()
+    input_files, calc_properties, _ = mc.get_cl_input()
 
-    if(min(calc_ids) < 1 or max(calc_ids) > 9):
+    if(min(calc_properties) < 1 or max(calc_properties) > 9):
         print("Give ids in range [1, 9] as input for plotting properties.")
         exit(-1)
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         scale = dimensions[0]/X
         over_time = False
 
-        mc.plot_metrics2D(disp_data, dimensions, calc_ids, scale, dt, \
+        mc.plot_metrics2D(disp_data, dimensions, calc_properties, scale, dt, \
                 threshold_pr, threshold_mv, path, over_time)
 
         print("Finished plotting, figures located in " + path)

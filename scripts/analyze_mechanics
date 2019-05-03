@@ -132,8 +132,9 @@ def save_output(idt, descriptions, values, path_num):
 if __name__ == "__main__":
 
     # input
-    
-    input_files, calc_ids, plt_ids = mc.get_cl_input()
+   
+    input_files, calc_properties, args = mc.get_cl_input(((("-p", "--plot"), {"default": ""}),))
+    plt_ids = args.plot
 
     # default parameters
 
@@ -172,7 +173,7 @@ if __name__ == "__main__":
 
         # calculations
 
-        descriptions, values = mc.calc_metrics(disp_data, calc_ids, \
+        descriptions, values = mc.calc_metrics(disp_data, calc_properties, \
             scale, dt, plt_prop, threshold_pv, threshold_mv)
 
         # save as ...

@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import mps
 
 
-def read_file(filename):
+def read_mt_file(filename):
     if(".nd2" in filename):
         return _read_file_nd2(filename)
     elif(".csv" in filename):

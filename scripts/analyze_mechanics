@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
         # read + preprocess data
 
-        disp_data = mc.read_file(f_in)
+        disp_data = mc.read_mt_file(f_in)
         disp_data = mc.do_diffusion(disp_data, alpha, N_d, over_time=True)
         
         _, X, _, _ = disp_data.shape

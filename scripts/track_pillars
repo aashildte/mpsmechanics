@@ -290,16 +290,15 @@ def plot_values(all_values, midpt_values, force_values, \
         paths_dir - dictionary of output folders
 
     """
-
     if(0 in plt_properties):
-        for t in range(T):
-            mc.plot_x_y_coordinates(all_values[t], dimensions, \
+        for t in range(len(all_values)):
+            mc.plot_xy_coords(all_values[t], dimensions, \
                     t, paths["plt_all"])
     
     if(1 in plt_properties):
         mc.plot_over_time(midpt_values, pillars_mpoints, \
                 paths["plt_max"], "disp")
-
+    
     if(2 in plt_properties):
         mc.plot_over_time(force_values, pillars_mpoints, \
                 paths["plt_max"], "force")

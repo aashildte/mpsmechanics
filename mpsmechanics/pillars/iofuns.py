@@ -3,7 +3,7 @@
 IO functions related to track_pillar scripts
 
 
-Ã…shild Telle / Simula Research Labratory / 2019
+Åshild Telle / Simula Research Labratory / 2019
 
 """
 
@@ -36,7 +36,7 @@ def handle_clp_arguments():
     
     f_in1, f_in2 = input_files
 
-    assert ((".csv" in f_in1) or (".nd2") in f_in2), \
+    assert ((".csv" in f_in1) or (".nd2") in f_in1), \
             "Displacement file must be a csv or nd2 file"
     assert (".csv" in f_in2), \
             "Pillar position file must be a csv file"

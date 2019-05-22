@@ -34,14 +34,14 @@ def handle_clp_arguments():
     input_files, calc_properties, args = \
             cl.get_cl_input(arguments)
     
-    f_in1, f_in2 = input_files
+    f_disp, f_pillars = input_files
 
-    assert ((".csv" in f_in1) or (".nd2") in f_in1), \
+    assert ((".csv" in f_disp) or (".nd2") in f_disp), \
             "Displacement file must be a csv or nd2 file"
-    assert (".csv" in f_in2), \
+    assert (".csv" in f_pillars), \
             "Pillar position file must be a csv file"
   
-    return f_in1, f_in2, calc_properties, args.plot, args.scale
+    return f_disp, f_pillars, calc_properties, args.plot, args.scale
 
 
 def write_all_values(all_values, mpoints, path):

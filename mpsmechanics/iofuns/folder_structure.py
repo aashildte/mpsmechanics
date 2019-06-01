@@ -68,9 +68,5 @@ def make_dir_structure(path):
 
     dirs = os.path.normpath(path).split(os.path.sep)
     
-    acc_d = ""
-
-    for d in dirs:
-        acc_d = os.path.join(acc_d, d)
-        if not (os.path.exists(acc_d)):
-            os.mkdir(acc_d)
+    if not os.path.exists(path):
+        os.makedirs(path)

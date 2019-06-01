@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 
 IO functions related to track_pillar scripts
 
 
-Åshild Telle / Simula Research Labratory / 2019
-
+Ã…shild Telle / Simula Research Labratory / 2019
 """
 
 import os

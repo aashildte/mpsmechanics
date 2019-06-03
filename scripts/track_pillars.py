@@ -79,7 +79,7 @@ import matplotlib.pyplot as plt
 import mpsmechanics as mc
 
 
-def define_pillars(p_values, N=100):
+def define_pillars(p_values, N=200):
     """
 
     Defines circle to mark the pillar's circumference, based on
@@ -102,12 +102,12 @@ def define_pillars(p_values, N=100):
     angles = np.linspace(0, 2*np.pi, N)
 
     for i in range(P):
-        '''
+
         ### mesh points on the circumsphere of the circle
         x, y, r = p_values[i]
         for j in range(N):
             pillars[i, j, 0] = x + r*np.cos(angles[j])
-            pillars[i, j, 1] = y + r*np.sin(angles[j])'''
+            pillars[i, j, 1] = y + r*np.sin(angles[j])
 
         '''
         ### CREATE AN RANDOM RADIUS
@@ -120,7 +120,7 @@ def define_pillars(p_values, N=100):
 
             print('Coordinates: x =', x, ' , y = ', y, ' and radius = ', random_radius)
         '''
-
+        '''
         ### REDUCED RADIUS
         x, y, r = p_values[i]
         reduced_radius = r - 2 #radius in µm
@@ -129,6 +129,8 @@ def define_pillars(p_values, N=100):
             pillars[i, j, 1] = y + reduced_radius * np.sin(angles[j])
 
             print('Coordinates: x =', x, ' , y = ', y, ' and radius = ', reduced_radius)
+            
+        '''
 
     return pillars
 
@@ -161,10 +163,9 @@ def calculate_current_timestep(xs, ys, data, pillars):
     midpt_values = np.zeros((P, d))
 
     # all points, absolute displacement
-
     for p in range(P):
         for n in range(N):
-            all_values[p, n] = fn_rel(pillars[p, n, 0], \
+            all_values[p, n] = fn_abs(pillars[p, n, 0], \
                     pillars[p, n, 1])
 
     # midpoints, relative displacement
@@ -172,14 +173,14 @@ def calculate_current_timestep(xs, ys, data, pillars):
     for p in range(P):
         mean = 0
         for n in range(N):
-            mean += fn_abs(*pillars[p, n])
+            mean += fn_rel(*pillars[p, n])
         mean /= N
         midpt_values[p] = mean
 
     return all_values, midpt_values
 
 
-def track_pillars_over_time(data, mpoints, dimensions):
+def track_pillars_over_time(data, pillars_mpoints, dimensions):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
@@ -203,7 +204,6 @@ def track_pillars_over_time(data, mpoints, dimensions):
     pillars = define_pillars(pillars_mpoints)
     
     # some general values
-
     T, X, Y = data.shape[:3]
     P, N = pillars.shape[:2]
     
@@ -300,7 +300,6 @@ def plot_values(all_values, midpt_values, force_values, pillars_mpoints,\
         plt_properties - which values to save
         pillars_mpoints - initial coordinates of midpoints
         paths_dir - dictionary of output folders
-
     """
     if(0 in plt_properties):
         for t in range(len(all_values)):
@@ -331,7 +330,7 @@ if __name__ == "__main__":
     # displacement data and positions of pillars
     data, scaling_factor, dimensions = mc.read_mt_file(f_disp)
     data = mc.do_diffusion(data, alpha=0.75, N_diff=5, over_time=True)
-    pillars_mpoints = mc.read_pt_file(f_pts)
+    pillars_mpoints = mc.read_pt_file(f_pts, scaling_factor)
 
     scale_data = True
 

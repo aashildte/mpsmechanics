@@ -6,20 +6,17 @@ come with a low sampling resolution; this algorithm will give you
 a smoother vector field.
 
 Åshild Telle / Simula Research Labratory / 2019
+David Cleres / UC Berkeley / 2019
 
 """
 
-
-import sys
-import os
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.stats as st
+import cv2
 
 
-def _diffusion_step(data, alpha, N_diff):
+def _diffusion_step(data, alpha, N_diff = 1):
     """
-    
+
     Do diffusion/averaging of values using the molecule
           x
         x o x
@@ -31,15 +28,15 @@ def _diffusion_step(data, alpha, N_diff):
 
         x 0 x
           x
-    
+
     or
 
         x 0
           x
     """
-    
-    # diffusion/averaging molecule
 
+    # diffusion/averaging molecule
+    '''
     m = lambda a, i, j : alpha*a[i][j] + 0.25*(1 - alpha)* \
              (a[max(i-1,0)][j] + a[i][max(j-1,0)] +
              a[min(i+1,X-1)][j] + a[i][min(j+1,Y-1)])
@@ -57,6 +54,20 @@ def _diffusion_step(data, alpha, N_diff):
         d1, d2 = d2, d1       # swap pointers
 
     return d1
+    '''
+
+    factor = 0.25
+    neighbour_weight = (1 - alpha) * factor
+
+    kernel = np.array([[0, neighbour_weight, 0], [neighbour_weight, alpha, neighbour_weight], [0, neighbour_weight, 0]])
+    dst = data.copy()
+
+    for i in range(N_diff):
+        for t in range(len(data)):
+            dst[:, :, 0] = cv2.filter2D(dst[:, :, 0], -1, kernel)
+            dst[:, :, 1] = cv2.filter2D(dst[:, :, 1], -1, kernel)
+
+    return dst
 
 
 def do_diffusion(data, alpha, N_diff, over_time):
@@ -94,7 +105,7 @@ def calc_filter(data, threshold):
 
     movement = np.full((X, Y), False)
 
-    for t in range(T): 
+    for t in range(T):
         for x in range(X):
             for y in range(Y):
                 if(np.linalg.norm(data[t, x, y]) >= threshold):

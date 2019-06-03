@@ -27,11 +27,20 @@ def read_mt_file(filename):
 
 def _read_file_nd2(filename):
 
+    '''
+    where x, y is the shape in macroblocs , dimension is the (x,y) coordinate of the relative motion
+
+    :param filename:
+    :return:
+    '''
+
     mps_data = mps.MPS(filename)
     scaling_factor = mps_data.info['um_per_pixel'] # loads the scaling from the .nd2 file
     dimensions = mps_data.frames.shape[:-1]
     motion = mps.MotionTracking(mps_data, use_cache=True)
     data = motion.displacement_vectors
+
+    '''
     # reshape; t as outer dimension - or??
     X, Y, D, T = data.shape
     data_disp = np.zeros((T, X, Y, D))
@@ -41,6 +50,11 @@ def _read_file_nd2(filename):
             for y in range(Y):
                 for d in range(D):
                     data_disp[t, x, y, d] = data[x, y, d, t]
+    '''
+
+    data_disp = np.swapaxes(data, 0, 1)
+    data_disp = np.swapaxes(data_disp, 0, 2)
+    data_disp = np.swapaxes(data_disp, 0, 3) # 1000x faster then before
 
     return data_disp, scaling_factor, dimensions
 

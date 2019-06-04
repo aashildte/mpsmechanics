@@ -102,24 +102,24 @@ def define_pillars(p_values, N=200):
     angles = np.linspace(0, 2*np.pi, N)
 
     for i in range(P):
-
+        '''
         ### mesh points on the circumsphere of the circle
         x, y, r = p_values[i]
         for j in range(N):
             pillars[i, j, 0] = x + r*np.cos(angles[j])
             pillars[i, j, 1] = y + r*np.sin(angles[j])
-
         '''
-        ### CREATE AN RANDOM RADIUS
+
+        ### CREATE A REDUCED RANDOM RADIUS
         x, y, r = p_values[i]
         reduced_radius = r - 1
         for j in range(N):
-            random_radius = np.random.uniform(0.0, reduced_radius)  # put the 100 points inside of the detection circle
+            random_radius = np.random.uniform(1.0, reduced_radius)  # put the N points inside of the detection circle
             pillars[i, j, 0] = x + random_radius * np.cos(angles[j])
             pillars[i, j, 1] = y + random_radius * np.sin(angles[j])
 
-            print('Coordinates: x =', x, ' , y = ', y, ' and radius = ', random_radius)
-        '''
+            #print('Coordinates: x =', x, ' , y = ', y, ' and radius = ', random_radius)
+
         '''
         ### REDUCED RADIUS
         x, y, r = p_values[i]
@@ -131,7 +131,6 @@ def define_pillars(p_values, N=200):
             print('Coordinates: x =', x, ' , y = ', y, ' and radius = ', reduced_radius)
             
         '''
-
     return pillars
 
 
@@ -324,15 +323,18 @@ if __name__ == "__main__":
     L = 50e-6  # in m
     R = 10e-6  # in m
     E = 2.63e6  # ????
+    scale_data = True
+    do_averaging = True
 
     area = L * R * np.pi * 1e6  # area in mm^2 half cylinder area
 
     # displacement data and positions of pillars
     data, scaling_factor, dimensions = mc.read_mt_file(f_disp)
-    data = mc.do_diffusion(data, alpha=0.75, N_diff=5, over_time=True)
-    pillars_mpoints = mc.read_pt_file(f_pts, scaling_factor)
 
-    scale_data = True
+    if do_averaging:
+        data = mc.do_diffusion(data, alpha=0.75, N_diff=5, over_time=True)
+
+    pillars_mpoints = mc.read_pt_file(f_pts, scaling_factor)
 
     if scale_data:
         pillars_mpoints, data, dimensions = scale_values(
@@ -344,7 +346,7 @@ if __name__ == "__main__":
         dimensions = np.array(dimensions)
 
     # setup for saving things
-    paths_dir, idt = mc.define_paths(f_disp)
+    paths_dir, idt = mc.define_paths(f_disp, out_dir='track_pillars_MPS_0_7_random_radius_200_pts')
 
     print("Tracking pillars for data set: ", idt)
     # track values
@@ -366,4 +368,3 @@ if __name__ == "__main__":
     if len(plt_properties) > 0:
         path_plots = paths_dir["plt_all"] + "; " + paths_dir["plt_max"]
         print(" * Specified plots saved in '" + path_plots + "'")
-

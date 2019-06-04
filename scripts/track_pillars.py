@@ -73,12 +73,13 @@ option -s or --scale.
 import os
 import sys
 import numpy as np
+import random
 import matplotlib.pyplot as plt
 
 import mpsmechanics as mc
 
 
-def define_pillars(p_values, N=100):
+def define_pillars(p_values, N=200):
     """
 
     Defines circle to mark the pillar's circumference, based on
@@ -91,7 +92,6 @@ def define_pillars(p_values, N=100):
     Returns:
         p_values - mesh points on the circumsphere of the circle
             defined by x, y, z
-
     """
 
     assert(len(p_values) > 0), "p_values can't be an empty list"
@@ -102,11 +102,35 @@ def define_pillars(p_values, N=100):
     angles = np.linspace(0, 2*np.pi, N)
 
     for i in range(P):
+        '''
+        ### mesh points on the circumsphere of the circle
         x, y, r = p_values[i]
         for j in range(N):
             pillars[i, j, 0] = x + r*np.cos(angles[j])
             pillars[i, j, 1] = y + r*np.sin(angles[j])
+        '''
 
+        ### CREATE A REDUCED RANDOM RADIUS
+        x, y, r = p_values[i]
+        reduced_radius = r - 1
+        for j in range(N):
+            random_radius = np.random.uniform(1.0, reduced_radius)  # put the N points inside of the detection circle
+            pillars[i, j, 0] = x + random_radius * np.cos(angles[j])
+            pillars[i, j, 1] = y + random_radius * np.sin(angles[j])
+
+            #print('Coordinates: x =', x, ' , y = ', y, ' and radius = ', random_radius)
+
+        '''
+        ### REDUCED RADIUS
+        x, y, r = p_values[i]
+        reduced_radius = r - 2 #radius in µm
+        for j in range(N):
+            pillars[i, j, 0] = x + reduced_radius * np.cos(angles[j])
+            pillars[i, j, 1] = y + reduced_radius * np.sin(angles[j])
+
+            print('Coordinates: x =', x, ' , y = ', y, ' and radius = ', reduced_radius)
+            
+        '''
     return pillars
 
 
@@ -138,10 +162,9 @@ def calculate_current_timestep(xs, ys, data, pillars):
     midpt_values = np.zeros((P, d))
 
     # all points, absolute displacement
-
     for p in range(P):
         for n in range(N):
-            all_values[p, n] = fn_rel(pillars[p, n, 0], \
+            all_values[p, n] = fn_abs(pillars[p, n, 0], \
                     pillars[p, n, 1])
 
     # midpoints, relative displacement
@@ -149,14 +172,14 @@ def calculate_current_timestep(xs, ys, data, pillars):
     for p in range(P):
         mean = 0
         for n in range(N):
-            mean += fn_abs(*pillars[p, n])
+            mean += fn_rel(*pillars[p, n])
         mean /= N
         midpt_values[p] = mean
 
     return all_values, midpt_values
 
 
-def track_pillars_over_time(data, mpoints, dimensions):
+def track_pillars_over_time(data, pillars_mpoints, dimensions):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
@@ -180,7 +203,6 @@ def track_pillars_over_time(data, mpoints, dimensions):
     pillars = define_pillars(pillars_mpoints)
     
     # some general values
-
     T, X, Y = data.shape[:3]
     P, N = pillars.shape[:2]
     
@@ -199,9 +221,8 @@ def track_pillars_over_time(data, mpoints, dimensions):
     return all_values, midpt_values
 
 
-def scale_values(scale_data, pillars_mpoints, data):
+def scale_values(pillars_mpoints, data, scaling_factor, dimensions):
     """
-
     Args:
         scale_data - boolen value
         pillars_mpoints - numpy array of position and radii
@@ -212,33 +233,23 @@ def scale_values(scale_data, pillars_mpoints, data):
         data - scaled, if applicable
 
     """
-    # some default values --- TODO get from metadata instead
+    print("Scale conversion: pixels (x, y, r) -> um (x, y, r)")
+    
+    for p in pillars_mpoints:
+        print("(%d, %d, %d) -> (%d, %d, %d)" % (p[0], p[1], p[2], \
+                                                int(scaling_factor * p[0]), int(scaling_factor * p[1]), int(scaling_factor * p[2])))
 
-    dimensions_um = np.array((664.30, 381.55))  # um
-    dimensions = np.array((1990, 958))          # pixels??
+    data = scaling_factor * data # converts pixels to µm
+    pillars_mpoints = scaling_factor * pillars_mpoints
+    tmp_y = dimensions[0] * scaling_factor
+    tmp_x = dimensions[1] * scaling_factor
+    dimensions = np.array((tmp_y, tmp_x))
 
-    if scale_data:
-
-        scale = dimensions_um[0]/dimensions[0]
-            
-        print("Scale conversion: pixels (x, y, r) -> um (x, y, r)")
-
-        for p in pillars_mpoints:
-            print("(%d, %d, %d) -> (%d, %d, %d)" % (p[0], p[1], p[2], \
-                    int(scale*p[0]), int(scale*p[1]), int(scale*p[2])))
-            
-        data = scale*data
-        pillars_mpoints = scale*pillars_mpoints
-        dims = dimensions_um
-    else:
-        dims = dimensions
-        scale = 1
-
-    return dims, scale, pillars_mpoints, data
+    return pillars_mpoints, data, dimensions
 
 
 def save_values(all_values, midpt_values, force_values, \
-        calc_properties, pillars_mpoints, paths):
+        calc_properties, pillars_mpoints, paths, data):
     """
 
     Args:
@@ -277,8 +288,8 @@ def save_values(all_values, midpt_values, force_values, \
                     pillars_mpoints, paths["num_max"], "force")
 
 
-def plot_values(all_values, midpt_values, force_values, \
-        calc_properties, pillars_mpoints, paths):
+def plot_values(all_values, midpt_values, force_values, pillars_mpoints,\
+        plt_properties, paths):
     """
 
     Args:
@@ -288,7 +299,6 @@ def plot_values(all_values, midpt_values, force_values, \
         plt_properties - which values to save
         pillars_mpoints - initial coordinates of midpoints
         paths_dir - dictionary of output folders
-
     """
     if(0 in plt_properties):
         for t in range(len(all_values)):
@@ -307,59 +317,54 @@ def plot_values(all_values, midpt_values, force_values, \
 if __name__ == "__main__":
     
     # command line arguments
-
     f_disp, f_pts, calc_properties, plt_properties, scale_data = \
             mc.handle_clp_arguments()
-
-    if(2 in calc_properties and (not scale_data)):
-        print("Warning: Force measurements calculated without scaling. " + \
-                "Indicate scaling using -s or --scale to turn on" + \
-                "scaling of displacement.")
-
     # force transformation ---- TODO cl arguments as well
+    L = 50e-6  # in m
+    R = 10e-6  # in m
+    E = 2.63e6  # ????
+    scale_data = True
+    do_averaging = True
 
-    L = 50E-6           #in m
-    R = 10E-6           #in m
-    E = 2.63E6          #????
-
-    area = L * R * np.pi * 1E6        #area in mm^2 half cylinder area
+    area = L * R * np.pi * 1e6  # area in mm^2 half cylinder area
 
     # displacement data and positions of pillars
+    data, scaling_factor, dimensions = mc.read_mt_file(f_disp)
 
-    data = mc.read_mt_file(f_disp)
-    data = mc.do_diffusion(data, alpha=0.75, N_diff=5, over_time=True)
-    pillars_mpoints = mc.read_pt_file(f_pts)
+    if do_averaging:
+        data = mc.do_diffusion(data, alpha=0.75, N_diff=5, over_time=True)
 
-    dimensions, scale, pillars_mpoints, data = \
-            scale_values(scale_data, pillars_mpoints, data)
-    
+    pillars_mpoints = mc.read_pt_file(f_pts, scaling_factor)
+
+    if scale_data:
+        pillars_mpoints, data, dimensions = scale_values(
+                               pillars_mpoints, data, scaling_factor, dimensions)
+    else:
+        print("Warning: Force measurements calculated without scaling. "
+              + "Indicate scaling using -s or --scale to turn on"
+              + "scaling of displacement.")
+        dimensions = np.array(dimensions)
+
     # setup for saving things
+    paths_dir, idt = mc.define_paths(f_disp, out_dir='track_pillars_MPS_0_7_random_radius_200_pts')
 
-    paths_dir, idt = mc.define_paths(f_disp)
-    
     print("Tracking pillars for data set: ", idt)
-
     # track values
+    all_values, midpt_values = track_pillars_over_time(data, pillars_mpoints, dimensions)
 
-    all_values, midpt_values = \
-            track_pillars_over_time(data, pillars_mpoints, \
-                dimensions)
+    midpt_values_meters = 1e-6 * midpt_values # converts data into meters
+    force_values = mc.displacement_to_force_area(midpt_values_meters, E, L, R, area)
 
-    midpt_values_meters = 1E-6*midpt_values
+    save_values(all_values, midpt_values, force_values, calc_properties,pillars_mpoints,
+                paths_dir, data)
 
-    force_values = mc.displacement_to_force_area(midpt_values_meters, \
-            E, L, R, area)
-
-    save_values(all_values, midpt_values, force_values, \
-            calc_properties, pillars_mpoints, paths_dir)
-    plot_values(all_values, midpt_values, force_values, \
-            plt_properties, pillars_mpoints, paths_dir)
+    plot_values(all_values,midpt_values,force_values,pillars_mpoints,plt_properties,paths_dir)
 
     path_num = paths_dir["num_all"] + "; " + paths_dir["num_max"]
 
     print("Pillar tracking for " + idt + " finished:")
     print(" * Output saved in '" + path_num + "'")
 
-    if(len(plt_properties)>0):
+    if len(plt_properties) > 0:
         path_plots = paths_dir["plt_all"] + "; " + paths_dir["plt_max"]
         print(" * Specified plots saved in '" + path_plots + "'")

@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 
 IO functions related to track_pillar scripts
 
 
-Åshild Telle / Simula Research Labratory / 2019
-
+Ã…shild Telle / Simula Research Labratory / 2019
 """
 
 import os
@@ -66,8 +66,6 @@ def write_all_values(all_values, mpoints, path):
                 str(int(coords[1]))]) + ".csv"
 
         filename = os.path.join(path, f_suffix)
-
-
         wf.write_position_values(all_values[:,p], filename)
 
 
@@ -97,34 +95,31 @@ def write_max_values(mid_values, max_indices, coords, path, prop):
     wf.write_max_values(max_indices, output_d, filename)
 
 
-def define_paths(f_disp):
-    """
-
+def define_paths(f_disp, out_dir = 'track_pillars'):
+    '''
     Define and create paths for output of track_pillar script.
 
     Folder structure:
-        path
-            numerical_output
-                positions_all_time_step
-                displacement_maxima
-            figures
-                positions_all_time_step
-                displacement_maxima
-    
-    Args:
-        f_disp - string; input file name, used to define path
+    out_dir
+        numerical_output
+            positions_all_time_step
+            displacement_maxima
+        figures
+            positions_all_time_step
+            displacement_maxima
 
-    Returns:
-        Dictionary with path structure; keys being
-            "num_all", "num_max", "plt_all", "plt_max"
-        Idt - string with last part of file name
 
-    """
+    :param f_disp: string input with file name, used to define path
+    :param out_dir: directory that contains all the computed data (plots, .csv files, ...)
+    :return: Dictionary with path structure; keys being
+            "num_all", "num_max", "plt_all", "plt_max" ; Idt - string with last part of file name
+    '''
+
 
     path, idt, _ = fs.get_input_properties(f_disp)
 
     path_num, path_plots = \
-            fs.make_default_structure(path, "track_pillars", idt)
+            fs.make_default_structure(path, out_dir, idt)
 
     paths = []
 

@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def read_pt_file(f_in):
+def read_pt_file(f_in, scaling_factor):
     """
 
     Reads in values for pillar coordinates + radii.
@@ -28,7 +28,7 @@ def read_pt_file(f_in):
 
     # using standard radius instead of input; by choice
 
-    r_standard = 1990/664*10       # pixel coords / length * radius
+    r_standard = 1/scaling_factor*10       # pixel coords / length * radius
     
     # flip x and y; temporal solution due to two different
     # conventions used. TODO - use same everywhere

@@ -1,7 +1,3 @@
-
-
-
-
 def write_position_values(values, filename):
     """
 

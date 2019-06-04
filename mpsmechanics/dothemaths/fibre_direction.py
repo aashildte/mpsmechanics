@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 
 Module for finding fibre direction from movement.
@@ -7,27 +9,21 @@ Module for finding fibre direction from movement.
 """
 
 
-import sys
-import os
 import numpy as np
-import matplotlib.pyplot as plt
 
-import operations as op
-import preprocessing as pp
-import angular as an
-import mechanical_properties as mc
-import heart_beat as hb
-import least_sq_solver as lsq
-import plot_vector_field as vs
+from . import operations as op
+from . import preprocessing as pp
+from . import angular as an
+from . import least_sq_solver as lsq
 
 
 def _preprocess_data(org, alpha, N_diff):
     """
 
-    Preprocesses raw data + extracts data for timestep with largest displacement,
-    to be used as input for the least squares solution. 
+    Preprocesses raw data + extracts data for timestep with largest
+    displacement, to be used as input for the least squares solution. 
 
-    Arguments:
+    Args:
         org - original displacement values, T x X x Y x 2 numpy array
         alpha - diffusion constant
         N_diff - number of times to do diffusion
@@ -36,8 +32,6 @@ def _preprocess_data(org, alpha, N_diff):
         normalized aligned averaged values, X x Y x 2 numpy array
 
     """
-
-    T, X, Y = org.shape[:3]
 
     # get timestep with largest movement
 
@@ -50,7 +44,7 @@ def _preprocess_data(org, alpha, N_diff):
     data_t = pp.do_diffusion(data_t, alpha, N_diff, over_time=False)
     data_t = op.normalize_values(data_t, over_time=False)
     data_t = an.flip_values(data_t, over_time=False)
- 
+
     return data_t
 
 
@@ -59,7 +53,7 @@ def _define_mesh_points(X, Y, dimensions):
 
     Defines a mesh for the solution.
 
-    Arguments:
+    Args:
         X - integer value, number of points in 1st dim
         Y - integer value, number of points in 2nd dim
         dimensions - dimensions of domain
@@ -81,11 +75,11 @@ def _define_mesh_points(X, Y, dimensions):
 
 def find_vector_field(data, M, N, basis_type, dimensions):
     """
-        
+
     Finds a vector field representing the motion, using a least squares
     solver.
 
-    Arguments:
+    Args:
         M, N - integer values, defines dimensions of a two-dimensional
             function space
         basis_type - defines basis functions, can be "trig" or "taylor"
@@ -94,24 +88,13 @@ def find_vector_field(data, M, N, basis_type, dimensions):
         x and y components of vector field
 
     """
-    
+
     X, Y = data.shape[1:3]
     xs, ys = _define_mesh_points(X, Y, dimensions)
-    org_values = _preprocess_data(data, alpha = 0.75, N_diff = 5)
+    org_values = _preprocess_data(data, alpha=0.75, N_diff=5)
 
-    disp_x, disp_y = org_values[:,:,0], org_values[:,:,1]
+    disp_x, disp_y = org_values[:, :, 0], org_values[:, :, 1]
     l = lsq.Least_sq_solver(X, Y, xs, ys, disp_x, disp_y) 
     VX, VY = l.solve(M, N, basis_type)
 
     return VX, VY
-
-
-if __name__ == "__main__":
-
-    # unit tests
-
-    M = N = X = Y = 3
-    data = np.random.rand(3, 3, 3, 2)
-    assert(find_vector_field(data, M, N, "trig", [X, Y]) is not None)
-
-    print("All checks passed for fibre_direction.py")

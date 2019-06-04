@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 
 Module for analyzing mechanical properties from motion vector images:
@@ -9,22 +11,19 @@ Module for analyzing mechanical properties from motion vector images:
 
 """
 
-
-import sys
-import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 from . import operations as op
 
 def calc_prevalence(data, threshold):
     """
-    Computes a true/false array for whether the displacement surpasses 
+
+    Computes a true/false array for whether the displacement surpasses
     a given threshold.
 
     This property only makes sense over time.
 
-    Arguments:
+    Args:
         data - T x X x Y x 2 numpy array
         threshold - cut-of value, in space/time units; should be scaled
             already - meaning that the movement can be compared on a
@@ -36,10 +35,10 @@ def calc_prevalence(data, threshold):
         prevalence - T x X x Y x 2 numpy boolean array
 
     """
- 
+
     dxdt = np.gradient(data, axis=0)
 
-    f_th = lambda x, i, j, th=threshold: (np.linalg.norm(x) > th)    
+    f_th = lambda x, i, j, th=threshold: (np.linalg.norm(x) > th)
 
     return op.perform_operation(dxdt, f_th, over_time=True)
 
@@ -49,7 +48,7 @@ def _def_tensor_step(data):
 
     Calculates the deformation gradient over a given X x Y data set.
 
-    Arguments:
+    Args:
         data - numpy array of dimensions X x Y x 2
 
     Returns:
@@ -58,10 +57,10 @@ def _def_tensor_step(data):
 
     """
 
-    dudx = np.gradient(data[:,:,0], axis=0)
-    dudy = np.gradient(data[:,:,0], axis=1)
-    dvdx = np.gradient(data[:,:,1], axis=0)
-    dvdy = np.gradient(data[:,:,1], axis=1)
+    dudx = np.gradient(data[:, :, 0], axis=0)
+    dudy = np.gradient(data[:, :, 0], axis=1)
+    dvdx = np.gradient(data[:, :, 1], axis=0)
+    dvdy = np.gradient(data[:, :, 1], axis=1)
 
     X, Y = data.shape[:2]
     F = np.zeros((data.shape + (2, )))
@@ -80,7 +79,7 @@ def calc_deformation_tensor(data, over_time):
     """
     Computes the deformation tensor F from values in data
 
-    Arguments:
+    Args:
         data - numpy array of dimensions (T x) X x Y x 2
         over_time - boolean value; determines if T dimension
             should be included or not
@@ -90,7 +89,7 @@ def calc_deformation_tensor(data, over_time):
 
     """
 
-    if(over_time):
+    if over_time:
         F = np.zeros((data.shape) + (2, ))
         T = data.shape[0]
 
@@ -109,7 +108,7 @@ def calc_cauchy_green_tensor(data, over_time):
     represents the deformation gradient tensor F (over time and 2 spacial
     dimensions) this corresponds to the cauchy green tensor C.
 
-    Arguments:
+    Args:
         data - numpy array of dimensions (T x) X x Y x 2 x 2
         over_time - boolean value; determines if T dimension
             should be included or not
@@ -120,7 +119,7 @@ def calc_cauchy_green_tensor(data, over_time):
     """
 
     F = calc_deformation_tensor(data, over_time=over_time)
-    f = lambda x, i, j : x.transpose()*x 
+    f = lambda x, i, j: x.transpose()*x
 
     return op.perform_operation(F, f, over_time=over_time)
 
@@ -131,7 +130,7 @@ def calc_principal_strain(data, over_time):
     (eigenvector corresponding to largest eigenvalue, scaled) of the
     Cauchy-Green tensor, for each point (t, x, y).
 
-    Arguments:
+    Args:
         data - displacement data, numpy array of dimension (T x) X x Y x 2
         over_time - boolean value; determines if T dimension
             should be included or not
@@ -144,23 +143,10 @@ def calc_principal_strain(data, over_time):
     C = calc_cauchy_green_tensor(data, over_time=over_time)
 
     f = lambda x, i, j, \
-            find_ps=lambda S : S[0][0]*S[1][0] if S[0][0] > S[0][1] \
-                                    else S[0][1]*S[1][1] : \
+            find_ps=lambda S : S[0][0]*S[1][0] if (S[0][0] > S[0][1]) \
+                else S[0][1]*S[1][1] : \
             find_ps(np.linalg.eig(x))
 
     P = op.perform_operation(C, f, over_time=over_time)
 
     return P
-
-
-if __name__ == "__main__":
-
-    data = np.random.rand(3, 3, 3, 2)
-    threshold = 2*1E-6
-
-    assert(calc_prevalence(data, threshold) is not None)
-    assert(calc_deformation_tensor(data, over_time=True) is not None)    
-    assert(calc_cauchy_green_tensor(data, over_time=True) is not None)
-    assert(calc_principal_strain(data, over_time=True) is not None)
-
-    print("All checks passed for mechanical_properties.py")

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 
 Performs operations relatd to the angular properties of given data.
@@ -7,7 +9,6 @@ Performs operations relatd to the angular properties of given data.
 """
 
 
-import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,14 +19,13 @@ from . import operations as op
 def calc_direction_vectors(disp, plt_pr, movement_filter):
     """
 
-    From the given displacement, this function finds the
-    direction of most detected movement using linear regression.
+    From the given displacement, this function finds the direction
+    of most detected movement using linear regression.
 
-    If specified in plt_pr, this function calls another
-    function which plots the values along with direction vectors for 
-    a visual check.
+    If specified in plt_pr, this function calls another function which
+    plots the values along with direction vectors for a visual check.
 
-    Arguments:
+    Args:
         disp - T x X x Y x 2 dimensional numpy array
         plt_pr - directory for plotting options
         movement_filter - boolean numpy array of size X x Y
@@ -54,9 +54,9 @@ def calc_direction_vectors(disp, plt_pr, movement_filter):
     dir_v = np.array([1, slope])
 
     e_alpha = 1./np.linalg.norm(dir_v)*dir_v
-    e_beta  = np.array([-e_alpha[1], e_alpha[0]])
- 
-    if(plt_pr["visual check"]):
+    e_beta = np.array([-e_alpha[1], e_alpha[0]])
+
+    if plt_pr["visual check"]:
         _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, plt_pr)
 
     return e_alpha, e_beta
@@ -71,7 +71,7 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, plt_pr):
         idt + _alignment.png
     in a folder called Figures
 
-    Arguments:
+    Args:
         xs - data points along x axis
         ys - data points along y axis
         X  - number of data points in x direction
@@ -101,12 +101,11 @@ def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, plt_pr):
     p_y = dimensions[1]/Y*ys
 
     plt.scatter(p_x, p_y, color='gray')
-    
+
     sc = 0.15*max(p_x)
 
     for e in [e_alpha, e_beta]:
-        plt.arrow(eps_x/2, eps_y/2,
-                sc*e[0], sc*e[1], \
+        plt.arrow(eps_x/2, eps_y/2, sc*e[0], sc*e[1], \
                 width=0.005*dimensions[0], color='red')
 
     plt.savefig(os.path.join(plt_pr["path"], "alignment.png"), dpi=1000)
@@ -118,7 +117,7 @@ def calc_projection_vectors(data, e_i, over_time):
     Extracts the parallel part of each component in disp,
     with respect to given vector e_i (does a projection).
 
-    Arguments:
+    Args:
         data - (T x) X x Y x 2 numpy array, original values
         e_i - non-zero vector (numpy array/two values)
         over_time - boolean value; determines if T dimension
@@ -131,17 +130,17 @@ def calc_projection_vectors(data, e_i, over_time):
     e_i = 1./(np.linalg.norm(e_i))*e_i
 
     f = lambda x, i, j, e_i=e_i: np.dot(x, e_i)*e_i
-    
+
     return op.perform_operation(data, f, over_time=over_time)
 
 
 def calc_projection_values(data, e_alpha):
     """
- 
+
     Calculates angular fraction of a given data set over time.
 
 
-    Arguments:
+    Args:
         data - numpy array of dimensions T x X x Y x 2
         e_alpha - defining direction of interest
 
@@ -154,16 +153,16 @@ def calc_projection_values(data, e_alpha):
     T, X, Y = data.shape[:3]
 
     # replaces data in data_x
-    
+
     for t in range(T):
         for x in range(X):
             for y in range(Y):
                 norm = np.linalg.norm(data[t, x, y])
-                if(norm > 1E-14):
+                if norm > 1E-14:
                     data_x[t, x, y] = data_x[t, x, y]/norm
                 else:
                     data_x[t, x, y] = np.zeros(2)
-    
+
     return data_x
 
 
@@ -172,7 +171,7 @@ def flip_values(data, over_time):
 
     Rotate each vector, to first or fourth quadrant
 
-    Arguments:
+    Args:
         data - (T x) X x Y x 2 numpy array, original values
         over_time - boolean value; determines if T dimension
             should be included or not
@@ -185,30 +184,3 @@ def flip_values(data, over_time):
     f = lambda x, i, j: -x if x[1] < 0 else x
 
     return op.perform_operation(data, f, over_time=over_time)
-
-
-if __name__ == "__main__":
-
-    # unit tests
-
-    data = np.random.rand(3, 3, 3, 2)
-
-    ppl = {}
-    for i in range(8):
-        ppl[int(i)] = {"plot" : False}
-    
-    ppl["idt"] = "unit_tests"
-    ppl["visual check"] = False
-    ppl["dims"] = (6, 4)
-
-    # unit tests:
-    
-    e_a, e_b = calc_direction_vectors(data, ppl)
-
-    assert((e_a, e_b) is not None)
-    assert(calc_projection_vectors(data, e_a, over_time=True) \
-            is not None)
-    assert(flip_values(data, over_time=True) is not None)
-    assert(calc_projection_values(data, e_a) is not None)
-    
-    print("All checks passed for angular.py")

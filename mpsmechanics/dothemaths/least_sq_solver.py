@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 
 """
 
 Module for finding a least squares solution of a given linear system.
 
-Åshild Telle / Simula Research Labratory / 2018
+Åshild Telle / Simula Research Labratory / 2018-2019
 
 """
 
@@ -22,7 +23,7 @@ class Least_sq_solver:
         by
             {1, x, 1/2 x^2, ..., 1/(N-1)! x^(N-1)}
 
-        Arguments:
+        Args:
             N - integer value
 
         Returns:
@@ -41,7 +42,7 @@ class Least_sq_solver:
         by
             {1, sin(x), cos(x), ..., 1/sqrt(N-1)cos((N-1)x)}
 
-        Arguments:
+        Args:
             N - integer value
 
         Returns:
@@ -67,7 +68,7 @@ class Least_sq_solver:
             span(basis_funs[:M]) x span(basis_funs[:N])
         giving a one-dimensional list of MxN basis functions back.
 
-        Arguments:
+        Args:
             basis_funs - at least max(M, N) functions
             from R to R, assumed to span a vector space
             M - integer value
@@ -92,7 +93,7 @@ class Least_sq_solver:
 
         Transform basis given as string to a set of functions.
 
-        Arguments:
+        Args:
             M - number of functions for x direction
             N - number of functions for y direction
             basis_type - string, must be "trig" or "taylor"
@@ -118,7 +119,7 @@ class Least_sq_solver:
 
         Solve the linear system, finding a least squares solution.
 
-        Arguments:
+        Args:
             M - number of functions for x direction
             N - number of functions for y direction
             basis_type - string, must be "trig" or "taylor"

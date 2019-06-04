@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 
 Functions for a few quite general operations needed by quite a few
@@ -15,16 +17,13 @@ direction distributions.
 import sys
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.stats as st
-
 
 def perform_xy_operation(A, fn):
     """
 
     Takes values from A and  performs operation defined in fn.
 
-    Arguments:
+    Args:
         A - numpy array of dimensions X x Y x D, D arbitary
         fn - operation f : x, i, j -> E, E arbitary, but must be of
             a formate convertable to numpy array (e.g. a number,
@@ -47,7 +46,7 @@ def perform_xy_operation(A, fn):
             disp[x, y] = fn(A[x, y], x, y)
 
     return disp
-    
+
 
 def perform_operation(A, fn, over_time):
     """
@@ -56,10 +55,10 @@ def perform_operation(A, fn, over_time):
     a X x Y x D numpy array, optionally T x X x Y x D, where
     D can be arbitary (e.g. 2 or 2 x 2).
 
-    Arguments:
+    Args:
         A - numpy array of original data (domain)
         fn - function f((x, y), i, j) -> E, E arbitary but must be of
-            a formate convertable to numpy array (e.g. a number, 
+            a formate convertable to numpy array (e.g. a number,
             a list, ..)
         over_time - boolean, set to True if operation is to performed
             for a number of time steps (if there is a third dimension
@@ -71,11 +70,11 @@ def perform_operation(A, fn, over_time):
 
     """
 
-    if(over_time):
+    if over_time:
         T, X, Y = A.shape[:3]
 
         # perform one operation to get shape; preallocate memory
-        shape = (T, X, Y) + np.asarray(fn(A[0,0,0], 0, 0)).shape
+        shape = (T, X, Y) + np.asarray(fn(A[0, 0, 0], 0, 0)).shape
         disp = np.zeros(shape)
 
         for t in range(T):
@@ -94,7 +93,7 @@ def calc_norm_over_time(data, movement):
 
     for t = 0 ... T.
     
-    Arguments:
+    Args:
         Data - numpy array, of dimensions T x X x Y x 2
         movement - filter for values; which values to consider
 
@@ -124,7 +123,7 @@ def calc_max_ind(data):
     Finds the index of the maximum value of disp. If there are multiple
     maxima (same number) the first one will be returned.
 
-    Arguments:
+    Args:
         data - 1D list-like data structure, of dimension T
 
     Returns
@@ -147,7 +146,7 @@ def calc_magnitude(data, over_time):
 
     Get the norm of the vector for every point (x, y).
 
-    Arguments:
+    Args:
         data - numpy array of dimension X x Y x D, where D is
             arbitary; optionally of dimensions T x X x Y X D
         over_time - boolean value; determines if T dimension
@@ -158,8 +157,6 @@ def calc_magnitude(data, over_time):
 
     f = lambda x, i, j : np.linalg.norm(x)
 
-    shape = data.shape[:-1]
-
     return perform_operation(data, f, over_time=over_time)
 
 
@@ -168,7 +165,7 @@ def normalize_values(data, over_time):
 
     Normalises each non-zero vector.
 
-    Arguments:
+    Args:
         data - T x X x Y x 2 numpy array, original values
         over_time - boolean value; determines if T dimension
             should be included or not
@@ -182,20 +179,3 @@ def normalize_values(data, over_time):
             if np.linalg.norm(x) > 1E-10 else np.zeros(2)
 
     return perform_operation(data, f, over_time=over_time)
-
-
-
-if __name__ == "__main__":
-
-    # unit tests
-    data = np.random.rand(3, 3, 3, 2)
-    idt_fn = lambda x, i, j : x
-    
-    assert(perform_xy_operation(data[0], idt_fn) is not None)
-    assert(perform_operation(data, idt_fn, over_time=True) is not None)
-    assert(calc_norm_over_time(data) is not None)
-    assert(calc_max_ind(calc_norm_over_time(data)) is not None)
-    assert(calc_magnitude(data, over_time=True) is not None)
-    assert(normalize_values(data, over_time=True) is not None)
-
-    print("All checks passed for operations.py")

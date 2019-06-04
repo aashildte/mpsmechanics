@@ -1,14 +1,14 @@
+# -*- coding: utf-8 -*-
 
 """
 
 Calculates beat rate + gives interval splitting based on maxima
 
-Aashild Telle / Simula Research Labratory / 2018-2019
+Åshild Telle / Simula Research Labratory / 2018-2019
 
 """
 
 import os
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,7 +16,6 @@ from . import operations as op
 
 def _get_local_intervals(disp_norm, eps):
     """
-
     Given displacement over time, this tries to calculate the maxima 
     of each beat.
 
@@ -25,7 +24,7 @@ def _get_local_intervals(disp_norm, eps):
     (1 + eps)*mean we won't include it (attempting to remove small
     local minima close to the cut-of).
 
-    Arguments:
+    Args:
         disp_norm - 1D numpy array of dimensions T, displacement over time.
         eps - buffer value, maxima needs to be above (1+eps)*average value
 
@@ -52,7 +51,7 @@ def _get_local_intervals(disp_norm, eps):
 
     # skip first interval if we start at a peak
     tt = 0
-    while(disp_norm[tt] > q2):
+    while disp_norm[tt] > q2:
         tt = tt + 1
 
     # find intervals
@@ -61,11 +60,11 @@ def _get_local_intervals(disp_norm, eps):
 
         # crossing from below
         
-        if(disp_norm[t] > q1):
-            if(not started):
+        if disp_norm[t] > q1:
+            if not started :
                 t_start = t
                 started = True
-            elif (disp_norm[t] > q2):
+            elif disp_norm[t] > q2:
                 threshold = True
  
         # crossing from above
@@ -84,7 +83,7 @@ def _get_beat_maxima(disp_norm, local_intervals):
     From data on displacement over time, this function calculates
     the indices of the maxima of each beat.
 
-    Arguments:
+    Args:
         disp_norm - 1D numpy array of dimensions T, disp. over time
         local_intervals - list of intervals containing a maximum point
 
@@ -112,7 +111,7 @@ def calc_beat_maxima_time(data, scale, \
     From data on displacement over time only, this function
     calculates the indices of the maxima of each beat.
 
-    Arguments:
+    Args:
         data - numpy array, displacement values over time
         plt_pr - dictionary defining visual output
 
@@ -133,13 +132,13 @@ def calc_beat_maxima_time(data, scale, \
 
 
 def calc_beat_maxima_2D(data, movement, scale=1, Tmax=1, \
-        plt_pr = {"visual check" : False}):
+        plt_pr={"visual check" : False}):
     """
 
     From data on displacement over space and time, this function
     calculates the indices of the maxima of each beat.
 
-    Arguments:
+    Args:
         data   - T x X x Y x 2 numpy array, displacement values
         Tmax  - last time value, optional
         plt_pr - dictionary defining visual output, optional
@@ -164,7 +163,7 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, plt_pr):
         idt + _mean.png
     in a folder called "Figures".
 
-    Arguments:
+    Args:
         disp_norm - displacement over time
         scale     - scale to get in SI units
         maxima    - time steps for maxima values
@@ -175,21 +174,18 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, plt_pr):
    
     path = plt_pr["path"]
     Tmax = plt_pr["Tmax"]
- 
-    t = np.linspace(0, Tmax, len(disp_norm))
-   
-    disp_scaled = scale*disp_norm
 
+    t = np.linspace(0, Tmax, len(disp_norm))
+    disp_scaled = scale*disp_norm
     plt.plot(t, disp_scaled)
     
     mean = np.mean(disp_scaled)
-
     mean_vals = mean*np.ones(len(t))
-    mean_eps  = (mean*(1 + eps))*np.ones(len(t))
+    mean_eps = (mean*(1 + eps))*np.ones(len(t))
 
     plt.plot(t, mean_vals, 'r')
     plt.plot(t, mean_eps, 'g')
-    
+
     m_t = [t[m] for m in maxima]
     max_vals = [disp_scaled[m] for m in maxima]
 
@@ -204,15 +200,3 @@ def _plot_disp_thresholds(disp_norm, scale, maxima, eps, plt_pr):
     plt.savefig(filename, dpi=1000)
 
     plt.clf()
-
-
-
-if __name__ == "__main__":
-
-    data = np.random.rand(3, 3, 3, 2)
-    T = data.shape[0]
-
-    assert(calc_beat_maxima_time(op.calc_norm_over_time(data), 1, T) is not None)
-    assert(calc_beat_maxima_2D(data, 1, T) is not None)
-
-    print("All checks passed for heart_beat.py")

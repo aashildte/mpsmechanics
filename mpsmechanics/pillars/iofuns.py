@@ -108,11 +108,15 @@ def define_paths(f_disp, out_dir = 'track_pillars'):
             positions_all_time_step
             displacement_maxima
 
-
-    :param f_disp: string input with file name, used to define path
-    :param out_dir: directory that contains all the computed data (plots, .csv files, ...)
-    :return: Dictionary with path structure; keys being
-            "num_all", "num_max", "plt_all", "plt_max" ; Idt - string with last part of file name
+    Args:
+        f_disp - string input with file name, used to define path
+        out_dir - directory that contains all the computed data
+            (plots, .csv files, ...)
+    
+    Returns:
+        Dictionary with path structure; keys being "num_all", "num_max", \
+            "plt_all", "plt_max"
+        idt - string with last part of file name
     '''
 
 

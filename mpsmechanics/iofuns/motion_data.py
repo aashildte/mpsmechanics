@@ -26,35 +26,23 @@ def read_mt_file(filename):
 
 
 def _read_file_nd2(filename):
+    """
+    Gets displacement from the mps module.
 
-    '''
-    where x, y is the shape in macroblocs , dimension is the (x,y) coordinate of the relative motion
+    Args:
+        filename - nd2 file
 
-    :param filename:
-    :return:
-    '''
+    Returns:
+        4-dimensional numpy array, of dimensions T x X x Y x 2
 
+    """
     mps_data = mps.MPS(filename)
-    scaling_factor = mps_data.info['um_per_pixel'] # loads the scaling from the .nd2 file
+    scaling_factor = mps_data.info['um_per_pixel']
     dimensions = mps_data.frames.shape[:-1]
     motion = mps.MotionTracking(mps_data, use_cache=True)
-    data = motion.displacement_vectors
 
-    '''
-    # reshape; t as outer dimension - or??
-    X, Y, D, T = data.shape
-    data_disp = np.zeros((T, X, Y, D))
-
-    for t in range(T):
-        for x in range(X):
-            for y in range(Y):
-                for d in range(D):
-                    data_disp[t, x, y, d] = data[x, y, d, t]
-    '''
-
-    data_disp = np.swapaxes(data, 0, 1)
-    data_disp = np.swapaxes(data_disp, 0, 2)
-    data_disp = np.swapaxes(data_disp, 0, 3) # 1000x faster then before
+    data_disp = np.swapaxes(np.swapaxes(np.swapaxes(\
+            motion.displacement_vectors, 0, 1), 0, 2), 0, 3)
 
     return data_disp, scaling_factor, dimensions
 
@@ -77,9 +65,6 @@ def _read_file_csv(filename):
     x0, y0 gives relative motion of unit (0, 0) at time step 0; x1, y1
     gives relative motion of unit (1, 0) at time step 0, etc.
 
-    The displacement is given as *scaled*, i.e. scaled to a range around 0.
-    This is to avoid potential problems with numerical precision.
-
     Args:
         filename - csv file
 
@@ -101,7 +86,5 @@ def _read_file_csv(filename):
                 data[t, i, j] = np.array(d)
     
     f.close()
-
-    # omit first value; reference configuration
 
     return data

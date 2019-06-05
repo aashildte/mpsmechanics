@@ -73,5 +73,15 @@ option -s or --scale.
 import sys
 import mpsmechanics as mc
 
+
 if __name__ == "__main__":
-    mc.track_pillars(sys.argv)    
+
+    arguments = ((("-p", "--plot"), {"default" : ""}),
+            (("-s", "--scale"), {"action" : "store_true"}))
+
+    input_files, calc_properties, args = \
+            mc.get_cl_input(arguments)
+    
+    f_disp, f_pillars = input_files
+
+    mc.track_pillars(f_disp, f_pillars, calc_properties, args.plot, args.scale)

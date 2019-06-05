@@ -11,7 +11,7 @@ import os
 import mpsmechanics as mc
 
 
-def _get_plotting_properties(plt_ids, path_plots, idt, dimensions, Tmax):
+def _get_plotting_properties(plot_properties, path_plots, idt, dimensions, Tmax):
     """
 
     Defines a dictionary which gives useful information about
@@ -36,7 +36,7 @@ def _get_plotting_properties(plt_ids, path_plots, idt, dimensions, Tmax):
     for i in range(11):
         plt_p[int(i)] = {"plot" : False}
 
-    for i in plt_ids:
+    for i in plot_properties:
         plt_p[i]["plot"] = True
 
     # get information specificly for metrics
@@ -75,14 +75,19 @@ def _save_output(idt, descriptions, values, path_num):
     fout.write(values_str)
     fout.close()
 
-def analyze_mechanics(cl_args):
+
+def analyze_mechanics(input_files, calc_properties, plot_properties):
     """
 
-    TODO
+    Calculates mechanical metrics.
+
+    Args:
+        input files - list of nd2 / csv files to perform analysis for
+        calc_propeties - list of integers, which properties to calculate
+        plot_properties - list of integers, which properties to plot
 
     """
-    input_files, calc_properties, args = mc.get_cl_input(((("-p", "--plot"), {"default": ""}),))
-    plt_ids = args.plot
+
 
     # default parameters
 
@@ -109,7 +114,7 @@ def analyze_mechanics(cl_args):
         T = disp_data.shape[0]
         Tmax = dt*T
 
-        plt_prop = _get_plotting_properties(plt_ids, path_plots, idt, \
+        plt_prop = _get_plotting_properties(plot_properties, path_plots, idt, \
                 dimensions, Tmax)
         
         # calculations
@@ -124,5 +129,5 @@ def analyze_mechanics(cl_args):
         print("Analysis of " + idt + " finished:")
         print(" * Output saved in '" + path_num + "'")
 
-        if not plt_ids:
+        if not plot_properties:
             print(" * Specified plots saved in '" + path_plots + "'")

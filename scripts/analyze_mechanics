@@ -61,4 +61,6 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    mc.analyze_mechanics(sys.argv)
+    input_files, calc_properties, args = mc.get_cl_input(((("-p", "--plot"), {"default": ""}),))
+    plot_properties = args.plot
+    mc.analyze_mechanics(input_files, calc_properties, plot_properties)

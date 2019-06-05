@@ -38,4 +38,5 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    mc.visualize_mechanics(sys.argv)
+    input_files, calc_properties, _ = mc.get_cl_input()
+    mc.visualize_mechanics(input_files, calc_properties)

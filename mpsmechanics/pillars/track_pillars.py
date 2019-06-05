@@ -250,15 +250,32 @@ def _plot_values(all_values, midpt_values, force_values, pillars_mpoints,\
                 paths["plt_max"], "force")
 
 
-def track_pillars(cl_args): 
+def track_pillars(f_disp, f_pts, calc_properties, plt_properties, scale_data):
     """
 
-    TODO
+    Tracks points corresponding to "pillars" over time.
+
+    Arguments:
+        f_disp - filename for displacement data
+        f_pts - filename for pillar positions data
+        calc_properties - list of integers defining which properties to calculate
+        plt_properties - list of integers defining which properties to plot
+        scale_data - boolean value for scaling data to SI units or not
 
     """
-    # command line arguments
-    f_disp, f_pts, calc_properties, plt_properties, scale_data = \
-            mc.handle_clp_arguments()
+
+    assert (".csv" in f_disp) or (".nd2" in f_disp), \
+        "Displacement file must be a csv or nd2 file"
+    assert ".csv" in f_pts, \
+        "Pillar position file must be a csv file"
+    assert all(isinstance(x, int) for x in calc_properties), \
+        "calc_properties needs to be list of integer"
+    assert all(isinstance(x, int) for x in plt_properties), \
+        "plt_properties needs to be list of integer"
+    assert type(scale_data) == bool, \
+        "scale_data needs to be a boolean value"
+
+
     # force transformation ---- TODO cl arguments as well
     L = 50e-6  # in m
     R = 10e-6  # in m

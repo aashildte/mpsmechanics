@@ -13,36 +13,6 @@ from ..iofuns import command_line as cl
 from ..iofuns import writetofile as wf
 from ..iofuns import folder_structure as fs
 
-def handle_clp_arguments():
-    """
-    
-    Handles command line arguments for the pillar tracking script,
-    as described in the main script and in the README file.
-
-    Returns:
-        Filename for displacement data
-        Filename for pillar positions data
-        List of integers defining which properties to calculate
-        List of integers defining which properties to plot
-        Boolean value for scaling data to SI units or not
-
-    """
-    
-    arguments = ((("-p", "--plot"), {"default" : ""}),
-            (("-s", "--scale"), {"action" : "store_true"}))
-
-    input_files, calc_properties, args = \
-            cl.get_cl_input(arguments)
-    
-    f_disp, f_pillars = input_files
-
-    assert ((".csv" in f_disp) or (".nd2") in f_disp), \
-            "Displacement file must be a csv or nd2 file"
-    assert (".csv" in f_pillars), \
-            "Pillar position file must be a csv file"
-  
-    return f_disp, f_pillars, calc_properties, args.plot, args.scale
-
 
 def write_all_values(all_values, mpoints, path):
     """

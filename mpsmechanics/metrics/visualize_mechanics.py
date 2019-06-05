@@ -10,14 +10,16 @@ Vector / heat map plots related functions.
 import os
 import mpsmechanics as mc
 
-def visualize_mechanics(cl_args):
+def visualize_mechanics(input_files, calc_properties):
     """
 
-    TODO
+    Plots for spatial visualization
+
+    Args:
+        input files - list of nd2 / csv files to perform analysis for
+        calc_propeties - list of integers, which properties to calculate
 
     """
-
-    input_files, calc_properties, _ = mc.get_cl_input()
 
     if(min(calc_properties) < 1 or max(calc_properties) > 9):
         print("Give ids in range [1, 9] as input for plotting properties.")

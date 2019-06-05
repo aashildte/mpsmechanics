@@ -43,8 +43,14 @@ from .iofuns.writetofile import write_position_values, \
 
 # metric functions
 
+from .metrics import analyze_mechanics
+from .metrics.analyze_mechanics import analyze_mechanics
+
 from .metrics import metric_values
 from .metrics.metric_values import calc_metrics, plot_metrics2D
+
+from .metrics import visualize_mechanics
+from .metrics.visualize_mechanics import visualize_mechanics
 
 # pillar tracking / pillar calculations functions
 
@@ -56,5 +62,9 @@ from .pillars import iofuns
 from .pillars.iofuns import handle_clp_arguments, write_all_values, \
         write_max_values, define_paths
 
+from .pillars import track_pillars
+from .pillars.track_pillars import track_pillars
+
 from .pillars import plotfuns
 from .pillars.plotfuns import plot_xy_coords, plot_over_time
+

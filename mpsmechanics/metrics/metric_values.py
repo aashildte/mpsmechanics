@@ -128,9 +128,8 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \
     
     if(len(maxima)<=1):
         print("Empty sequence – no intervals found")
-        return []
+        return [], []
     
-
     values = []
     headers = []
      
@@ -144,4 +143,3 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \
             m.plot_metric_time(time, plt_pr["path"])
 
     return headers, values
-

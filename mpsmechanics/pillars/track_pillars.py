@@ -1,77 +1,13 @@
-#!/usr/bin/env python3
-
+# -*- coding: utf-8 -*-
 """
 
-Tracks given points for a given data set over time.
-
-Run as
-
-    python track_pillars.py [displacement] [points] [indices]
-
-where displacement is a csv/nd2 file with displacement data, points 
-a csv file giving pillar positions + radii, and indices a string
-indicating which value to track, "0", "1" or "0 1" (corresponding
-to output outlined below):
-
-Output given as (if indicated)
-
-    0) a set of files on the form pt[X]_[Y].csv, saved in where the
-       *first* line give number of time steps, number of tracking
-       points for that pillar:
-           T, N
-       (which indicates N uniformly distributed points around (X, Y)
-       and then T*N lines of the form
-           x y
-       which gives the position of the n'th point at time step t;
-       all positions first listed for time step 0, then for time
-       step 1, etc.
-
-    1) a file called disp_at_maxima.csv, where the first line give
-       the maximum indices:
-           _, _ , m1, _ , m2, _, m3, _, ...
-       and the remaning lines contains the following values:
-           original x position of pillar
-           original y position of pillar
-           x position at index m1
-           y position at index m1
-           x position at index m2
-           y position at index m2 
-           ...
-
-    2) a file called force_at_maxima.csv, where the first line give
-       the maximum indices:
-           _, _ , m1, _ , m2, _, m3, _, ...
-       and the remaning lines contains the following values:
-           original x position of pillar
-           original y position of pillar
-           x force at index m1
-           y force at index m1
-           x force at index m2
-           y force at index m2 
-           ...
-
-
-All files for numerical output are saved in
-    same directory as the displacement file ->
-        folder with same name as the displacement file ->
-            "track_pillars" ->
-                "numerical_output" ->
-                    for 0) subfolder named "positions_all_time_steps"
-                    for 1) subfolder named "displacement_maxima"
-
-Optionally add -p [indices] or --plot [indices] as an argument to
-plot corresponding values. Plots are saved as the numerical output,
-but in a subfolder named "plots" instead.
-
-To get scaled output (in micrometers, not "pixel values"), add the
-option -s or --scale.
+Point tracking related functions
 
 Åshild Telle / Simula Research Labratory / 2019
 
 """
 
 import os
-import sys
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -79,7 +15,7 @@ import matplotlib.pyplot as plt
 import mpsmechanics as mc
 
 
-def define_pillars(p_values, N=200):
+def _define_pillars(p_values, N=200):
     """
 
     Defines circle to mark the pillar's circumference, based on
@@ -134,7 +70,7 @@ def define_pillars(p_values, N=200):
     return pillars
 
 
-def calculate_current_timestep(xs, ys, data, pillars):
+def _calculate_current_timestep(xs, ys, data, pillars):
     """
 
     Calculates values at given tracking points (defined by pillars)
@@ -179,7 +115,7 @@ def calculate_current_timestep(xs, ys, data, pillars):
     return all_values, midpt_values
 
 
-def track_pillars_over_time(data, pillars_mpoints, dimensions):
+def _track_pillars_over_time(data, pillars_mpoints, dimensions):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
@@ -221,7 +157,7 @@ def track_pillars_over_time(data, pillars_mpoints, dimensions):
     return all_values, midpt_values
 
 
-def scale_values(pillars_mpoints, data, scaling_factor, dimensions):
+def _scale_values(pillars_mpoints, data, scaling_factor, dimensions):
     """
     Args:
         scale_data - boolen value
@@ -248,7 +184,7 @@ def scale_values(pillars_mpoints, data, scaling_factor, dimensions):
     return pillars_mpoints, data, dimensions
 
 
-def save_values(all_values, midpt_values, force_values, \
+def _save_values(all_values, midpt_values, force_values, \
         calc_properties, pillars_mpoints, paths, data):
     """
 
@@ -288,7 +224,7 @@ def save_values(all_values, midpt_values, force_values, \
                     pillars_mpoints, paths["num_max"], "force")
 
 
-def plot_values(all_values, midpt_values, force_values, pillars_mpoints,\
+def _plot_values(all_values, midpt_values, force_values, pillars_mpoints,\
         plt_properties, paths):
     """
 
@@ -314,8 +250,12 @@ def plot_values(all_values, midpt_values, force_values, pillars_mpoints,\
                 paths["plt_max"], "force")
 
 
-if __name__ == "__main__":
-    
+def track_pillars(cl_args): 
+    """
+
+    TODO
+
+    """
     # command line arguments
     f_disp, f_pts, calc_properties, plt_properties, scale_data = \
             mc.handle_clp_arguments()
@@ -337,7 +277,7 @@ if __name__ == "__main__":
     pillars_mpoints = mc.read_pt_file(f_pts, scaling_factor)
 
     if scale_data:
-        pillars_mpoints, data, dimensions = scale_values(
+        pillars_mpoints, data, dimensions = _scale_values(
                                pillars_mpoints, data, scaling_factor, dimensions)
     else:
         print("Warning: Force measurements calculated without scaling. "
@@ -350,15 +290,15 @@ if __name__ == "__main__":
 
     print("Tracking pillars for data set: ", idt)
     # track values
-    all_values, midpt_values = track_pillars_over_time(data, pillars_mpoints, dimensions)
+    all_values, midpt_values = _track_pillars_over_time(data, pillars_mpoints, dimensions)
 
     midpt_values_meters = 1e-6 * midpt_values # converts data into meters
     force_values = mc.displacement_to_force_area(midpt_values_meters, E, L, R, area)
 
-    save_values(all_values, midpt_values, force_values, calc_properties,pillars_mpoints,
+    _save_values(all_values, midpt_values, force_values, calc_properties,pillars_mpoints,
                 paths_dir, data)
 
-    plot_values(all_values,midpt_values,force_values,pillars_mpoints,plt_properties,paths_dir)
+    _plot_values(all_values,midpt_values,force_values,pillars_mpoints,plt_properties,paths_dir)
 
     path_num = paths_dir["num_all"] + "; " + paths_dir["num_max"]
 

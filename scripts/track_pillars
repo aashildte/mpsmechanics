@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+
+"""
+
+Tracks given points for a given data set over time.
+
+Run as
+
+    python track_pillars [displacement] [points] [indices]
+
+where displacement is a csv/nd2 file with displacement data, points 
+a csv file giving pillar positions + radii, and indices a string
+indicating which value to track, "0", "1" or "0 1" (corresponding
+to output outlined below):
+
+Output given as (if indicated)
+
+    0) a set of files on the form pt[X]_[Y].csv, saved in where the
+       *first* line give number of time steps, number of tracking
+       points for that pillar:
+           T, N
+       (which indicates N uniformly distributed points around (X, Y)
+       and then T*N lines of the form
+           x y
+       which gives the position of the n'th point at time step t;
+       all positions first listed for time step 0, then for time
+       step 1, etc.
+
+    1) a file called disp_at_maxima.csv, where the first line give
+       the maximum indices:
+           _, _ , m1, _ , m2, _, m3, _, ...
+       and the remaning lines contains the following values:
+           original x position of pillar
+           original y position of pillar
+           x position at index m1
+           y position at index m1
+           x position at index m2
+           y position at index m2 
+           ...
+
+    2) a file called force_at_maxima.csv, where the first line give
+       the maximum indices:
+           _, _ , m1, _ , m2, _, m3, _, ...
+       and the remaning lines contains the following values:
+           original x position of pillar
+           original y position of pillar
+           x force at index m1
+           y force at index m1
+           x force at index m2
+           y force at index m2 
+           ...
+
+
+All files for numerical output are saved in
+    same directory as the displacement file ->
+        folder with same name as the displacement file ->
+            "track_pillars" ->
+                "numerical_output" ->
+                    for 0) subfolder named "positions_all_time_steps"
+                    for 1) subfolder named "displacement_maxima"
+
+Optionally add -p [indices] or --plot [indices] as an argument to
+plot corresponding values. Plots are saved as the numerical output,
+but in a subfolder named "plots" instead.
+
+To get scaled output (in micrometers, not "pixel values"), add the
+option -s or --scale.
+
+Åshild Telle / Simula Research Labratory / 2019
+
+"""
+
+import sys
+import mpsmechanics as mc
+
+if __name__ == "__main__":
+    mc.track_pillars(sys.argv)    

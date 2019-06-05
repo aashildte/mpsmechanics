@@ -1,28 +1,35 @@
-"""
-
-Functions for IO operations: Reading files, creating folder structures.
-
-Ashild Telle / Simula Research Labratory / 2019
+# -*- coding: utf-8 -*-
 
 """
 
+Functions to load displacement data.
 
-import sys
-import os
+Åshild Telle / Simula Research Labratory / 2019
+
+"""
+
 import numpy as np
-import matplotlib.pyplot as plt
-
 import mps
 
 
 def read_mt_file(filename):
-    if(".nd2" in filename):
+    """
+
+    Passes on filename based on extension.
+
+    Args:
+        Filename - nd2 or csv file
+
+    Returns:
+        4-dimensional numpy array, of dimensions T x X x Y x 2
+    """
+
+    assert (".nd2" in filename or ".csv" in filename), \
+            "Unknown file formate"
+
+    if ".nd2" in filename:
         return _read_file_nd2(filename)
-    elif(".csv" in filename):
-        return _read_file_csv(filename)
-    else:
-        print("Uknown file formate")
-        exit(-1)
+    return _read_file_csv(filename)      # if not nd2, then csv
 
 
 def _read_file_nd2(filename):
@@ -77,14 +84,14 @@ def _read_file_csv(filename):
 
     T, X, Y = map(int, str.split(f.readline(), ","))
     data = np.zeros((T, X, Y, 2))
-    
+
     for t in range(T):
         for i in range(X):
             for j in range(Y):
                 str_values = str.split(f.readline().strip(), ",")
-                d = list(map(float, str_values))
-                data[t, i, j] = np.array(d)
-    
+                disp = list(map(float, str_values))
+                data[t, i, j] = np.array(disp)
+
     f.close()
 
     return data

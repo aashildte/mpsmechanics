@@ -4,9 +4,7 @@
 
 """
 
-import sys
 import os
-
 
 def get_input_properties(filename):
     """
@@ -62,7 +60,7 @@ def make_dir_structure(path):
     directory specified it's created unless it already exists.
 
     Arguments:
-        path, final "/" not needed
+        path
 
     """
 

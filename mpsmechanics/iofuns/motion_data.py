@@ -41,6 +41,8 @@ def _read_file_nd2(filename):
 
     Returns:
         4-dimensional numpy array, of dimensions T x X x Y x 2
+        scaling factor - um per pixel
+        dimensions - number of macroblocs in x and y directions
 
     """
     mps_data = mps.MPS(filename)

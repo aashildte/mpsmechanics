@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 """
 
@@ -22,7 +23,7 @@ def _string_to_ints(calc_str):
         Sorted list containing the same integers.
 
     """
-    if (not calc_str):
+    if not calc_str:
         return []
 
     calc_str = list(map(int, calc_str.split(" ")))
@@ -45,35 +46,35 @@ def get_cl_input(arg_keys=()):
     """
 
     parser = ArgumentParser()
-    
+
     # default arguments
 
     parser.add_argument("vars", nargs="+")
 
     # optional arguments
-    for op in arg_keys:
-        parser.add_argument(*op[0], **op[1])
-    
+    for option in arg_keys:
+        parser.add_argument(*option[0], **option[1])
+
     args = parser.parse_args()
-     
+
     input_files = args.vars[:-1]
     calc_properties = args.vars[-1]
-    
+
     # per default, "p" or "plot" is reserved for ids for all scripts
     try:
         args.plot = _string_to_ints(args.plot)
     except:
         pass
 
-    try: 
-        assert(len(input_files)>0)
+    try:
+        assert input_files
         calc_properties = _string_to_ints(calc_properties)
 
     except:
         print("Give files name and integers indicationg values of " +
-                "interests + possibly optional arguments on the " +
-                "command line (see README file and/or top of " + 
-                "given script).")
+              "interests + possibly optional arguments on the " +
+              "command line (see README file and/or top of " +
+              "given script).")
         exit(-1)
-    
+
     return input_files, calc_properties, args

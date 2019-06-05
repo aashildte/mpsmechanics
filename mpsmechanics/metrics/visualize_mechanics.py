@@ -25,7 +25,7 @@ def visualize_mechanics(cl_args):
 
     # default parameters
 
-    alpha, N_d, dt, threshold_pr, threshold_mv, dimensions = \
+    alpha, N_d, dt, threshold_pr, threshold_mv = \
             mc.get_default_parameters()
 
     # TODO in parallel, based on threads?
@@ -43,11 +43,9 @@ def visualize_mechanics(cl_args):
 
         # read + preprocess data
 
-        disp_data = mc.read_mt_file(f_in)
+        disp_data, scale, dimensions = mc.read_mt_file(f_in)
         disp_data = mc.do_diffusion(disp_data, alpha, N_d, over_time=True)
 
-        _, X, _, _ = disp_data.shape
-        scale = dimensions[0]/X
         over_time = False
 
         mc.plot_metrics2D(disp_data, dimensions, calc_properties, scale, dt, \

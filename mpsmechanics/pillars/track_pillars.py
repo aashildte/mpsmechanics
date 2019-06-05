@@ -136,7 +136,7 @@ def _track_pillars_over_time(data, pillars_mpoints, dimensions):
 
     # define pillars by their circumference
 
-    pillars = define_pillars(pillars_mpoints)
+    pillars = _define_pillars(pillars_mpoints)
     
     # some general values
     T, X, Y = data.shape[:3]
@@ -152,7 +152,7 @@ def _track_pillars_over_time(data, pillars_mpoints, dimensions):
     
     for t in range(T):
         all_values[t], midpt_values[t] = \
-                calculate_current_timestep(xs, ys, data[t], pillars)
+                _calculate_current_timestep(xs, ys, data[t], pillars)
 
     return all_values, midpt_values
 

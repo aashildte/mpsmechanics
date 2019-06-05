@@ -15,6 +15,5 @@ def get_default_parameters():
     dt = 1./100                          # cl arguments? fps
     threshold_prev = 2                   # um/s
     threshold_mv = 1E-10                 # [unit]/s
-    dimensions = (664.30, 381.55)        # picture length/height in um
 
-    return alpha, N_d, dt, threshold_prev, threshold_mv, dimensions
+    return alpha, N_d, dt, threshold_prev, threshold_mv

@@ -22,6 +22,9 @@ def read_mt_file(filename):
 
     Returns:
         4-dimensional numpy array, of dimensions T x X x Y x 2
+        scaling factor
+        dimensions in x and y direction
+
     """
 
     assert (".nd2" in filename or ".csv" in filename), \
@@ -62,7 +65,7 @@ def _read_file_csv(filename):
     Reads the input file, where the file is assumed to be a csv file on
     the form
 
-        T, X, Y
+        T, X, Y, scaling factor, dimension x dir., dimension y dir.
         x0, y0
         x1, y1
         ...
@@ -79,12 +82,17 @@ def _read_file_csv(filename):
 
     Returns:
         4-dimensional numpy array, of dimensions T x X x Y x 2
+        scaling factor
+        dimensions in x and y direction
 
     """
 
     f = open(filename, 'r')
 
-    T, X, Y = map(int, str.split(f.readline(), ","))
+    T, X, Y, scaling_factor, dims_x, dims_y = f.readline().split(",")
+    T, X, Y = map(int, (T, X, Y))
+    scaling_factor, dims_x, dims_y = \
+            map(float, (scaling_factor, dims_x, dims_y))
     data = np.zeros((T, X, Y, 2))
 
     for t in range(T):
@@ -96,4 +104,4 @@ def _read_file_csv(filename):
 
     f.close()
 
-    return data
+    return data, scaling_factor, np.array((dims_x, dims_y))

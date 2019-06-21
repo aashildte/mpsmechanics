@@ -35,7 +35,7 @@ def visualize_mechanics(input_files, calc_properties):
     for f_in in input_files:
 
         # create directory structure
-        
+
         path, idt, _ = mc.get_input_properties(f_in)
 
         path = os.path.join(os.path.join(path, idt), "visualize_mechanics")

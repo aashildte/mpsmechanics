@@ -33,11 +33,11 @@ def plot_xy_coords(values, dimensions, t, path):
 
     x_vals = values[:, :, 0].flatten()
     y_vals = values[:, :, 1].flatten()
-    
+
     t_id = "%04d" % t
     filename = os.path.join(path, "state_" + t_id + ".png")
 
-    fg = plt.figure(t, figsize=dims_scaled)
+    plt.figure(t, figsize=dims_scaled)
     plt.xlim(0, dimensions[0])
     plt.ylim(0, dimensions[1])
 
@@ -61,13 +61,13 @@ def plot_over_time(values, coords, path, prop):
         path - save figures here
 
     """
-    
+
     T, P = values.shape[:2]
     fps = 100
     Tmax = T/fps
     ts = np.linspace(0, Tmax, T)
 
-    if(prop == "disp"):
+    if prop == "disp":
         titles = ["Displacement over time (x values)", \
               "Displacement over time (y values)", \
               "Displacement over time (l2 norm)"]
@@ -80,30 +80,32 @@ def plot_over_time(values, coords, path, prop):
             os.path.join(path, prop + "_all_time_steps_y.png"), \
             os.path.join(path, prop + "_all_time_steps_norm.png")]
 
-    x_values = values[:,:,0]
-    y_values = values[:,:,1]
+    x_values = values[:, :, 0]
+    y_values = values[:, :, 1]
 
     overall_values = np.zeros((T, P))
 
+    # TODO this can probably be done in one line?
+
     for t in range(T):
         for p in range(P):
-            overall_values[t,p] = np.linalg.norm(values[t, p])
-    
+            overall_values[t, p] = np.linalg.norm(values[t, p])
+
     d_values = [x_values, y_values, overall_values]
 
     for i in range(3):
         for p in range(P):
-            plt.plot(ts, d_values[i][:,p])
+            plt.plot(ts, d_values[i][:, p])
 
         plt.title(titles[i])
         plt.legend([("(" + str(int(x[0])) + ", " + str(int(x[1])) + ")") \
                 for x in coords])
         plt.xlabel("Time ($s$)")
 
-        if(prop == "disp"):
+        if prop == "disp":
             plt.ylabel("Displacement ($\mu m$)")
-        elif(prop == "force"):
+        elif prop == "force":
             plt.ylabel("Force ($N$)")
-        plt.savefig(filenames[i], dpi=1000) 
-        plt.close()
 
+        plt.savefig(filenames[i], dpi=1000)
+        plt.close()

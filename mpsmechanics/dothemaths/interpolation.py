@@ -12,16 +12,16 @@ import numpy as np
 from scipy import interpolate
 
 
-def interpolate_values_2D(xs, ys, org_data):
+def interpolate_values_2D(x_coords, y_coords, org_data):
     """
 
     Interpolates given data; defines functions based on this. The first
-    function gives relative displacement (difference from first 
+    function gives relative displacement (difference from first
     time frame); second absolute (relative to origo in given frame).
 
     Args:
-        xs - x coordinates
-        ys - y coordinates
+        x_coords - x coordinates
+        y_coords - y coordinates
         org_data - displacement data; X x Y x 2 numpy array
 
     Returns:
@@ -30,17 +30,12 @@ def interpolate_values_2D(xs, ys, org_data):
 
     """
 
-    # Displacement data in x, y directions
+    # fn_x, fn_y - gives displacement in x / y direction
 
-    Xs = org_data[:, :, 0].transpose()
-    Ys = org_data[:, :, 1].transpose()
-
-    # X-motion / Y-motion : finds the values of displacement of a given
-    # point (x,y) on the grid defines by Xs / Ys which is the 2D array
-    # that contains all the motion data from the points
-
-    fn_x = interpolate.interp2d(xs, ys, Xs, kind='cubic')
-    fn_y = interpolate.interp2d(xs, ys, Ys, kind='cubic')
+    fn_x = interpolate.interp2d(x_coords, y_coords, \
+            org_data[:, :, 0].transpose(), kind='cubic')
+    fn_y = interpolate.interp2d(x_coords, y_coords, \
+            org_data[:, :, 1].transpose(), kind='cubic')
 
     fn_rel = lambda x, y: np.array([float(fn_x(x, y)), float(fn_y(x, y))])
     fn_abs = lambda x, y: np.array([x, y]) - fn_rel(x, y)

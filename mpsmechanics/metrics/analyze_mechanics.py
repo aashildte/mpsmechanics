@@ -11,7 +11,7 @@ import os
 import mpsmechanics as mc
 
 
-def _get_plotting_properties(plot_properties, path_plots, idt, dimensions, Tmax):
+def _get_plotting_properties(plot_properties, path_plots, dimensions, max_t):
     """
 
     Defines a dictionary which gives useful information about
@@ -23,7 +23,7 @@ def _get_plotting_properties(plot_properties, path_plots, idt, dimensions, Tmax)
         f_in - filename, including full path
         idt - string used for identification of data set
         dimensions - length and height of pictures used for recording
-        Tmax - time frame (seconds)
+        max_t - time frame (seconds)
 
     Return:
         Dictionary with some useful plotting information
@@ -45,7 +45,7 @@ def _get_plotting_properties(plot_properties, path_plots, idt, dimensions, Tmax)
     plt_p["path"] = path_plots
     plt_p["dims"] = dimensions     # size of plots over height/length
     plt_p["visual check"] = True   # extra plots if applicable
-    plt_p["Tmax"] = Tmax
+    plt_p["Tmax"] = max_t
 
     return plt_p
 
@@ -112,11 +112,11 @@ def analyze_mechanics(input_files, calc_properties, plot_properties):
 
         # for plotting?
         T = disp_data.shape[0]
-        Tmax = dt*T
+        max_t = dt*T
 
-        plt_prop = _get_plotting_properties(plot_properties, path_plots, idt, \
-                dimensions, Tmax)
-        
+        plt_prop = _get_plotting_properties(plot_properties, path_plots, \
+                dimensions, max_t)
+
         # calculations
 
         descriptions, values = mc.calc_metrics(disp_data, calc_properties, \

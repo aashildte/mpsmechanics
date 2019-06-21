@@ -22,7 +22,6 @@ class Metric:
 
 
 class Beatrate(Metric):
-    
     def __init__(self, disp_time, maxima):
         self.disp_time = disp_time
         super().__init__(maxima)
@@ -37,25 +36,24 @@ class Beatrate(Metric):
 
         Arguments:
             maxima - list of indices
-        
+
         Returns:
             Average beatrate
 
-        """ 
+        """
+
         maxima = self.maxima
 
         return np.mean(np.array([(maxima[k] - maxima[k-1]) \
                         for k in range(1, len(maxima))]))
 
-    
     def plot_metric_time(self, time, path, mark_maxima=False):
-        
         disp = self.disp_time
         maxima = self.maxima
 
         plt.plot(time, disp)
-        
-        # maxima 
+
+        # maxima
         for t in [time[m] for m in maxima]:
             plt.axvline(x=t, color='red')
 

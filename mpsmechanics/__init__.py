@@ -2,6 +2,7 @@
 from . import dothemaths
 from . import iofuns
 from . import metrics
+from . import motion_tracking
 
 # dothemaths functions
 
@@ -51,6 +52,10 @@ from .metrics.metric_values import calc_metrics, plot_metrics2D
 
 from .metrics import visualize_mechanics
 from .metrics.visualize_mechanics import visualize_mechanics
+
+# motion tracking
+
+from .motion_tracking import motion_tracking
 
 # pillar tracking / pillar calculations functions
 

@@ -9,7 +9,7 @@ Functions to load displacement data.
 """
 
 import numpy as np
-import mps
+from ..motion_tracking import motion_tracking as mt 
 
 
 def read_mt_file(filename):
@@ -37,7 +37,7 @@ def read_mt_file(filename):
 
 def _read_file_nd2(filename):
     """
-    Gets displacement from the mps module.
+    Gets displacement from the mt module.
 
     Args:
         filename - nd2 file
@@ -48,10 +48,10 @@ def _read_file_nd2(filename):
         dimensions - number of macroblocs in x and y directions
 
     """
-    mps_data = mps.MPS(filename)
-    scaling_factor = mps_data.info['um_per_pixel']
-    dimensions = mps_data.frames.shape[:-1]
-    motion = mps.MotionTracking(mps_data, use_cache=True)
+    mt_data = mt.MPS(filename)
+    scaling_factor = mt_data.info['um_per_pixel']
+    dimensions = mt_data.frames.shape[:-1]
+    motion = mt.MotionTracking(mt_data, use_cache=True)
 
     data_disp = np.swapaxes(np.swapaxes(np.swapaxes(\
             motion.displacement_vectors, 0, 1), 0, 2), 0, 3)

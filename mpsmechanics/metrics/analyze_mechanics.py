@@ -97,7 +97,9 @@ def analyze_mechanics(input_files, calc_properties, plot_properties):
     # TODO in parallel, based on threads? - separate function
 
     for f_in in input_files:
+        
         # create directory structure
+
         path, idt, _ = mc.get_input_properties(f_in)
         path_num, path_plots = \
                 mc.make_default_structure(path, \
@@ -108,7 +110,10 @@ def analyze_mechanics(input_files, calc_properties, plot_properties):
         # read + preprocess data
 
         disp_data, scale, dimensions = mc.read_mt_file(f_in)
-        disp_data = mc.do_diffusion(disp_data, alpha, N_d, over_time=True)
+        #disp_data = mc.do_diffusion(disp_data, alpha, N_d, over_time=True)
+        disp_data = 1/scale*disp_data  #???
+
+        print("scale, dimensions: ", scale, dimensions)
 
         # for plotting?
         T = disp_data.shape[0]
@@ -129,5 +134,5 @@ def analyze_mechanics(input_files, calc_properties, plot_properties):
         print("Analysis of " + idt + " finished:")
         print(" * Output saved in '" + path_num + "'")
 
-        if not plot_properties:
+        if len(plot_properties) > 0:
             print(" * Specified plots saved in '" + path_plots + "'")

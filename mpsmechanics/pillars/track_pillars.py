@@ -182,26 +182,24 @@ def _save_values(all_values, midpt_values, force_values, \
     # find values at maximum displacement
 
     max_indices = mc.calc_beat_maxima_2D(data, \
-           mc.calc_filter(data, 1E-10))
-
-    # save values
+            mc.calc_filter(data, 1E-10))
 
     if 0 in calc_properties:
-        mc.write_all_values(all_values, pillars_mpoints, \
+        mc.pts_write_all_values(all_values, pillars_mpoints, \
                 paths["num_all"])
 
     if 1 in calc_properties:
-        if not max_indices:
+        if max_indices.size == 0:
             print("No maxima found for this data set.")
         else:
-            mc.write_max_values(midpt_values, max_indices, \
+            mc.pts_write_max_values(midpt_values, max_indices, \
                     pillars_mpoints, paths["num_max"], "disp")
 
     if 2 in calc_properties:
-        if not max_indices:
+        if max_indices.size == 0:
             print("No maxima found for this data set.")
         else:
-            mc.write_max_values(force_values, max_indices, \
+            mc.pts_write_max_values(force_values, max_indices, \
                     pillars_mpoints, paths["num_max"], "force")
 
 
@@ -251,7 +249,7 @@ def track_pillars(f_disp, f_pts, calc_properties, plt_properties, scale_data):
     assert (".csv" in f_disp) or (".nd2" in f_disp), \
         "Displacement file must be a csv or nd2 file"
     assert ".csv" in f_pts, \
-        "no_pillarsillar position file must be a csv file"
+        "position file must be a csv file"
     assert all(isinstance(x, int) for x in calc_properties), \
         "calc_properties needs to be list of integer"
     assert all(isinstance(x, int) for x in plt_properties), \
@@ -286,16 +284,17 @@ def track_pillars(f_disp, f_pts, calc_properties, plt_properties, scale_data):
               + "scaling of displacement.")
         dimensions = np.array(dimensions)
 
-    # setup for saving things
-    paths_dir, idt = mc.define_paths(f_disp, \
-            out_dir='track_pillars_Mno_pillarsS_0_7_random_radius_200_pts')
+    # setup for saving things; by convention out_dir = file name (unless
+    # we want it as a parameter)
+
+    paths_dir, idt = mc.define_paths(f_disp, out_dir="track_pillars")
 
     print("Tracking pillars for data set: ", idt)
     # track values
     all_values, midpt_values = _track_pillars_over_time(data, \
             pillars_mpoints, dimensions)
 
-    midpt_values_meters = 1e-6 * midpt_values # converts data into meters
+    midpt_values_meters = 1e-6 * midpt_values         # convertion um -> m
     force_values = mc.displacement_to_force_area(midpt_values_meters, E, \
             L, R, area)
 

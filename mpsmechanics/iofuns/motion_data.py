@@ -9,8 +9,9 @@ Functions to load displacement data.
 """
 
 import numpy as np
-from ..motion_tracking import motion_tracking as mt 
-
+from ..motion_tracking import motion_tracking as mt
+from ..motion_tracking import ref_frame as rf
+import mps
 
 def read_mt_file(filename):
     """
@@ -48,13 +49,27 @@ def _read_file_nd2(filename):
         dimensions - number of macroblocs in x and y directions
 
     """
-    mt_data = mt.MPS(filename)
+    mt_data = mps.MPS(filename)
     scaling_factor = mt_data.info['um_per_pixel']
     dimensions = mt_data.frames.shape[:-1]
     motion = mt.MotionTracking(mt_data, use_cache=True)
 
+    # get right reference frame
+
+    data_disp = motion.displacement_vectors
+
+    # different conventions
+
+    ref_fn = rf.calculate_min_velocity_frame
+    #ref_fn = rf.calculate_minimum_2step
+    
+    data_disp = rf.convert_disp_data(data_disp, ref_fn(data_disp))
+
+    # convert to T x X x Y x 2 TODO maybe we can do this in
+    # motiontracking actually
+
     data_disp = np.swapaxes(np.swapaxes(np.swapaxes(\
-            motion.displacement_vectors, 0, 1), 0, 2), 0, 3)
+            data_disp, 0, 1), 0, 2), 0, 3)
 
     return data_disp, scaling_factor, dimensions
 

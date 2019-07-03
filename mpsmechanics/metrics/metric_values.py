@@ -112,7 +112,20 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \
         List of metrics, based on average values
 
     """
-    
+
+    # disp data:
+
+    T, X, Y, d = disp_data.shape
+
+    for t in range(len(disp_data)):
+
+        A = 0
+
+        for x in range(X):
+            for y in range(Y):
+                A += np.linalg.norm(disp_data[t, x, y])
+        
+        print(A/(X*Y))
     # a few parameters
 
     T, X, Y = disp_data.shape[:3]

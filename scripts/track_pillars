@@ -58,6 +58,7 @@ All files for numerical output are saved in
                 "numerical_output" ->
                     for 0) subfolder named "positions_all_time_steps"
                     for 1) subfolder named "displacement_maxima"
+                    for 1) subfolder named "force_maxima"
 
 Optionally add -p [indices] or --plot [indices] as an argument to
 plot corresponding values. Plots are saved as the numerical output,

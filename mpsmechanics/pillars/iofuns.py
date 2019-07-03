@@ -14,7 +14,7 @@ from ..iofuns import writetofile as wf
 from ..iofuns import folder_structure as fs
 
 
-def write_all_values(all_values, mpoints, path):
+def pts_write_all_values(all_values, mpoints, path):
     """
 
     Output to files: T x N values for each pillar
@@ -39,7 +39,7 @@ def write_all_values(all_values, mpoints, path):
         wf.write_position_values(all_values[:,p], filename)
 
 
-def write_max_values(mid_values, max_indices, coords, path, prop):
+def pts_write_max_values(mid_values, max_indices, coords, path, prop):
     """
 
     Writes values at maximum displacement to a file.
@@ -60,7 +60,10 @@ def write_max_values(mid_values, max_indices, coords, path, prop):
 
     for p in range(len(coords)):
         key = str(coords[p,0]) + " " + str(coords[p,1])
-        output_d[key] = mid_values[:,p]
+        output_d[key] = []
+        
+        for m in max_indices:
+            output_d[key].append(mid_values[m,p])
 
     wf.write_max_values(max_indices, output_d, filename)
 
@@ -74,9 +77,11 @@ def define_paths(f_disp, out_dir = 'track_pillars'):
         numerical_output
             positions_all_time_step
             displacement_maxima
+            force_maxima
         figures
             positions_all_time_step
             displacement_maxima
+            force_maxima
 
     Args:
         f_disp - string input with file name, used to define path
@@ -98,7 +103,9 @@ def define_paths(f_disp, out_dir = 'track_pillars'):
     paths = []
 
     for p in [path_num, path_plots]:
-        for a in ["positions_all_time_step", "displacement_maxima"]:
+        for a in ["positions_all_time_step", \
+                "displacement_maxima", \
+                "force_maxima"]:
             pt = os.path.join(p, a)
             fs.make_dir_structure(pt)
             paths.append(pt)

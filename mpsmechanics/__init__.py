@@ -64,7 +64,7 @@ from .pillars.forcetransformation import displacement_to_force_area, \
         displacement_to_force
 
 from .pillars import iofuns
-from .pillars.iofuns import write_all_values, write_max_values, \
+from .pillars.iofuns import pts_write_all_values, pts_write_max_values, \
         define_paths
 
 from .pillars import track_pillars

@@ -60,10 +60,10 @@ def _read_file_nd2(filename):
 
     # different conventions
 
-    ref_fn = rf.calculate_min_velocity_frame
-    #ref_fn = rf.calculate_minimum_2step
+    # ref_fn = rf.calculate_min_velocity_frame
+    # ref_fn = rf.calculate_minimum_2step
     
-    data_disp = rf.convert_disp_data(data_disp, ref_fn(data_disp))
+    # data_disp = rf.convert_disp_data(data_disp, ref_fn(data_disp))
 
     # convert to T x X x Y x 2 TODO maybe we can do this in
     # motiontracking actually

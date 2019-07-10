@@ -20,5 +20,4 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    for f_in in sys.argv[1:]:
-        mc.track_pillars(f_in)
+    mc.calculate_stats_chips(sys.argv[1:])

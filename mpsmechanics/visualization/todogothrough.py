@@ -250,3 +250,53 @@ def plot_values(values, e_alpha, e_beta, path, idt, dimensions, \
         plot_percentile_values(values, x_values, y_values, \
                 per_values[i], p_label, lognorm, dimensions, \
                 title, path, idt)
+
+
+def _plot_data_vectors(xs, ys, X, Y, e_alpha, e_beta, plt_pr):
+    """
+
+    Plots data points along with direction vectors.
+
+    Figures saved as
+        idt + _alignment.png
+    in a folder called Figures
+
+    Args:
+        xs - data points along x axis
+        ys - data points along y axis
+        X  - number of data points in x direction
+        Y  - number of data points in y direction
+        e_alpha - main direction
+        e_beta  - perpendicular vector
+        plt_pr - plotting properties dictionary
+
+    """
+    # scale dimensions to standard size in x direction
+
+    dimensions = plt_pr["dims"]
+    scale = 6.4/dimensions[0]
+    dimensions_scaled = (scale*dimensions[0], scale*dimensions[1])
+
+    eps_x = 0.05*dimensions[0]
+    eps_y = 0.05*dimensions[1]
+
+    plt.figure(figsize=dimensions_scaled)
+    plt.xlim(-eps_x, dimensions[0] + eps_x)
+    plt.ylim(-eps_y, dimensions[1] + eps_y)
+    plt.xlabel('$\mu m$')
+    plt.ylabel('$\mu m$')
+
+    # scale
+    p_x = dimensions[0]/X*xs
+    p_y = dimensions[1]/Y*ys
+
+    plt.scatter(p_x, p_y, color='gray')
+
+    sc = 0.15*max(p_x)
+
+    for e in [e_alpha, e_beta]:
+        plt.arrow(eps_x/2, eps_y/2, sc*e[0], sc*e[1], \
+                width=0.005*dimensions[0], color='red')
+
+    plt.savefig(os.path.join(plt_pr["path"], "alignment.png"), dpi=1000)
+    plt.close()

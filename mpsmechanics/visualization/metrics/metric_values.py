@@ -76,24 +76,9 @@ def _metric_setup(disp_data, scale, dt, threshold_pr, threshold_mv, plt_pr):
     return metrics, args, maxima
 
 
-def plot_metrics2D(disp_data, dimensions, ind_list, scale, dt,
-        threshold_pr, threshold_mv, path, over_time):
-
-    plt_pr = {"visual check" : False}
-
-    metrics, args, _ = _metric_setup(disp_data, scale, dt, \
-            threshold_pr, threshold_mv, plt_pr)
-
-    values = []
-    headers = []
-     
-    for i in ind_list:
-        m = metrics[i](*args[i])
-        m.plot_spacial_dist(dimensions, path, over_time)
 
 
-def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \
-        threshold_pr, threshold_mv):
+def calc_metrics(disp_data, ind_list, scale, dt):
     """
 
     Arguments:
@@ -104,9 +89,6 @@ def calc_metrics(disp_data, ind_list, scale, dt, plt_pr, \
             the original magnitude
         dt - temporal difference
         dx - spacial difference
-        plt_pr - dictionary determining visual output
-        threshold_pr - for prevalence
-        threshold_mv - for movement
 
     Returns:
         List of metrics, based on average values

@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+
+"""
+
+Given data on displacement, this scripts finds the peak values and plots
+spacial distribution of given metrics for these.
+
+Run script as (with python 3)
+
+    visualize_mechanics [input files]
+
+where the input files are csv/nd2 files containing displacement data,
+(see README).
+
+Åshild Telle / Simula Research Labratory / 2019
+
+"""
+
+import sys
+import mpsmechanics as mc
+
+if __name__ == "__main__":
+    for f_in in sys.argv[1:]:
+        mc.visualize_chip(f_in)

@@ -44,6 +44,7 @@ import itertools
 import concurrent.futures
 from scipy.signal import medfilt, find_peaks, detrend
 from scipy import ndimage
+import scipy.stats as st
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -516,7 +517,7 @@ class MotionTracking(object):
     def _init_arrays(self):
 
         self.computed = dict(
-            edges=False, velocities=False, displacements=False
+            angle=False, edges=False, velocities=False, displacements=False
         )
 
     @property
@@ -688,6 +689,40 @@ class MotionTracking(object):
         )
         self.computed["displacements"] = True
         self._save_cache()
+    
+    def _get_angle(self):
+        """
+        
+        Estimating angle/how much the chamber is tilted using linear
+        regression.
+        
+        """
+
+        disp = self.displacement_vectors 
+        T = disp.shape[-1]
+
+        xs, ys = [], []
+
+        for t in range(T):
+            xs_, ys_, _ = np.nonzero(disp[:, :, :, t])
+            xs += list(xs_)
+            ys += list(ys_)
+
+        if not xs:
+            print("Warning: No nonzero values detected.")
+            slope = 0
+        else:
+            slope = st.linregress(xs, ys)[0]
+        
+        self._angle = np.arctan(slope)
+        self.computed["angle"] = True
+        self._save_cache()
+
+    @property
+    def angle(self):
+        if (True or not self.has_results("angle")):
+            self._get_angle()
+        return np.copy(self._angle)
 
     @property
     def edges(self):

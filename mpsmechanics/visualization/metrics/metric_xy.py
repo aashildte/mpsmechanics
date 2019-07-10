@@ -14,8 +14,6 @@ from ..dothemaths import operations as op
 from ..dothemaths import angular as an
 from ..dothemaths import heartbeat as hb
 
-from ..visualization2D import plot_vector_field as pv
-
 from .metric import Metric
 
 class Metric_xy(Metric):

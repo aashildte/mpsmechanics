@@ -2,56 +2,21 @@
 
 """
 
-Given data on displacement, this script finds average and overall values
-for a number of features.
+Given data on displacement, this script calculates derived quantities,
+including
+- velocity
+- strain
+- beat rate
 
 Run script as (with python 3)
 
-    python analyze_mechanics [input files] [indices]
+    python analyze_mechanics [input files]
 
 or install it using the setup file, running it as
 
-    analyze_mechanics [input files] [indices]
+    analyze_mechanics [input files]
 
-where the input files are csv/nd2 files containing displacement data,
-(see README) and [indices] is a string which indicates which
-properties should be recorded, e.g. given as "2 3 5". Quotation marks
-required if more than one integer is given. Current supported id's:
-    - average beat rate (0)
-    - average displacement (1)
-    - average motion in x direction (2)
-    - average motion in y direction (3)
-    - average velocity (4)
-    - average velocity in x direction (5)
-    - average velocity in y direction (6)
-    - average principal strain (7)
-    - average principal strain in x direction (8)
-    - average principal strain in y direction (9)
-    - average prevalence (10)
-
-Optionally add
-    -p [indices]          (e.g. -p "0 2 5 8")
-for plotting specific properties over time (over all spacial
-coordinates), These must be a subset of the set of properties
-specified as the second argument.
-
----
-
-The *output* of the calculations is saved as 
-
-    metrics_average.csv
-
-in
-    the same folder as each input file ->
-        subfolder with same identity as each input file ->
-            "analyze_mechanics" ->
-                "numerical_output"
-
----
-
-The (optional) plots over time and space will be saved as png files
-in a folder i the same folder hierarchy, with "numerical_output"
-replaced with "figures".
+where the input files are nd2/npy files containing displacement data.
 
 Åshild Telle / Simula Research Labratory / 2019
 
@@ -61,6 +26,5 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    input_files, calc_properties, args = mc.get_cl_input(((("-p", "--plot"), {"default": ""}),))
-    plot_properties = args.plot
-    mc.analyze_mechanics(input_files, calc_properties, plot_properties)
+    for f in sys.argv[1:]:
+        mc.analyze_mechanics(f)

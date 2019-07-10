@@ -25,9 +25,7 @@ def interpolate_values_2D(x_coords, y_coords, org_data):
         org_data - displacement data; X x Y x 2 numpy array
 
     Returns:
-        function fn_abs : R2 - R2 - relative displacement
-        function fn_rel : R2 - R2 - absolute displacement
-
+        function fn_rel : R2 - R2 - relative displacement
     """
 
     # fn_x, fn_y - gives displacement in x / y direction
@@ -38,6 +36,6 @@ def interpolate_values_2D(x_coords, y_coords, org_data):
             org_data[:, :, 1].transpose(), kind='cubic')
 
     fn_rel = lambda x, y: np.array([float(fn_x(x, y)), float(fn_y(x, y))])
-    fn_abs = lambda x, y: np.array([x, y]) - fn_rel(x, y)
+    # fn_abs = lambda x, y: np.array([x, y]) - fn_rel(x, y)  needed??
 
-    return fn_abs, fn_rel
+    return fn_rel

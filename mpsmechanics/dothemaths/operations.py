@@ -85,7 +85,7 @@ def perform_operation(A, fn, over_time):
     return disp
 
 
-def calc_norm_over_time(data, movement):
+def calc_norm_over_time(data):
     """
     Finds sum of L2 norm of each vector,
     
@@ -95,26 +95,13 @@ def calc_norm_over_time(data, movement):
     
     Args:
         Data - numpy array, of dimensions T x X x Y x 2
-        movement - filter for values; which values to consider
 
     Returns:
         Sum array - numpy array of dimension T  
 
     """
-
-    T, X, Y = data.shape[:3]
-    disp_norm = np.zeros(T)
-
-    zeros = np.zeros((X, Y))
-    scale = 1./sum(sum(movement))
-    
-    for t in range(T):
-        for x in range(X):
-            for y in range(Y):
-                if(movement[x, y]):
-                    disp_norm[t] += np.linalg.norm(data[t, x, y])
-
-    return scale*disp_norm
+ 
+    return np.sum(np.linalg.norm(data, axis=3), axis=(1, 2))
 
 
 def calc_max_ind(data):
@@ -131,14 +118,7 @@ def calc_max_ind(data):
 
     """
 
-    max_t = (0, data[0])
-
-    for t in range(len(data)):
-        if(data[t] > max_t[1]):
-            max_t = (t, data[t])
-
-    return max_t[0]
-
+    return np.argmax(data, axis=0)
 
 
 def calc_magnitude(data, over_time):

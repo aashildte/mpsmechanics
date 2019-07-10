@@ -51,6 +51,7 @@ def _get_local_intervals(disp_norm, eps):
 
     # skip first interval if we start at a peak
     tt = 0
+ 
     while disp_norm[tt] > q2:
         tt = tt + 1
 
@@ -104,8 +105,7 @@ def _get_beat_maxima(disp_norm, local_intervals):
     return maxima
 
 
-def calc_beat_maxima_time(data, scale, \
-        plt_pr = {"visual check" : False}):
+def calc_beat_maxima_time(data):
     """
 
     From data on displacement over time only, this function
@@ -113,26 +113,16 @@ def calc_beat_maxima_time(data, scale, \
 
     Args:
         data - numpy array, displacement values over time
-        plt_pr - dictionary defining visual output
 
     Returns:
         list of maxima indices
         
     """
     
-    eps = 0.05
-    
-    local_intervals = _get_local_intervals(data, eps)
-    maxima = _get_beat_maxima(data, local_intervals)
-    
-    if(plt_pr["visual check"]):
-        _plot_disp_thresholds(data, scale, maxima, eps, plt_pr)
+    return _get_beat_maxima(data, \
+            _get_local_intervals(data, eps=0.05))
 
-    return maxima
-
-
-def calc_beat_maxima_2D(data, movement, scale=1, Tmax=1, \
-        plt_pr={"visual check" : False}):
+def calc_beat_maxima_2D(data):
     """
 
     From data on displacement over space and time, this function
@@ -140,63 +130,33 @@ def calc_beat_maxima_2D(data, movement, scale=1, Tmax=1, \
 
     Args:
         data   - T x X x Y x 2 numpy array, displacement values
-        Tmax  - last time value, optional
-        plt_pr - dictionary defining visual output, optional
 
     Returns:
         list of maxima indices
         
     """
 
-    disp_norm = op.calc_norm_over_time(data, movement)
-    
-    return calc_beat_maxima_time(disp_norm, scale, plt_pr)
+    disp_norm = op.calc_norm_over_time(data)
+
+    return calc_beat_maxima_time(disp_norm)
 
 
-def _plot_disp_thresholds(disp_norm, scale, maxima, eps, plt_pr):
+def calc_beat_minmax(data):
     """
 
-    Plots values, maxima, mean value and mean value*(1+eps) for a 
-    visual check.
-
-    Plots are saved as 
-        idt + _mean.png
-    in a folder called "Figures".
+    From data on displacement over time only, this function
+    calculates the indices of the minima and maxima of each beat.
 
     Args:
-        disp_norm - displacement over time
-        scale     - scale to get in SI units
-        maxima    - time steps for maxima values
-        eps       - buffer value
-        plt_pr    - gives general values
+        data - numpy array, displacement values over time
+        plt_pr - dictionary defining visual output
 
+    Returns:
+        list of minimum indices
+        list of maxima indices
+        
     """
-   
-    path = plt_pr["path"]
-    Tmax = plt_pr["Tmax"]
 
-    t = np.linspace(0, Tmax, len(disp_norm))
-    disp_scaled = scale*disp_norm
-    plt.plot(t, disp_scaled)
-    
-    mean = np.mean(disp_scaled)
-    mean_vals = mean*np.ones(len(t))
-    mean_eps = (mean*(1 + eps))*np.ones(len(t))
+    return calc_beat_maxima_2D(-1*data), \
+            calc_beat_maxima_2D(data)
 
-    plt.plot(t, mean_vals, 'r')
-    plt.plot(t, mean_eps, 'g')
-
-    m_t = [t[m] for m in maxima]
-    max_vals = [disp_scaled[m] for m in maxima]
-
-    plt.scatter(m_t, max_vals, color='red')   
-
-    plt.legend(['Displacement', 'Mean value', \
-        'Mean (1 + $\epsilon$)', 'Maxima'], loc=4)
-
-    plt.xlabel('Time (s)')
-
-    filename = os.path.join(path, "mean.png")
-    plt.savefig(filename, dpi=1000)
-
-    plt.clf()

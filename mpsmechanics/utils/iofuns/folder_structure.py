@@ -26,31 +26,29 @@ def get_input_properties(filename):
 
     return path, filename, ext
 
-def make_default_structure(path, subfolder, idt):
+
+def make_dir_layer_structure(f_in, layer):
     """
 
-    Define/create structure for
-        output path -> subfolder -> idt
-    and two subfolders, "numerical output" and "figures"
-    in the last one.
+    If applicable, akes a subfolder with the name given by layer, in
+    a subfolder with the same name as the input file, which again is
+    in the same directory as the input file itself.
+
+    Args:
+        f_in - filename, including full path
+        layer - name of subfolder to be created
 
     Returns:
-        path to numerical output
-        path to plots
+        path to folder created
 
     """
 
-    f_path = os.path.join(\
-        os.path.join(path, idt), \
-        subfolder)
+    path, filename, _ = get_input_properties(f_in)
+    output_folder = os.path.join(path, \
+            os.path.join(filename, layer))
+    make_dir_structure(output_folder)
 
-    path_num = os.path.join(f_path, "numerical_output")
-    path_plots = os.path.join(f_path, "figures")
-
-    make_dir_structure(path_num)
-    make_dir_structure(path_plots)
-
-    return path_num, path_plots
+    return output_folder
 
 
 def make_dir_structure(path):

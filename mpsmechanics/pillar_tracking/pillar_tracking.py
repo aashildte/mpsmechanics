@@ -152,7 +152,7 @@ def _find_pillar_positions_file(f_disp):
 
     path, filename, _ = get_input_properties(f_disp)
     
-    return os.path.join(path, os.path.join(filename, "pillars.csv"))
+    return os.path.join(path, filename + "_pillars.csv")
 
 
 def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
@@ -175,9 +175,10 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
 
     assert (".csv" in f_disp) or (".nd2" in f_disp), \
         "Displacement file must be a csv or nd2 file"
-    
+
     f_pts = _find_pillar_positions_file(f_disp)
-    
+    print(f_pts)
+
     assert os.path.isfile(f_pts), "Pillar position file not found."
 
     # displacement data and positions of pillars

@@ -9,6 +9,7 @@ can calculate the reference frame *after* the blocktracking algorithm
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def convert_disp_data(frames, ref_index):
@@ -100,6 +101,16 @@ def calculate_min_velocity_frame(frames):
     return np.argmin(diff_norm[interval[0]:interval[1]])
 
 
+def calculate_firstframe(frames):
+    """
+    
+    Just the first one. For comparison - this SHOULD give the
+    same values as the original script!
+    
+    """
+    return 0
+
+
 def calculate_minimum_2step(frames):
     """
 
@@ -115,18 +126,29 @@ def calculate_minimum_2step(frames):
 
     """
 
-    diff_norm = np.sum(np.linalg.norm(frames, axis=2), \
+    norm = np.sum(np.linalg.norm(frames, axis=2), \
             axis=(0, 1))
 
-    min_index = np.argmax(diff_norm)
-    min_norm = diff_norm[min_index]
-    mean_norm = np.mean(diff_norm)
+    #X, Y, D, T = frames.shape
 
+    #plt.figure(0)
+    #plt.plot(frames[int(X/2), int(Y/2), 1])
+    #plt.title("chpt 1")
+
+    min_index = np.argmax(norm)
+    min_norm = norm[min_index]
+    mean_norm = np.mean(norm)
+    
     if (min_norm - mean_norm) > mean_norm:
-        print("Getting here! min index. ", min_index)
         frames_shifted = convert_disp_data(frames, min_index)
-        diff_norm = np.sum(np.linalg.norm(np.diff(frames_shifted), \
+        norm = np.sum(np.linalg.norm(frames_shifted, \
                 axis=2), axis=(0, 1))
-        min_index = np.argmin(diff_norm)
+        min_index = np.argmax(norm)
+
+        #plt.figure(1)
+        #plt.plot(frames_shifted[int(X/2), int(Y/2), 1])
+        #plt.title("chpt 2")
+
+    plt.show()
 
     return min_index

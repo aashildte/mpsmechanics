@@ -14,7 +14,7 @@ import mps
 from ...motion_tracking import motion_tracking as mt
 from ...motion_tracking import ref_frame as rf
 
-def read_mt_file(filename):
+def read_mt_file(filename, method):
     """
 
     Passes on filename based on extension.
@@ -33,12 +33,12 @@ def read_mt_file(filename):
             "Unknown file formate"
 
     if ".nd2" in filename:
-        return _read_file_nd2(filename)
+        return _read_file_nd2(filename, method)
 
     print("TODO : Implement npy file formate.")
 
 
-def _read_file_nd2(filename):
+def _read_file_nd2(filename, method=None):
     """
     Gets displacement from the mt module.
 
@@ -64,10 +64,15 @@ def _read_file_nd2(filename):
 
     # different conventions
 
-    # ref_fn = rf.calculate_min_velocity_frame
-    # ref_fn = rf.calculate_minimum_2step
-    
-    # data_disp = rf.convert_disp_data(data_disp, ref_fn(data_disp))
+    if method=="velocity":
+        ref_fn = rf.calculate_min_velocity_frame
+    elif method=="minmax":
+        ref_fn = rf.calculate_minimum_2step
+    elif method=="firstframe":
+        ref_fn = rf.calculate_firstframe
+
+    if method is not None:
+        data_disp = rf.convert_disp_data(data_disp, ref_fn(data_disp))
 
     # convert to T x X x Y x 2 TODO maybe we can do this in
     # motiontracking actually

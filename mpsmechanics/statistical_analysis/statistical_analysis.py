@@ -31,9 +31,11 @@ def _read_data(input_files, layer_name, layer_fn):
         dose, media = path.split("/")[-2:]
 
         data = read_prev_layer(f_in, layer_name, layer_fn)
-        print(data["over_time_avg"].keys())
+        
         all_maxima[dose][media][filename] = \
                 np.max(data["over_time_avg"]["displacement_um"])  # e.g.
+
+        print("m: ", filename, all_maxima[dose][media][filename])
 
     doses_keys = list(all_maxima.keys())
     media_keys = list(all_maxima[doses_keys[0]].keys())
@@ -53,7 +55,13 @@ def _find_correct_layer(layer):
     """
 
     fn_map = {"track_pillars" : track_pillars,
-            "analyze_mechanics" : analyze_mechanics}
+              "track_pillars_velocity" : lambda x, save_data: \
+                      track_pillars(x, "velocity", save_data=save_data),
+              "track_pillars_minmax" : lambda x, save_data: \
+                      track_pillars(x, "minmax", save_data=save_data),
+              "track_pillars_firstframe" : lambda x, save_data: \
+                      track_pillars(x, "firstframe", save_data=save_data),
+              "analyze_mechanics" : analyze_mechanics}
 
     assert layer in fn_map.keys(), \
             "Error: No corresponding function found"
@@ -118,9 +126,13 @@ def calculate_stats_chips(input_files, layers, sort_by):
         avgs = []
         stds = []
 
+        print("dose, media, avg, avg/std")
+
         for dose in doses_keys:
             for media in media_keys:
                 values = np.array(list(all_maxima[dose][media].values()))
+                #print(values)
+                
                 avg = np.mean(values)
                 std = np.std(values)/avg        # normalised!
                 stats[dose][media] = (avg, std)

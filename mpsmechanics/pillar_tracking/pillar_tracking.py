@@ -151,11 +151,12 @@ def _find_pillar_positions_file(f_disp):
     """
 
     path, filename, _ = get_input_properties(f_disp)
-    
-    return os.path.join(path, filename + "_pillars.csv")
+    print(os.path.join(path, os.path.join(filename, "pillars.csv")))
+
+    return os.path.join(path, os.path.join(filename, "pillars.csv"))
 
 
-def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
+def track_pillars(f_disp, method, L=50E-6, R=10E-6, E=2.63E-6, \
         save_data=True):
     """
 
@@ -163,6 +164,7 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
 
     Arguments:
         f_disp - filename for displacement data
+        method - for ref. frame
         L - ??
         R - ??
         E - ??
@@ -177,13 +179,12 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
         "Displacement file must be a csv or nd2 file"
 
     f_pts = _find_pillar_positions_file(f_disp)
-    print(f_pts)
 
     assert os.path.isfile(f_pts), "Pillar position file not found."
 
     # displacement data and positions of pillars
 
-    data_disp, scaling_factor, angle, dt, size_x, size_y = read_mt_file(f_disp)
+    data_disp, scaling_factor, angle, dt, size_x, size_y = read_mt_file(f_disp, method)
     pillars_mpoints = read_pt_file(f_pts, scaling_factor)
 
     print("Tracking pillars for data set: ", f_disp)
@@ -217,7 +218,12 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
 
     print("Pillar tracking for " + f_disp + " finished")
 
+    saveas = "track_pillars"
+
+    if method is not None:
+        saveas += "_" + method
+
     if(save_data):
-        save_dictionary(f_disp, "track_pillars", d_all)
+        save_dictionary(f_disp, saveas, d_all)
 
     return d_all

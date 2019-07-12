@@ -20,5 +20,5 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    for f_in in sys.argv[1:]:
-        mc.track_pillars(f_in)
+    for f_in in sys.argv[1:-1]:
+        mc.track_pillars(f_in, sys.argv[-1])

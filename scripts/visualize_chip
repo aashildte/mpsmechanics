@@ -20,5 +20,15 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    for f_in in sys.argv[1:]:
-        mc.visualize_chip(f_in)
+
+
+    try:
+        input_files = sys.argv[1:-1]
+        layers = sys.argv[-1]
+    except:
+        print('Expected arguments: files, layers (one string); ' + \
+               'e.g. track_pillars */*/*.nd2 "visualize_chip')
+        exit(-1)
+
+    for f_in in input_files:
+        mc.visualize_chip(f_in, layers)

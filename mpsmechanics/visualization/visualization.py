@@ -28,7 +28,7 @@ def plot_over_time(values, time, label, unit, path):
 
     """
 
-    plt.plot(time, values)
+    plt.plot(values)
 
     label = label.replace("_", " ")
 
@@ -52,7 +52,7 @@ def stats_over_time(f_in, layer_name, layer_fn, save_data):
             output_values in a 'cache' or not)
 
     """
-
+    
     output_folder = os.path.join(\
             make_dir_layer_structure(f_in, "visualize_chip"), layer_name)
     make_dir_structure(output_folder)
@@ -66,12 +66,42 @@ def stats_over_time(f_in, layer_name, layer_fn, save_data):
                        key, data["units"][key], output_folder)
 
 
-def visualize_chip(f_in, save_data=True):
+def _find_correct_layer(layer):
+    """
+
+    The script intends to find data/call functions to calculate
+    data if needed - layers needs to be in specific set of functions
+    as defined specifically. For now this includes mechanical analysis
+    and pillar tracking. With some adaptions we could possibly
+    also include things like calcum and action potential traces.
+
+    TODO move to iofuns
+
+    """
+
+    fn_map = {"track_pillars" : track_pillars,
+              "track_pillars_velocity" : lambda x, save_data: \
+                      track_pillars(x, "velocity", save_data=save_data),
+              "track_pillars_minmax" : lambda x, save_data: \
+                      track_pillars(x, "minmax", save_data=save_data),
+              "track_pillars_firstframe" : lambda x, save_data: \
+                      track_pillars(x, "firstframe", save_data=save_data),
+              "analyze_mechanics" : analyze_mechanics}
+
+    assert layer in fn_map.keys(), \
+            "Error: No corresponding function found"
+
+    return layer, fn_map[layer]
+
+
+def visualize_chip(f_in, layers, save_data=True):
     """
 
     Visualize mechanics - "main function"
 
     """
-
-    stats_over_time(f_in, "analyze_mechanics", analyze_mechanics, save_data)
-    stats_over_time(f_in, "track_pillars", track_pillars, save_data)
+    layers = layers.split(" ")
+    
+    for layer in layers:
+        layer_name, layer_fn = _find_correct_layer(layer)
+        stats_over_time(f_in, layer_name, layer_fn, save_data)

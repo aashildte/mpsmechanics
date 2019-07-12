@@ -151,7 +151,6 @@ def _find_pillar_positions_file(f_disp):
     """
 
     path, filename, _ = get_input_properties(f_disp)
-    print(os.path.join(path, os.path.join(filename, "pillars.csv")))
 
     return os.path.join(path, os.path.join(filename, "pillars.csv"))
 

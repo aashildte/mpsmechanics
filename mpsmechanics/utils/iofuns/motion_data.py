@@ -70,8 +70,13 @@ def _read_file_nd2(filename, method=None):
         ref_fn = rf.calculate_minimum_2step
     elif method=="firstframe":
         ref_fn = rf.calculate_firstframe
+    elif method=="mean":
+        pass
+    else:
+        print("Error: Method not recognized")
+        exit(-1)
 
-    if method is not None:
+    if method != "mean":
         data_disp = rf.convert_disp_data(data_disp, ref_fn(data_disp))
 
     # convert to T x X x Y x 2 TODO maybe we can do this in

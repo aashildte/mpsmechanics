@@ -54,7 +54,8 @@ def _find_correct_layer(layer):
 
     """
 
-    fn_map = {"track_pillars" : track_pillars,
+    fn_map = {"track_pillars_mean" : lambda x, save_data: \
+                      track_pillars(c, "mean", save_data=save_data),
               "track_pillars_velocity" : lambda x, save_data: \
                       track_pillars(x, "velocity", save_data=save_data),
               "track_pillars_minmax" : lambda x, save_data: \

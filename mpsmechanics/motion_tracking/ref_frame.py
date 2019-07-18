@@ -51,6 +51,8 @@ def _find_longest_subinterval(diff_norm):
     indices = list(filter(lambda i: diff_norm[i] < threshold, \
             range(len(diff_norm))))
 
+    print("threshold: ", threshold)
+
     count = 0
     prev = indices[0]
     start_ind = 0
@@ -97,8 +99,11 @@ def calculate_min_velocity_frame(frames):
     diff_norm = np.sum(np.linalg.norm(np.diff(frames), axis=2), \
             axis=(0, 1))
     interval = _find_longest_subinterval(diff_norm)
+    
+    norm = np.sum(np.linalg.norm(frames, axis=2), \
+            axis=(0, 1))
 
-    return np.argmin(diff_norm[interval[0]:interval[1]])
+    return interval[0] + np.argmin(diff_norm[interval[0]:interval[1]])
 
 
 def calculate_firstframe(frames):
@@ -129,12 +134,6 @@ def calculate_minimum_2step(frames):
     norm = np.sum(np.linalg.norm(frames, axis=2), \
             axis=(0, 1))
 
-    #X, Y, D, T = frames.shape
-
-    #plt.figure(0)
-    #plt.plot(frames[int(X/2), int(Y/2), 1])
-    #plt.title("chpt 1")
-
     min_index = np.argmax(norm)
     min_norm = norm[min_index]
     mean_norm = np.mean(norm)
@@ -144,11 +143,5 @@ def calculate_minimum_2step(frames):
         norm = np.sum(np.linalg.norm(frames_shifted, \
                 axis=2), axis=(0, 1))
         min_index = np.argmax(norm)
-
-        #plt.figure(1)
-        #plt.plot(frames_shifted[int(X/2), int(Y/2), 1])
-        #plt.title("chpt 2")
-
-    plt.show()
 
     return min_index

@@ -4,6 +4,8 @@
 
 Functions to load displacement data.
 
+TODO depricated??
+
 Åshild Telle / Simula Research Labratory / 2019
 
 """
@@ -11,8 +13,9 @@ Functions to load displacement data.
 import numpy as np
 import mps
 
-from ...motion_tracking import motion_tracking as mt
-from ...motion_tracking import ref_frame as rf
+
+from .data_layer import read_prev_layer
+from ...motion_tracking.motion_tracking import track_motion
 
 def read_mt_file(filename, method):
     """
@@ -38,7 +41,7 @@ def read_mt_file(filename, method):
     print("TODO : Implement npy file formate.")
 
 
-def _read_file_nd2(filename, method=None):
+def _read_file_nd2(filename, method):
     """
     Gets displacement from the mt module.
 
@@ -48,42 +51,17 @@ def _read_file_nd2(filename, method=None):
     Returns:
         4-dimensional numpy array, of dimensions T x X x Y x 2
         scaling factor - um per pixel
-        dt - time step (ms)
         angle - angle correction
-
+        dt - time step (ms)
+        size_x
+        size_y
     """
-    mt_data = mps.MPS(filename)
 
-    scaling_factor = mt_data.info['um_per_pixel']
-    motion = mt.MotionTracking(mt_data, use_cache=True)
+    save_data = True
+    layer_name = "track_motion_" + method
+    layer_fn = lambda f_in, save_data, method=method: track_motion(f_in, method, save_data=save_data)
 
-    # get right reference frame
+    data = read_prev_layer(filename, layer_name, layer_fn, save_data)
 
-    data_disp = motion.displacement_vectors
-    angle = motion.angle
-
-    # different conventions
-
-    if method=="velocity":
-        ref_fn = rf.calculate_min_velocity_frame
-    elif method=="minmax":
-        ref_fn = rf.calculate_minimum_2step
-    elif method=="firstframe":
-        ref_fn = rf.calculate_firstframe
-    elif method=="mean":
-        pass
-    else:
-        print("Error: Method not recognized")
-        exit(-1)
-
-    if method != "mean":
-        data_disp = rf.convert_disp_data(data_disp, ref_fn(data_disp))
-
-    # convert to T x X x Y x 2 TODO maybe we can do this in
-    # motiontracking actually
-
-    data_disp = np.swapaxes(np.swapaxes(np.swapaxes(\
-            data_disp, 0, 1), 0, 2), 0, 3)
-
-    return data_disp, scaling_factor, angle, \
-            mt_data.dt, mt_data.size_x, mt_data.size_y      # maybe??
+    return data["data_disp"], data["scaling_factor"], data["angle"], \
+            data["dt"], data["size_x"], data["size_y"]

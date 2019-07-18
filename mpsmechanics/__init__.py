@@ -8,7 +8,7 @@ from . import visualization
 from . import statistical_analysis
 
 from .mechanical_analysis.mechanical_analysis import analyze_mechanics
-from .motion_tracking import motion_tracking       # track_motion?? or sim.
+from .motion_tracking.motion_tracking import track_motion
 from .pillar_tracking.pillar_tracking import track_pillars
 from .visualization.visualization import visualize_chip
 from .statistical_analysis.statistical_analysis import calculate_stats_chips

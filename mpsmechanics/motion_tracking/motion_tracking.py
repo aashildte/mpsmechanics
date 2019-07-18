@@ -54,10 +54,9 @@ from mps import utils
 from mps import plotter
 from mps import analysis
 
-# try:
-# import h5py
-# except ImportError:
-
+from .ref_frame import calculate_min_velocity_frame, calculate_minimum_2step, \
+        calculate_firstframe, convert_disp_data
+from ..utils.iofuns.save_values import save_dictionary
 
 def save_cache(fname, data):
     with open(cachename(fname), "wb") as fid:
@@ -946,3 +945,60 @@ class MotionTracking(object):
                 velocity=utils.namedtuple2dict(self.velocity_data),
             ),
         )
+
+
+def track_motion(input_file, method, use_cache=True, save_data=True):
+    mt_data = mps.MPS(input_file)
+
+    scaling_factor = mt_data.info['um_per_pixel']
+
+    if(method == "median"):
+        motion = MotionTracking(mt_data, "median", use_cache=use_cache)
+    else:
+        motion = MotionTracking(mt_data, use_cache=use_cache)
+
+    # get right reference frame
+
+    data_disp = motion.displacement_vectors
+    angle = motion.angle
+
+    # different conventions
+
+    if method=="velocity":
+        ref_fn = calculate_min_velocity_frame
+    elif method=="minmax":
+        ref_fn = calculate_minimum_2step
+    elif method=="firstframe":
+        ref_fn = calculate_firstframe
+    elif method=="median":
+        pass
+    elif method=="mean":
+        pass
+    else:
+        print("Error: Method not recognized")
+        exit(-1)
+
+    if method != "mean" and method != "median":
+        data_disp = convert_disp_data(data_disp, ref_fn(data_disp))
+
+    # convert to T x X x Y x 2 TODO maybe we can do this in
+    # earlier actually
+
+    data_disp = np.swapaxes(np.swapaxes(np.swapaxes(\
+            data_disp, 0, 1), 0, 2), 0, 3)
+
+    # dictionary
+    d_all = {} 
+    d_all["data_disp"] = data_disp
+    d_all["scaling_factor"] = scaling_factor
+    d_all["angle"] = angle
+    d_all["dt"] = mt_data.dt
+    d_all["size_x"] = mt_data.size_x
+    d_all["size_y"] = mt_data.size_y
+
+    saveas = "track_motion_" + method
+
+    if(save_data):
+        save_dictionary(input_file, saveas, d_all)
+
+    return d_all

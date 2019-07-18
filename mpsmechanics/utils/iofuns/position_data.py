@@ -13,7 +13,53 @@ Function for reading initial position file
 import numpy as np
 
 
-def read_pt_file(f_in, scaling_factor):
+def read_pt_file(f_in):
+    """
+
+    Reads in values for pillar coordinates + radii.
+
+    Args:
+        f_in - Filename
+
+    Returns;
+        Numpy array of dimensions P x 3, P being the number of
+            points; entries being x, y, radius for all points.
+
+    """
+
+    if(".csv" in f_in):
+        return _read_pt_file_csv(f_in)
+    elif(".nd2" in f_in):
+        return _read_pt_file_nd2(f_in)
+    else:
+        print("Error: Uknown file formate.")
+
+
+def _read_pt_file_nd2(f_in):
+    """
+
+    Reads in values for pillar coordinates + radii.
+
+    Args:
+        f_in - Filename
+
+    Returns;
+        Numpy array of dimensions P x 3, P being the number of
+            points; entries being x, y, radius for all points.
+
+    """
+    data = np.load(f_in, allow_pickle=True).item()
+
+    # convention : longitudal = x; transverse = y
+    
+    x_pos = data["positions_longitudal"]
+    y_pos = data["positions_transverse"]
+    radii = data["radii"]
+
+    return np.swapaxes(np.array(x_pos, y_pos, radii), 0, 1)
+
+
+def _read_pt_file_csv(f_in):
     """
 
     Reads in values for pillar coordinates + radii.
@@ -35,18 +81,13 @@ def read_pt_file(f_in, scaling_factor):
         lines = lines[:-1]      # ignore last line if empty
 
     p_values = [[int(x) for x in line.split(",")] \
-                        for line in lines]  # or float???
+                        for line in lines]
 
-    # using standard radius instead of input; by choice
-
-    r_standard = 1/scaling_factor*10       # pixel coords / length * radius
-
-    # flip x and y; temporal solution due to two different
-    # conventions used. TODO - use same everywhere
+    # flip x and y; different conventions for these two scripts
 
     for i in range(len(p_values)):
-        x, y, _ = p_values[i]
-        p_values[i] = [y, x, r_standard]
+        x, y, r = p_values[i]
+        p_values[i] = [y, x, r]
 
     p_values = np.array(p_values)
 

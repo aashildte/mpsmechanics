@@ -35,8 +35,6 @@ def _read_data(input_files, layer_name, layer_fn):
         all_maxima[dose][media][filename] = \
                 np.max(data["over_time_avg"]["displacement_um"])  # e.g.
 
-        print("m: ", filename, all_maxima[dose][media][filename])
-
     doses_keys = list(all_maxima.keys())
     media_keys = list(all_maxima[doses_keys[0]].keys())
 
@@ -55,14 +53,21 @@ def _find_correct_layer(layer):
     """
 
     fn_map = {"track_pillars_mean" : lambda x, save_data: \
-                      track_pillars(c, "mean", save_data=save_data),
+                      track_pillars(x, "mean", save_data=save_data),
               "track_pillars_velocity" : lambda x, save_data: \
                       track_pillars(x, "velocity", save_data=save_data),
               "track_pillars_minmax" : lambda x, save_data: \
                       track_pillars(x, "minmax", save_data=save_data),
               "track_pillars_firstframe" : lambda x, save_data: \
                       track_pillars(x, "firstframe", save_data=save_data),
-              "analyze_mechanics" : analyze_mechanics}
+              "analyze_mechanics_mean" : lambda x, save_data: \
+                      analyze_mechanics(x, "mean", save_data=save_data),
+              "analyze_mechanics_velocity" : lambda x, save_data: \
+                      analyze_mechanics(x, "velocity", save_data=save_data),
+              "analyze_mechanics_minmax" : lambda x, save_data: \
+                      analyze_mechanics(x, "minmax", save_data=save_data),
+              "analyze_mechanics_firstframe" : lambda x, save_data: \
+                      analyze_mechanics(x, "firstframe", save_data=save_data)}
 
     assert layer in fn_map.keys(), \
             "Error: No corresponding function found"
@@ -127,12 +132,11 @@ def calculate_stats_chips(input_files, layers, sort_by):
         avgs = []
         stds = []
 
-        print("dose, media, avg, avg/std")
+        print("dose, media, avg, avg/std, values")
 
         for dose in doses_keys:
             for media in media_keys:
                 values = np.array(list(all_maxima[dose][media].values()))
-                #print(values)
                 
                 avg = np.mean(values)
                 std = np.std(values)/avg        # normalised!
@@ -140,4 +144,4 @@ def calculate_stats_chips(input_files, layers, sort_by):
                 # TODO to file or to dictionary -> next layer
                 avgs.append(avg)
                 stds.append(std)
-                print(dose, media, avg, std)
+                print(dose, media, avg, std, values)

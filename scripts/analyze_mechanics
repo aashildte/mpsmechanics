@@ -26,5 +26,7 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    for f in sys.argv[1:]:
-        mc.analyze_mechanics(f)
+    input_files = sys.argv[1:-1]
+    method = sys.argv[-1]
+    for f in input_files:
+        mc.analyze_mechanics(f, method)

@@ -80,14 +80,21 @@ def _find_correct_layer(layer):
     """
 
     fn_map = {"track_pillars_mean" : lambda x, save_data: \
-                      track_pillars(c, "mean", save_data=save_data),
+                      track_pillars(x, "mean", save_data=save_data),
               "track_pillars_velocity" : lambda x, save_data: \
                       track_pillars(x, "velocity", save_data=save_data),
               "track_pillars_minmax" : lambda x, save_data: \
                       track_pillars(x, "minmax", save_data=save_data),
               "track_pillars_firstframe" : lambda x, save_data: \
                       track_pillars(x, "firstframe", save_data=save_data),
-              "analyze_mechanics" : analyze_mechanics}
+              "analyze_mechanics_mean" : lambda x, save_data: \
+                      analyze_mechanics(x, "mean", save_data=save_data),
+              "analyze_mechanics_velocity" : lambda x, save_data: \
+                      analyze_mechanics(x, "velocity", save_data=save_data),
+              "analyze_mechanics_minmax" : lambda x, save_data: \
+                      analyze_mechanics(x, "minmax", save_data=save_data),
+              "analyze_mechanics_firstframe" : lambda x, save_data: \
+                      analyze_mechanics(x, "firstframe", save_data=save_data)}
 
     assert layer in fn_map.keys(), \
             "Error: No corresponding function found"

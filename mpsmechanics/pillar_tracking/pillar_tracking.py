@@ -150,15 +150,16 @@ def _find_pillar_positions_file(f_disp):
     path, filename, _ = get_input_properties(f_disp)
     path_f = os.path.join(path, filename)
 
-    npy_file = os.path.join(path_f, "pillars.nd2")
+    npy_file = os.path.join(path_f, "pillars.npy")
     csv_file = os.path.join(path_f, "pillars.csv")
+
+    assert os.path.isfile(npy_file) or os.path.isfile(csv_file), \
+        "Error: No pillar position file found."
 
     if os.path.isfile(npy_file):
         return npy_file
-    elif os.path.isfile(csv_file):
-        return csv_file
     else:
-        print("Error: No pillar position file found.")
+        return csv_file
 
 
 def track_pillars(f_disp, method, L=50E-6, R=10E-6, E=2.63E-6, \

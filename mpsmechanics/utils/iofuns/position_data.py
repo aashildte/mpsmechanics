@@ -29,11 +29,10 @@ def read_pt_file(f_in):
 
     if(".csv" in f_in):
         return _read_pt_file_csv(f_in)
-    elif(".nd2" in f_in):
+    elif(".npy" in f_in):
         return _read_pt_file_nd2(f_in)
     else:
         print("Error: Uknown file formate.")
-
 
 def _read_pt_file_nd2(f_in):
     """
@@ -56,7 +55,7 @@ def _read_pt_file_nd2(f_in):
     y_pos = data["positions_transverse"]
     radii = data["radii"]
 
-    return np.swapaxes(np.array(x_pos, y_pos, radii), 0, 1)
+    return np.swapaxes(np.array((x_pos, y_pos, radii)), 0, 1)
 
 
 def _read_pt_file_csv(f_in):

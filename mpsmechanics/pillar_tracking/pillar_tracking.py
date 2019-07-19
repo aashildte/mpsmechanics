@@ -66,6 +66,8 @@ def _calculate_current_timestep(x_coords, y_coords, data_disp, pillars):
     Calculates values at given tracking points (defined by pillars)
     based on interpolation.
 
+    # TODO can we make this step faster?
+
     Args:
         x_coords - x coordinates, dimension X
         y_coords - y coordinates, dimension Y
@@ -82,18 +84,13 @@ def _calculate_current_timestep(x_coords, y_coords, data_disp, pillars):
 
     no_pillars, no_meshpts, no_dims = pillars.shape
 
-    midpt_values = np.zeros((no_pillars, no_dims))
-
-    # midpoints, relative displacement
-
+    disp_values = np.zeros((no_pillars, no_meshpts, no_dims))
+    
     for p in range(no_pillars):
-        mean = 0
         for n in range(no_meshpts):
-            mean += fn_rel(*pillars[p, n])
-        mean /= no_meshpts
-        midpt_values[p] = mean
-
-    return midpt_values
+            disp_values[p, n] = fn_rel(*pillars[p, n])
+    
+    return disp_values
 
 
 def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y):
@@ -127,7 +124,7 @@ def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y):
 
     # store data - as an average of all meshpoints
 
-    all_values = np.zeros((T, no_pillars, 2))
+    all_values = np.zeros((T, no_pillars, no_meshpts, 2))
 
     for t in range(T):
         all_values[t] = \
@@ -196,22 +193,24 @@ def track_pillars(f_disp, method, L=50E-6, R=10E-6, E=2.63E-6, \
 
     print("Tracking pillars for data set: ", f_disp)
 
-    mdpt_values_px = _track_pillars_over_time(data_disp, \
+    values_px = _track_pillars_over_time(data_disp, \
             pillars_mpoints, size_x, size_y)
     
+    dims = values_px.shape
+
     # then do a couple of transformations ..
 
-    mdpt_values_um = 1/scaling_factor*mdpt_values_px
+    values_um = 1/scaling_factor*values_px
 
     area = L * R * np.pi * 1E6  # area in mm^2 half cylinder area
-    mdpt_values_m = 1e-6 * mdpt_values_um
+    values_m = 1e-6 * values_um
 
-    force = displacement_to_force(mdpt_values_m, E, L, R)
-    forceperarea = displacement_to_force_area(mdpt_values_m, E, \
+    force = displacement_to_force(values_m, E, L, R)
+    forceperarea = displacement_to_force_area(values_m, E, \
             L, R, area)
 
-    values = {"displacement_px" : mdpt_values_px,
-              "displacement_um" : mdpt_values_um,
+    values = {"displacement_px" : values_px,
+              "displacement_um" : values_um,
               "force" : force,
               "force_per_area" : forceperarea}
 

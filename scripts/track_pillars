@@ -20,5 +20,15 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    for f_in in sys.argv[1:-1]:
-        mc.track_pillars(f_in, sys.argv[-1])
+    input_files = sys.argv[1:-1]
+    method = sys.argv[-1]
+
+    assert method in ["mean", "median", "minmax", \
+            "velocity", "firstframe"]
+
+    for f in input_files:
+        try:
+            mc.track_pillars(f, method)
+        except Exception as e:
+            print("Could not run pillar tracking; error ", e)
+            print("Launching next data set ..")

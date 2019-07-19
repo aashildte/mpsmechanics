@@ -5,5 +5,15 @@ import mpsmechanics as mc
 import mps
 
 if __name__ == "__main__":
-    for filename in sys.argv[1:-1]:
-        motion = mc.track_motion(filename, sys.argv[-1])
+    input_files = sys.argv[1:-1]
+    method = sys.argv[-1]
+
+    assert method in ["mean", "median", "minmax", \
+            "velocity", "firstframe"]
+
+    for f in input_files:
+        try:
+            motion = mc.track_motion(f, method)
+        except Exception as e:
+            print("Could not run motion tracking; error ", e)
+            print("Launching next data set ..")

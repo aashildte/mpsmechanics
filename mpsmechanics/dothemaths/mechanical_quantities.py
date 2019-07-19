@@ -43,110 +43,74 @@ def calc_prevalence(data, threshold):
     return op.perform_operation(dxdt, f_th, over_time=True)
 
 
-def _def_tensor_step(data):
-    """
-
-    Calculates the deformation gradient over a given X x Y data set.
-
-    Args:
-        data - numpy array of dimensions X x Y x 2
-
-    Returns:
-        deformation gradient for all points, numpy array of
-        dimensions X x Y x 2 x 2
-
-    """
-
-    dudx = np.gradient(data[:, :, 0], axis=0)
-    dudy = np.gradient(data[:, :, 0], axis=1)
-    dvdx = np.gradient(data[:, :, 1], axis=0)
-    dvdy = np.gradient(data[:, :, 1], axis=1)
-
-    X, Y = data.shape[:2]
-    F = np.zeros((data.shape + (2, )))
-
-    for x in range(X):
-        for y in range(Y):
-            F[x, y] = np.array([[dudx[x, y] + 1, \
-                                 dudy[x, y]], \
-                                [dvdx[x, y], \
-                                 dvdy[x, y] + 1]])
-
-    return F
-
-
-def calc_deformation_tensor(data, over_time):
+def calc_deformation_tensor(data):
     """
     Computes the deformation tensor F from values in data
 
     Args:
-        data - numpy array of dimensions (T x) X x Y x 2
-        over_time - boolean value; determines if T dimension
-            should be included or not
+        data - numpy array of dimensions T x X x Y x 2
 
     Returns:
-        F, deformation tensor, of dimensions (T x) X x Y x 4
+        F, deformation tensor, of dimensions T x X x Y x 4
 
-    """
+    """    
 
-    if over_time:
-        F = np.zeros((data.shape) + (2, ))
-        T = data.shape[0]
+    dudx = np.gradient(data[:, :, :, 0], axis=0)
+    dudy = np.gradient(data[:, :, :, 0], axis=1)
+    dvdx = np.gradient(data[:, :, :, 1], axis=0)
+    dvdy = np.gradient(data[:, :, :, 1], axis=1)
 
-        for t in range(T):
-            F[t] = _def_tensor_step(data[t])
-
-    else:
-        F = _def_tensor_step(data)
+    F = np.swapaxes(np.swapaxes(np.swapaxes(np.swapaxes(\
+            np.array(((dudx, dudy), \
+                      (dvdx, dvdy))), \
+                      0, -2), 1, -1), 0, 2), 1, 2) \
+             + np.eye(2)[None, None, None, :, :]
 
     return F
 
 
-def calc_cauchy_green_tensor(data, over_time):
+def calc_cauchy_green_tensor(data):
     """
     Computes the transpose along the third dimension of data; if data
     represents the deformation gradient tensor F (over time and 2 spacial
     dimensions) this corresponds to the cauchy green tensor C.
 
     Args:
-        data - numpy array of dimensions (T x) X x Y x 2 x 2
-        over_time - boolean value; determines if T dimension
-            should be included or not
+        data - numpy array of dimensions T x X x Y x 2 x 2
 
     Returns
-        C, numpy array of dimensions (T x) X x Y x 2 x 2
+        C, numpy array of dimensions T x X x Y x 2 x 2
 
     """
 
-    F = calc_deformation_tensor(data, over_time=over_time)
-    f = lambda x, i, j: x.transpose()*x
+    F = calc_deformation_tensor(data)
 
-    return op.perform_operation(F, f, over_time=over_time)
+    return np.matmul(F, F.transpose(0, 1, 2, 4, 3))
 
 
-def calc_principal_strain(data, over_time):
+def calc_principal_strain(data):
     """
     Computes the principal strain defined to be the largest eigenvector
     (eigenvector corresponding to largest eigenvalue, scaled) of the
     Cauchy-Green tensor, for each point (t, x, y).
 
     Args:
-        data - displacement data, numpy array of dimension (T x) X x Y x 2
-        over_time - boolean value; determines if T dimension
-            should be included or not
+        data - displacement data, numpy array of dimension T x X x Y x 2
 
     Returns:
-        principal strain - numpy array of dimension (T x) X x Y x 2
+        principal strain - numpy array of dimension T x X x Y x 2
 
     """
+    
+    C = calc_cauchy_green_tensor(data)
 
-    C = calc_cauchy_green_tensor(data, over_time=over_time)
+    eigenvalues, eigenvectors = np.linalg.eig(C)
 
-    f = lambda x, i, j, \
-            find_ps=lambda S : S[0][0]*S[1][0] if (S[0][0] > S[0][1]) \
-                else S[0][1]*S[1][1] : \
-            find_ps(np.linalg.eig(x))
+    eigen_filter = np.swapaxes(np.swapaxes(np.swapaxes(\
+            np.array((eigenvalues[:,:,:,0],
+                      eigenvalues[:,:,:,1])),\
+                        0, 1), 1, 2), 2, 3)
 
-    P = op.perform_operation(C, f, over_time=over_time)
-
-    return P
+    return np.where(eigen_filter, \
+            eigenvectors[:,:,:,0], \
+            eigenvectors[:,:,:,1])

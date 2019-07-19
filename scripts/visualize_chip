@@ -21,7 +21,6 @@ import mpsmechanics as mc
 
 if __name__ == "__main__":
 
-
     try:
         input_files = sys.argv[1:-1]
         layers = sys.argv[-1]
@@ -31,4 +30,8 @@ if __name__ == "__main__":
         exit(-1)
 
     for f_in in input_files:
-        mc.visualize_chip(f_in, layers)
+        try:
+            mc.visualize_chip(f_in, layers)
+        except Exception as e:
+            print("Could not run visualization; error ", e)
+            print("Launching next data set ..")

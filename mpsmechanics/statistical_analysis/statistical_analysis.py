@@ -30,10 +30,15 @@ def _read_data(input_files, layer_name, layer_fn):
 
         dose, media = path.split("/")[-2:]
 
-        data = read_prev_layer(f_in, layer_name, layer_fn)
+        try:
+            data = read_prev_layer(f_in, layer_name, layer_fn)
         
-        all_maxima[dose][media][filename] = \
+            all_maxima[dose][media][filename] = \
                 np.max(data["over_time_avg"]["displacement_um"])  # e.g.
+        except Exception as e:
+            print("Could not run statistical analysis; error ", e)
+            print("Launching next data set ..")
+        
 
     doses_keys = list(all_maxima.keys())
     media_keys = list(all_maxima[doses_keys[0]].keys())

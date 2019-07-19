@@ -37,17 +37,19 @@ def chip_statistics(data, displacement, dt):
 
     Args:
         data - dictionary with attributes as keys, data over space
-            and time as values
+            and time as values; each array (value) is assumed to
+            be of dimension T x A x B x D where
+                A and B describes point distribution
+                D gives dimension of values
 
     Returns;
         dictionary with values, folded distributions, moments, and
             some values of general interest
 
     """
-    
-    fn_folded = lambda x: np.linalg.norm(x, axis=2)
-    fn_mean = lambda x: np.mean(x, axis=1)
-    fn_std = lambda x: np.std(x, axis=1)
+    fn_folded = lambda x: np.linalg.norm(x, axis=3)
+    fn_mean = lambda x: np.mean(x, axis=(1, 2))
+    fn_std = lambda x: np.std(x, axis=(1, 2))
 
     d_all = {}
 

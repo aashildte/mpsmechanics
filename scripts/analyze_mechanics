@@ -28,5 +28,14 @@ import mpsmechanics as mc
 if __name__ == "__main__":
     input_files = sys.argv[1:-1]
     method = sys.argv[-1]
+
+    assert method in ["mean", "median", "minmax", \
+            "velocity", "firstframe"]
+
     for f in input_files:
-        mc.analyze_mechanics(f, method)
+        try:
+            mc.analyze_mechanics(f, method)
+        except Exception as e:
+            print("Could not run mechanical analysis; error ", e)
+            print("Launching next data set ..")
+

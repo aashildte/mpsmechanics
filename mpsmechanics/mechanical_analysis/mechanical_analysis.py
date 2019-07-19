@@ -29,30 +29,23 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
         dt - time step (frame rate)
 
     Returns:
-        displacement - T x X x Y x 2
+        displacement in um - T x X x Y x 2
         xmotion - T x X x Y x 1
         velocity - T x X x Y x 2
         principal strain - T x X x Y x 2
 
     """
 
-    displacement = (1/scale)*displacement       # pixels to to um
+    dims = displacement.shape
 
-    t_dim, x_dim, y_dim, _ = displacement.shape
-    vector_shape = (t_dim, x_dim*y_dim, 2)
-    scalar_shape = (t_dim, x_dim*y_dim, 1)
+    displacement = (1/scale)*displacement
 
-    xmotion = calc_projection_values(displacement, \
-            angle).reshape(scalar_shape)
+    xmotion = calc_projection_values(displacement, angle).\
+            reshape(dims[0], dims[1], dims[2], 1)
 
-    velocity = 1/dt*(np.gradient(displacement, \
-            axis=0)).reshape(vector_shape)
-    
-    # TODO speed up this step
-    principal_strain = calc_principal_strain(displacement, \
-            over_time=True).reshape(vector_shape)
-    
-    displacement = displacement.reshape(vector_shape)
+    velocity = 1/dt*(np.gradient(displacement, axis=0))
+
+    principal_strain = calc_principal_strain(displacement)
 
     return displacement, xmotion, velocity, principal_strain
 
@@ -76,7 +69,7 @@ def analyze_mechanics(input_file, method, save_data=True):
 
     displacement, xmotion, velocity, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, dt)
-
+    
     # over space and time (original data)
 
     values = {"displacement" : displacement,
@@ -92,6 +85,6 @@ def analyze_mechanics(input_file, method, save_data=True):
                       "principal strain" : r"(-)"}
 
     if save_data:
-        save_dictionary(input_file, "analyze_mechanics", d_all)
+        save_dictionary(input_file, "analyze_mechanics_" + method, d_all)
 
     return d_all

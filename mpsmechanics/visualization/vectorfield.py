@@ -14,11 +14,15 @@ from ..pillar_tracking.pillar_tracking import track_pillars
 def animate_vectorfield(vectors, fname="animation", framerate=None, images=None, \
             extension="mp4", dpi=300, dx=5):
 
+    D = vectors.shape[-1]
+
+    if D!=2:
+        print("Only defined for 2D vectors")
+        return
+    
     # tmp solution ...
 
-    vectors = np.swapaxes(np.swapaxes(np.swapaxes(vectors, \
-            2, 3), 1, 2), 0, 1)
-
+    vectors = np.swapaxes(np.swapaxes(np.swapaxes(vectors, 0, 1), 1, 2), 2, 3)
     # from motion tracking
 
     extensions = ["gif", "mp4"]
@@ -42,7 +46,7 @@ def animate_vectorfield(vectors, fname="animation", framerate=None, images=None,
     Q = ax.quiver(
         y[::dx],
         x[::dx],
-        vectors[::dx, ::dx, 1, 0],
+        -vectors[::dx, ::dx, 1, 0],
         vectors[::dx, ::dx, 0, 0],
         color="r",
         units="xy",
@@ -91,5 +95,5 @@ def visualize_vectorfield(f_in, layers, save_data=True):
         
         for key in data["all_values"].keys():
             animate_vectorfield(data["all_values"][key], framerate=100, \
-                    fname=os.path.join(output_folder, "animation"))
+                    fname=os.path.join(output_folder, "animation_" + key))
 

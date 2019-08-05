@@ -124,14 +124,19 @@ def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y):
 
     # store data - as an average of all meshpoints
 
-    all_values = np.zeros((T, no_pillars, no_meshpts, 2))
+    rel_values = np.zeros((T, no_pillars, no_meshpts, 2))
 
     for t in range(T):
-        all_values[t] = \
+        rel_values[t] = \
                 _calculate_current_timestep(x_coords, y_coords, \
                                             data_disp[t], pillars)
 
-    return all_values
+    # absolute values: add relative to first positions
+
+    abs_values = rel_values + pillars[None, :, :, :]
+
+    return rel_values, abs_values
+
 
 def _find_pillar_positions_file(f_disp):
     """
@@ -162,7 +167,7 @@ def _find_pillar_positions_file(f_disp):
         return csv_file
 
 
-def track_pillars(f_disp, method, L=50E-6, R=10E-6, E=2.63E-6, \
+def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
         save_data=True):
     """
 
@@ -170,7 +175,6 @@ def track_pillars(f_disp, method, L=50E-6, R=10E-6, E=2.63E-6, \
 
     Arguments:
         f_disp - filename for displacement data
-        method - for ref. frame
         L - ??
         R - ??
         E - ??
@@ -189,36 +193,40 @@ def track_pillars(f_disp, method, L=50E-6, R=10E-6, E=2.63E-6, \
     # displacement data and positions of pillars
 
     data_disp, scaling_factor, angle, dt, size_x, size_y = \
-            read_mt_file(f_disp, method)
+            read_mt_file(f_disp)
     pillars_mpoints = read_pt_file(f_pts)
 
     print("Tracking pillars for data set: ", f_disp)
 
-    values_px = _track_pillars_over_time(data_disp, \
+    rel_values_px, abs_values_px = \
+            _track_pillars_over_time(data_disp, \
             pillars_mpoints, size_x, size_y)
     
-    dims = values_px.shape
-
     # then do a couple of transformations ..
 
-    values_um = 1/scaling_factor*values_px
+    rel_values_um = 1/scaling_factor*rel_values_px
+    abs_values_um = 1/scaling_factor*abs_values_px
 
     area = L * R * np.pi * 1E6  # area in mm^2 half cylinder area
-    values_m = 1e-6 * values_um
+    values_m = 1e-6 * rel_values_um
 
     force = displacement_to_force(values_m, E, L, R)
     forceperarea = displacement_to_force_area(values_m, E, \
             L, R, area)
 
-    values = {"displacement_px" : values_px,
-              "displacement_um" : values_um,
+    values = {"absolute_displacement_px" : abs_values_px,
+              "absolute_displacement_um" : abs_values_um,
+              "relative_displacement_px" : rel_values_px,
+              "relative_displacement_um" : rel_values_um,
               "force" : force,
               "force_per_area" : forceperarea}
 
     d_all = chip_statistics(values, data_disp, dt)
 
-    d_all["units"] = {"displacement_px" : "px",
-                     "displacement_um" : "$\mu m$",
+    d_all["units"] = {"relative_displacement_px" : "px",
+                     "relative_displacement_um" : "$\mu m$",
+                    "absolute_displacement_px" : "px",
+                     "absolute_displacement_um" : "$\mu m$",
                      "force" : "$F$",
                      "force_per_area" : "$F/mm^2$"}
 
@@ -226,10 +234,7 @@ def track_pillars(f_disp, method, L=50E-6, R=10E-6, E=2.63E-6, \
 
     saveas = "track_pillars"
 
-    if method is not None:
-        saveas += "_" + method
-
     if(save_data):
-        save_dictionary(f_disp, saveas, d_all)
+        save_dictionary(f_disp, "track_pillars", d_all)
 
     return d_all

@@ -17,7 +17,8 @@ import mps
 from .data_layer import read_prev_layer
 from ...motion_tracking.motion_tracking import track_motion
 
-def read_mt_file(filename, method):
+
+def read_mt_file(filename):
     """
 
     Passes on filename based on extension.
@@ -36,12 +37,12 @@ def read_mt_file(filename, method):
             "Unknown file formate"
 
     if ".nd2" in filename:
-        return _read_file_nd2(filename, method)
+        return _read_file_nd2(filename)
 
     print("TODO : Implement npy file formate.")
 
 
-def _read_file_nd2(filename, method):
+def _read_file_nd2(filename):
     """
     Gets displacement from the mt module.
 
@@ -58,8 +59,8 @@ def _read_file_nd2(filename, method):
     """
 
     save_data = True
-    layer_name = "track_motion_" + method
-    layer_fn = lambda f_in, save_data, method=method: track_motion(f_in, method, save_data=save_data)
+    layer_name = "track_motion"
+    layer_fn = lambda f_in, save_data: track_motion(f_in, save_data=save_data)
 
     data = read_prev_layer(filename, layer_name, layer_fn, save_data)
 

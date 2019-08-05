@@ -28,7 +28,7 @@ if __name__ == "__main__":
     except:
         print('Expected arguments: files, layers (one string), ' + \
         'sort by (one string); e.g. "calculate_stats_chips */*/*.nd2' + \
-        '"track_pillars_minmax" "no_dose 1nM 10nM 100nM 1uM"')
+        '"track_pillars" "no_dose 1nM 10nM 100nM 1uM"')
         exit(-1)
 
     mc.calculate_stats_chips(input_files, layers, sort_by)

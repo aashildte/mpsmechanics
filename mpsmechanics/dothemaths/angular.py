@@ -11,7 +11,6 @@ Performs operations relatd to the angular properties of given data.
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 from . import operations as op
 

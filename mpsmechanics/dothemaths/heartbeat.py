@@ -10,7 +10,6 @@ Calculates beat rate + gives interval splitting based on maxima
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 from . import operations as op
 
@@ -149,7 +148,6 @@ def calc_beat_minmax(data):
 
     Args:
         data - numpy array, displacement values over time
-        plt_pr - dictionary defining visual output
 
     Returns:
         list of minimum indices

@@ -50,7 +50,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
     return displacement, xmotion, velocity, principal_strain
 
 
-def analyze_mechanics(input_file, method, save_data=True):
+def analyze_mechanics(input_file, save_data=True):
     """
 
     Args:
@@ -65,7 +65,7 @@ def analyze_mechanics(input_file, method, save_data=True):
     # read + preprocess data
     print("input file: ", input_file)
 
-    disp_data, scale, angle, dt, _, _ = md.read_mt_file(input_file, method)
+    disp_data, scale, angle, dt, _, _ = md.read_mt_file(input_file)
 
     displacement, xmotion, velocity, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, dt)
@@ -85,6 +85,6 @@ def analyze_mechanics(input_file, method, save_data=True):
                       "principal strain" : r"(-)"}
 
     if save_data:
-        save_dictionary(input_file, "analyze_mechanics_" + method, d_all)
+        save_dictionary(input_file, "analyze_mechanics" , d_all)
 
     return d_all

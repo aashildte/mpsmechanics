@@ -211,8 +211,8 @@ def block_matching(reference_image, image, block_size, max_block_movement):
                     vectors[y_block, x_block, 0] = 0
                     vectors[y_block, x_block, 1] = 0
                 else:
-                    vectors[y_block, x_block, 0] = dy[0] - max_block_movement
-                    vectors[y_block, x_block, 1] = dx[0] - max_block_movement
+                    vectors[y_block, x_block, 0] = max_block_movement - dy[0]
+                    vectors[y_block, x_block, 1] = max_block_movement - dx[0]
             else:
                 # If no values in box set to no movement
                 vectors[y_block, x_block, :] = 0

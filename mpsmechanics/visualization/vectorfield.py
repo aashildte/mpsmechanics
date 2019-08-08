@@ -94,6 +94,6 @@ def visualize_vectorfield(f_in, layers, save_data=True):
         # average over time
         
         for key in data["all_values"].keys():
-            animate_vectorfield(data["all_values"][key], framerate=100, \
+            animate_vectorfield(data["all_values"][key], framerate=40, \
                     fname=os.path.join(output_folder, "animation_" + key))
 

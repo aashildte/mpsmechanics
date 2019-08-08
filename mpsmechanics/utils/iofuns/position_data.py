@@ -8,8 +8,6 @@ Function for reading initial position file
 
 """
 
-
-
 import numpy as np
 import pandas as pd
 

@@ -21,7 +21,7 @@ from ..utils.iofuns.save_values import save_dictionary
 from .forcetransformation import displacement_to_force, \
         displacement_to_force_area
 
-def _define_pillars(p_values, no_meshpts=200):
+def _define_pillars(p_values, tracking_type = 'large_radius', no_meshpts=200):
     """
 
     Defines circle to mark the pillar's circumference, based on
@@ -53,9 +53,23 @@ def _define_pillars(p_values, no_meshpts=200):
 
         #TODO something like pillars[i, :, 0] = x_pos + radius*np.cos(angles)
 
-        for j in range(no_meshpts):
-            pillars[i, j, 0] = x_pos + radius*np.cos(angles[j])
-            pillars[i, j, 1] = y_pos + radius*np.sin(angles[j])
+        if tracking_type == "large_radius":
+
+            for j in range(no_meshpts):
+                pillars[i, j, 0] = x_pos + radius*np.cos(angles[j])
+                pillars[i, j, 1] = y_pos + radius*np.sin(angles[j])
+
+        elif tracking_type == "small_radius":
+            small_radius -= 3
+            for j in range(no_meshpts):
+                pillars[i, j, 0] = x_pos + small_radius*np.cos(angles[j])
+                pillars[i, j, 1] = y_pos + small_radius*np.sin(angles[j])
+
+        else:
+            for j in range(no_meshpts):
+                random_radius = np.random.uniform(0, radius)
+                pillars[i, j, 0] = x_pos + random_radius*np.cos(angles[j])
+                pillars[i, j, 1] = y_pos + random_radius*np.sin(angles[j])
 
     return pillars
 
@@ -93,7 +107,8 @@ def _calculate_current_timestep(x_coords, y_coords, data_disp, pillars):
     return disp_values
 
 
-def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y, no_meshpts=200):
+def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y,
+                             tracking_type, no_meshpts=200):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
@@ -113,7 +128,7 @@ def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y, no_mesh
 
     # define pillars by their circumference
 
-    pillars = _define_pillars(pillars_mpoints, no_meshpts)
+    pillars = _define_pillars(pillars_mpoints, tracking_type=tracking_type, no_meshpts=no_meshpts)
 
     # some general values
     T, x_dim, y_dim = data_disp.shape[:3]
@@ -131,7 +146,6 @@ def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y, no_mesh
                                             data_disp[t], pillars)
 
     # absolute values: add relative to first positions
-
     abs_values = rel_values + pillars[None, :, :, :]
 
     return rel_values, abs_values
@@ -167,7 +181,7 @@ def _find_pillar_positions_file(f_disp):
 
 
 def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
-        save_data=True, no_meshpts=200):
+        save_data=True, tracking_type='large_radius', no_meshpts=200):
     """
 
     Tracks points corresponding to "pillars" over time.
@@ -196,10 +210,9 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
     pillars_mpoints = read_pt_file(f_pts)
 
     print("Tracking pillars for data set: ", f_disp)
-
     rel_values_px, abs_values_px = \
             _track_pillars_over_time(data_disp, \
-            pillars_mpoints, size_x, size_y, no_meshpts)
+            pillars_mpoints, size_x, size_y, no_meshpts=no_meshpts, tracking_type=tracking_type)
     
     # then do a couple of transformations ..
     rel_values_um = 1/scaling_factor*rel_values_px

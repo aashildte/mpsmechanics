@@ -93,7 +93,7 @@ def _calculate_current_timestep(x_coords, y_coords, data_disp, pillars):
     return disp_values
 
 
-def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y):
+def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y, no_meshpts=200):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
@@ -113,7 +113,7 @@ def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y):
 
     # define pillars by their circumference
 
-    pillars = _define_pillars(pillars_mpoints)
+    pillars = _define_pillars(pillars_mpoints, no_meshpts)
 
     # some general values
     T, x_dim, y_dim = data_disp.shape[:3]
@@ -123,7 +123,6 @@ def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y):
     y_coords = np.linspace(0, size_y, y_dim)
 
     # store data - as an average of all meshpoints
-
     rel_values = np.zeros((T, no_pillars, no_meshpts, 2))
 
     for t in range(T):
@@ -168,7 +167,7 @@ def _find_pillar_positions_file(f_disp):
 
 
 def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
-        save_data=True):
+        save_data=True, no_meshpts=200):
     """
 
     Tracks points corresponding to "pillars" over time.
@@ -200,10 +199,9 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
 
     rel_values_px, abs_values_px = \
             _track_pillars_over_time(data_disp, \
-            pillars_mpoints, size_x, size_y)
+            pillars_mpoints, size_x, size_y, no_meshpts)
     
     # then do a couple of transformations ..
-
     rel_values_um = 1/scaling_factor*rel_values_px
     abs_values_um = 1/scaling_factor*abs_values_px
 
@@ -231,8 +229,6 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
                      "force_per_area" : "$F/mm^2$"}
 
     print("Pillar tracking for " + f_disp + " finished")
-
-    saveas = "track_pillars"
 
     if(save_data):
         save_dictionary(f_disp, "track_pillars", d_all)

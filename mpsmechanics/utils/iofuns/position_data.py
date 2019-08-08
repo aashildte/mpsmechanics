@@ -30,11 +30,12 @@ def read_pt_file(f_in):
     if(".csv" in f_in):
         return _read_pt_file_csv(f_in)
     elif(".npy" in f_in):
-        return _read_pt_file_nd2(f_in)
+        return _read_pt_file_npy(f_in)
     else:
         print("Error: Uknown file formate.")
 
-def _read_pt_file_nd2(f_in):
+
+def _read_pt_file_npy(f_in):
     """
 
     Reads in values for pillar coordinates + radii.

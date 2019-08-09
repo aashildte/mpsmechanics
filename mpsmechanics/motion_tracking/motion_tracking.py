@@ -474,7 +474,8 @@ class MotionTracking(object):
         self._load_cache(reset_cache)
 
     def _load_cache(self, reset):
-        """Load results that is allready saved
+        """
+        Load results that is already saved
         """
         if self.use_cache:
             if cachename(self._cachename).is_file():

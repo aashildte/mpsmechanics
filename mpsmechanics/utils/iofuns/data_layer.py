@@ -11,11 +11,11 @@ import numpy as np
 
 from .folder_structure import get_input_properties
 
-def read_prev_layer(input_file, layer, layer_fn, save_data=True):
+def read_prev_layer(input_file, layer, layer_fn, outdir, save_data=True):
     """
 
     Reads data from a layer "up" in the hierarchy. If already
-    calcualted, we'll use previous calculations. If not, the
+    calculated, we'll use previous calculations. If not, the
     relevant functions are called, and the calculated data can
     be saved for possibly reusability.
 
@@ -35,11 +35,13 @@ def read_prev_layer(input_file, layer, layer_fn, save_data=True):
     assert ext == "nd2", "File must be an nd2 file"
 
     data_path = os.path.join(path, \
-            os.path.join(filename, layer + ".npy"))
+            os.path.join(outdir, layer + ".npy"))
+
+    print('Looking for File: ', data_path)
     
     if not os.path.isfile(data_path):
-        print("Previous data not accessible. Recalculating ..")
+        print("Previous data not accessible. Recalculating ...")
         return layer_fn(input_file, save_data=save_data)
 
-    print("Previous data found, loading ..")
+    print("Previous data found, loading ...")
     return np.load(data_path, allow_pickle=True).item()

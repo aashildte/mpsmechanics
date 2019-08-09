@@ -34,12 +34,12 @@ def read_mt_file(filename, outdir, max_motion):
     """
 
     assert (".nd2" in filename or ".npy" in filename), \
-            "Unknown file formate"
+            "Unknown file format."
 
     if ".nd2" in filename:
         return _read_file_nd2(filename, outdir, max_motion)
 
-    print("TODO : Implement npy file formate.")
+    print("TODO : Implement npy file format.")
 
 
 def _read_file_nd2(filename, outdir, max_motion):
@@ -62,7 +62,7 @@ def _read_file_nd2(filename, outdir, max_motion):
     layer_name = "track_motion"
     layer_fn = lambda f_in, save_data: track_motion(f_in, outdir, max_motion, save_data=save_data)
 
-    data = read_prev_layer(filename, layer_name, layer_fn, save_data)
+    data = read_prev_layer(filename, layer_name, layer_fn, outdir, save_data)
 
     return data["data_disp"], data["scaling_factor"], data["angle"], \
             data["dt"], data["size_x"], data["size_y"]

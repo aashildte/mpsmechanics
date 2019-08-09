@@ -60,7 +60,7 @@ def _define_pillars(p_values, tracking_type = 'large_radius', no_meshpts=200):
                 pillars[i, j, 1] = y_pos + radius*np.sin(angles[j])
 
         elif tracking_type == "small_radius":
-            small_radius -= 3
+            small_radius = radius - 9
             for j in range(no_meshpts):
                 pillars[i, j, 0] = x_pos + small_radius*np.cos(angles[j])
                 pillars[i, j, 1] = y_pos + small_radius*np.sin(angles[j])
@@ -151,7 +151,7 @@ def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y,
     return rel_values, abs_values
 
 
-def _find_pillar_positions_file(f_disp):
+def _find_pillar_positions_file(outdir):
     """
 
     TODO change to npy files
@@ -165,11 +165,8 @@ def _find_pillar_positions_file(f_disp):
 
     """
 
-    path, filename, _ = get_input_properties(f_disp)
-    path_f = os.path.join(path, filename)
-
-    npy_file = os.path.join(path_f, "pillars.npy")
-    csv_file = os.path.join(path_f, "pillars.csv")
+    npy_file = os.path.join(outdir, "pillars.npy")
+    csv_file = os.path.join(outdir, "pillars.csv")
 
     assert os.path.isfile(npy_file) or os.path.isfile(csv_file), \
         "Error: No pillar position file found."
@@ -180,8 +177,8 @@ def _find_pillar_positions_file(f_disp):
         return csv_file
 
 
-def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
-        save_data=True, tracking_type='large_radius', no_meshpts=200):
+def track_pillars(f_disp, outdir, L=50E-6, R=10E-6, E=2.63E-6, \
+        save_data=True, tracking_type='large_radius', no_meshpts=200, max_motion=3):
     """
 
     Tracks points corresponding to "pillars" over time.
@@ -201,12 +198,11 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
     assert (".csv" in f_disp) or (".nd2" in f_disp), \
         "Displacement file must be a csv or nd2 file"
 
-    f_pts = _find_pillar_positions_file(f_disp)
+    f_pts = _find_pillar_positions_file(outdir)
 
     # displacement data and positions of pillars
-
     data_disp, scaling_factor, angle, dt, size_x, size_y = \
-            read_mt_file(f_disp)
+            read_mt_file(f_disp, outdir, max_motion)
     pillars_mpoints = read_pt_file(f_pts)
 
     print("Tracking pillars for data set: ", f_disp)
@@ -244,6 +240,6 @@ def track_pillars(f_disp, L=50E-6, R=10E-6, E=2.63E-6, \
     print("Pillar tracking for " + f_disp + " finished")
 
     if(save_data):
-        save_dictionary(f_disp, "track_pillars", d_all)
+        save_dictionary(outdir, "track_pillars", d_all)
 
     return d_all

@@ -31,7 +31,7 @@ def read_pt_file(f_in):
     elif(".npy" in f_in):
         return _read_pt_file_nd2(f_in)
     else:
-        print("Error: Uknown file formate.")
+        print("Error: Unknown file format.")
 
 def _read_pt_file_nd2(f_in):
     """

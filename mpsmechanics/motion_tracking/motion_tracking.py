@@ -39,14 +39,11 @@ from pathlib import Path
 from collections import namedtuple
 import hashlib
 import pickle
-import warnings
 import itertools
 import concurrent.futures
-from scipy.signal import medfilt, find_peaks, detrend
 from scipy import ndimage
 import scipy.stats as st
 import numpy as np
-import matplotlib.pyplot as plt
 
 import mps
 
@@ -947,7 +944,7 @@ class MotionTracking(object):
         )
 
 
-def track_motion(input_file, use_cache=True, save_data=True):
+def track_motion(input_file, outdir, max_motion=3, use_cache=True, save_data=True):
     """
 
     Args:
@@ -964,7 +961,8 @@ def track_motion(input_file, use_cache=True, save_data=True):
     mt_data = mps.MPS(input_file)
 
     scaling_factor = mt_data.info['um_per_pixel']
-    motion = MotionTracking(mt_data, reference_frame="median", use_cache=use_cache)
+    motion = MotionTracking(mt_data, outdir=outdir, reference_frame="median", use_cache=use_cache,
+                            max_block_movement=max_motion)
 
     # get right reference frame
 
@@ -991,6 +989,6 @@ def track_motion(input_file, use_cache=True, save_data=True):
 
 
     if(save_data):
-        save_dictionary(input_file, "track_motion", d_all)
+        save_dictionary(outdir, "track_motion", d_all)
     
     return d_all

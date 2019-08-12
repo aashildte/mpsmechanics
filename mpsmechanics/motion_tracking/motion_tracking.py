@@ -946,7 +946,6 @@ class MotionTracking(object):
             ),
         )
 
-
 def track_motion(input_file, use_cache=True, save_data=True):
     """
 
@@ -960,9 +959,8 @@ def track_motion(input_file, use_cache=True, save_data=True):
             mps file
 
     """
-
+    
     mt_data = mps.MPS(input_file)
-
     scaling_factor = mt_data.info['um_per_pixel']
     motion = MotionTracking(mt_data, reference_frame="median", use_cache=use_cache)
 
@@ -971,9 +969,6 @@ def track_motion(input_file, use_cache=True, save_data=True):
     data_disp = motion.displacement_vectors
     angle = motion.angle
 
-    # saveas = input_file[:-4] + "_animation"   # - ".nd2"
-    # mps.plotter.animate_vectorfield(data_disp, fname=saveas, framerate=5)
-
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
 
     data_disp = np.swapaxes(np.swapaxes(np.swapaxes(\
@@ -981,16 +976,11 @@ def track_motion(input_file, use_cache=True, save_data=True):
 
     # save values
 
-    d_all = {} 
-    d_all["data_disp"] = data_disp
-    d_all["scaling_factor"] = scaling_factor
+    d_all = {}
+    d_all["displacement vectors"] = data_disp
     d_all["angle"] = angle
-    d_all["dt"] = mt_data.dt
-    d_all["size_x"] = mt_data.size_x
-    d_all["size_y"] = mt_data.size_y
-
 
     if(save_data):
         save_dictionary(input_file, "track_motion", d_all)
-    
+
     return d_all

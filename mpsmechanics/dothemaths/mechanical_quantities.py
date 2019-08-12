@@ -69,7 +69,7 @@ def calc_deformation_tensor(data):
     return F
 
 
-def calc_cauchy_green_tensor(data):
+def calc_cauchy_green_deformation_tensor(data):
     """
     Computes the transpose along the third dimension of data; if data
     represents the deformation gradient tensor F (over time and 2 spacial
@@ -85,7 +85,7 @@ def calc_cauchy_green_tensor(data):
 
     F = calc_deformation_tensor(data)
 
-    return np.matmul(F, F.transpose(0, 1, 2, 4, 3))
+    return 0.5*(np.matmul(F, F.transpose(0, 1, 2, 4, 3)) -  np.eye(2)[None, None, None, :, :])
 
 
 def calc_principal_strain(data):
@@ -102,15 +102,26 @@ def calc_principal_strain(data):
 
     """
     
-    C = calc_cauchy_green_tensor(data)
+    C = calc_cauchy_green_deformation_tensor(data)
+    
+    T, X, Y, _, _ = C.shape
 
     eigenvalues, eigenvectors = np.linalg.eig(C)
 
-    eigen_filter = np.swapaxes(np.swapaxes(np.swapaxes(\
-            np.array((eigenvalues[:,:,:,0],
-                      eigenvalues[:,:,:,1])),\
-                        0, 1), 1, 2), 2, 3)
+    eigen_filter = np.abs(eigenvalues[:,:,:,0]) > np.abs(eigenvalues[:,:,:,1])
 
-    return np.where(eigen_filter, \
-            eigenvectors[:,:,:,0], \
-            eigenvectors[:,:,:,1])
+    # TODO there must be a numpy function for this ..
+
+    pr_strain = np.zeros((T, X, Y, 2))
+
+    for t in range(T):
+        for x in range(X):
+            for y in range(Y):
+                if(eigen_filter[t, x, y]):
+                    pr_strain[t, x, y] = eigenvalues[t, x, y, 0]*\
+                            eigenvectors[t, x, y, 0]
+                else:
+                    pr_strain[t, x, y] = eigenvalues[t, x, y, 1]*\
+                            eigenvectors[t, x, y, 1] 
+    
+    return pr_strain

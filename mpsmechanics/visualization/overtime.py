@@ -54,7 +54,7 @@ def stats_over_time(f_in, layer_name, layer_fn, save_data):
     """
     
     output_folder = os.path.join(\
-            make_dir_layer_structure(f_in, "visualize_chip"), layer_name)
+            make_dir_layer_structure(f_in, "visualize_over_time"), layer_name)
     make_dir_structure(output_folder)
     
     data = read_prev_layer(f_in, layer_name, layer_fn, save_data)
@@ -66,7 +66,7 @@ def stats_over_time(f_in, layer_name, layer_fn, save_data):
                        key, data["units"][key], output_folder)
 
 
-def visualize_chip(f_in, layers, save_data=True):
+def visualize_over_time(f_in, layers, save_data=True):
     """
 
     Visualize mechanics - "main function"

@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     for f_in in input_files:
         try:
-            mc.visualize_chip(f_in, layers)
+            mc.visualize_over_time(f_in, layers)
         except Exception as e:
             print("Could not run visualization; error ", e)
             print("Launching next data set ..")

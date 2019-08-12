@@ -4,6 +4,8 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
+import mps
+
 from ..utils.iofuns.data_layer import read_prev_layer
 from ..utils.iofuns.folder_structure import make_dir_structure, \
         make_dir_layer_structure
@@ -23,6 +25,7 @@ def animate_vectorfield(vectors, fname="animation", framerate=None, images=None,
     # tmp solution ...
 
     vectors = np.swapaxes(np.swapaxes(np.swapaxes(vectors, 0, 1), 1, 2), 2, 3)
+
     # from motion tracking
 
     extensions = ["gif", "mp4"]
@@ -37,12 +40,16 @@ def animate_vectorfield(vectors, fname="animation", framerate=None, images=None,
     y = np.linspace(0, Ny, vectors.shape[1])
 
     block_size = Nx // vectors.shape[0]
-    scale = max(np.divide(vectors.shape[:2], block_size)) / 5.0
+    print("min, max: ", np.min(vectors), np.max(vectors))
+    scale = np.max(np.abs(vectors)) #max(np.divide(vectors.shape[:2], block_size))
+    print("scale: ", scale)
+
 
     figsize = (2 * Ny / vectors.shape[1], 2 * Nx / vectors.shape[0])
     fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
     if images is not None:
         im = ax.imshow(images[:, :, 0], cmap=cm.gray)
+    
     Q = ax.quiver(
         y[::dx],
         x[::dx],
@@ -57,6 +64,7 @@ def animate_vectorfield(vectors, fname="animation", framerate=None, images=None,
 
     def update(idx):
         Q.set_UVC(-vectors[::dx, ::dx, 1, idx], vectors[::dx, ::dx, 0, idx])
+        
         if images is not None:
             im.set_array(images[:, :, idx])
 
@@ -82,18 +90,22 @@ def visualize_vectorfield(f_in, layers, save_data=True):
     """
     layers = layers.split(" ")
 
+    mt_data = mps.MPS(f_in)
+
     for layer in layers:
         layer_fn = eval(layer)
-
+    
         output_folder = os.path.join(\
-                make_dir_layer_structure(f_in, "visualize_vectorfield"), layer)
+                make_dir_layer_structure(f_in, \
+                "visualize_vectorfield"), layer)
         make_dir_structure(output_folder)
 
         data = read_prev_layer(f_in, layer, layer_fn, save_data)
 
         # average over time
-        
-        for key in data["all_values"].keys():
-            animate_vectorfield(data["all_values"][key], framerate=100, \
-                    fname=os.path.join(output_folder, "animation_" + key))
+         
+        for key in data["all_values"].keys(): 
+            animate_vectorfield(data["all_values"][key], \
+                    framerate=0.1*mt_data.framerate, \
+                    fname=os.path.join(output_folder, "vectorfield_" + key))
 

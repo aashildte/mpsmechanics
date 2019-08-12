@@ -8,12 +8,15 @@ Computes mechanical quantities over space and time.
 """
 
 import numpy as np
+import mps
 
+from ..motion_tracking.motion_tracking import track_motion
 from ..dothemaths.mechanical_quantities import calc_principal_strain
 from ..dothemaths.angular import calc_projection_values
 from ..dothemaths.statistics import chip_statistics
 from ..utils.iofuns import motion_data as md
 from ..utils.iofuns.save_values import save_dictionary
+from ..utils.iofuns.data_layer import read_prev_layer
 
 
 def _calc_mechanical_quantities(displacement, scale, angle, dt):
@@ -62,11 +65,15 @@ def analyze_mechanics(input_file, save_data=True):
 
     """
 
-    # read + preprocess data
-    print("input file: ", input_file)
+    mt_data = mps.MPS(input_file)
+    data = read_prev_layer(input_file, "track_motion", track_motion, save_data)
+   
+    disp_data = data["displacement vectors"]
+    angle = data["angle"]
 
-    disp_data, scale, angle, dt, _, _ = md.read_mt_file(input_file)
-
+    scale = mt_data.info["um_per_pixel"]
+    dt = mt_data.dt
+    
     displacement, xmotion, velocity, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, dt)
     
@@ -76,14 +83,13 @@ def analyze_mechanics(input_file, save_data=True):
               "velocity" : velocity,
               "xmotion" : xmotion,
               "principal strain" : principal_strain}
-
-    d_all = chip_statistics(values, disp_data, dt)
-
+    
+    d_all = chip_statistics(values, disp_data, dt) 
     d_all["units"] = {"displacement" : r"$\mu m$",
                       "velocity" : r"$\mu m / s$",
                       "xmotion" : r"??",
-                      "principal strain" : r"(-)"}
-
+                      "principal strain" : r"-"}
+    
     if save_data:
         save_dictionary(input_file, "analyze_mechanics" , d_all)
 

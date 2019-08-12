@@ -24,7 +24,7 @@ def read_mt_file(filename):
     Passes on filename based on extension.
 
     Args:
-        Filename - nd2 or csv file
+        Filename - nd2 or csv
 
     Returns:
         4-dimensional numpy array, of dimensions T x X x Y x 2
@@ -33,18 +33,18 @@ def read_mt_file(filename):
 
     """
 
-    assert (".nd2" in filename or ".npy" in filename), \
+    assert (".nd2" in filename or ".csv" in filename), \
             "Unknown file formate"
 
     if ".nd2" in filename:
         return _read_file_nd2(filename)
 
-    print("TODO : Implement npy file formate.")
+    print("TODO : Implement csv file formate.")
 
 
 def _read_file_nd2(filename):
     """
-    Gets displacement from the mt module.
+    Gets displacement from motion tracking layer ... review this function
 
     Args:
         filename - nd2 file
@@ -58,11 +58,15 @@ def _read_file_nd2(filename):
         size_y
     """
 
-    save_data = True
-    layer_name = "track_motion"
-    layer_fn = lambda f_in, save_data: track_motion(f_in, save_data=save_data)
+    print("hei??")
 
-    data = read_prev_layer(filename, layer_name, layer_fn, save_data)
+    layer_name = "track_motion"
+    
+    print("hei??")
+
+    data = read_prev_layer(filename, layer_name, track_motion, save_data)
+    
+    print("hei??")
 
     return data["data_disp"], data["scaling_factor"], data["angle"], \
             data["dt"], data["size_x"], data["size_y"]

@@ -46,40 +46,6 @@ def _read_data(input_files, layer_name, layer_fn):
     return doses_keys, media_keys, all_maxima
 
 
-def _find_correct_layer(layer):
-    """
-
-    The script intends to find data/call functions to calculate
-    data if needed - layers needs to be in specific set of functions
-    as defined specifically. For now this includes mechanical analysis
-    and pillar tracking. With some adaptions we could possibly
-    also include things like calcum and action potential traces.
-
-    """
-
-    fn_map = {"track_pillars_mean" : lambda x, save_data: \
-                      track_pillars(x, "mean", save_data=save_data),
-              "track_pillars_velocity" : lambda x, save_data: \
-                      track_pillars(x, "velocity", save_data=save_data),
-              "track_pillars_minmax" : lambda x, save_data: \
-                      track_pillars(x, "minmax", save_data=save_data),
-              "track_pillars_firstframe" : lambda x, save_data: \
-                      track_pillars(x, "firstframe", save_data=save_data),
-              "analyze_mechanics_mean" : lambda x, save_data: \
-                      analyze_mechanics(x, "mean", save_data=save_data),
-              "analyze_mechanics_velocity" : lambda x, save_data: \
-                      analyze_mechanics(x, "velocity", save_data=save_data),
-              "analyze_mechanics_minmax" : lambda x, save_data: \
-                      analyze_mechanics(x, "minmax", save_data=save_data),
-              "analyze_mechanics_firstframe" : lambda x, save_data: \
-                      analyze_mechanics(x, "firstframe", save_data=save_data)}
-
-    assert layer in fn_map.keys(), \
-            "Error: No corresponding function found"
-
-    return layer, fn_map[layer]
-
-
 def _sort_keys(keys, sort_by):
     """
 
@@ -122,11 +88,12 @@ def calculate_stats_chips(input_files, layers, sort_by):
     layers = layers.split(" ")
     sort_by = sort_by.split(" ")
 
+    
     for layer in layers:
-        layer_name, layer_fn = _find_correct_layer(layer)
+        layer_fn = eval(layer)
 
         doses_keys, media_keys, all_maxima = _read_data(input_files, \
-                layer_name, layer_fn)
+                layer, layer_fn)
 
         # expected structure: doses / media / data
 

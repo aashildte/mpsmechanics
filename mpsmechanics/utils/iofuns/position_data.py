@@ -49,10 +49,10 @@ def _read_pt_file_nd2(f_in):
     data = np.load(f_in, allow_pickle=True).item()
 
     # convention : longitudal = x; transverse = y
-    df = pd.DataFrame(data=data)
-    x_pos = df["positions_longitudinal"].values
-    y_pos = df["positions_transverse"].values
-    radii = df["radii"].values
+
+    x_pos = data["positions_longitudinal"]
+    y_pos = data["positions_transverse"]
+    radii = data["radii"]
 
     return np.swapaxes(np.array((x_pos, y_pos, radii)), 0, 1)
 

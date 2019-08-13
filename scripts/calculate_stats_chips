@@ -26,6 +26,7 @@ if __name__ == "__main__":
         layers = sys.argv[-2]
         sort_by = sys.argv[-1]
     except:
+        print("Expected structure: doses / media / data")
         print('Expected arguments: files, layers (one string), ' + \
         'sort by (one string); e.g. "calculate_stats_chips */*/*.nd2' + \
         '"track_pillars" "no_dose 1nM 10nM 100nM 1uM"')

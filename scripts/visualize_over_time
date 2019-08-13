@@ -33,5 +33,5 @@ if __name__ == "__main__":
         try:
             mc.visualize_over_time(f_in, layers)
         except Exception as e:
-            print("Could not run visualization; error ", e)
+            print("Could not run visualization over time; error ", e)
             print("Launching next data set ..")

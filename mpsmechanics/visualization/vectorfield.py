@@ -12,7 +12,6 @@ from ..utils.iofuns.folder_structure import make_dir_structure, \
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 from ..pillar_tracking.pillar_tracking import track_pillars
 
-
 def animate_vectorfield(vectors, fname="animation", framerate=None, images=None, \
             extension="mp4", dpi=300, dx=5):
 
@@ -21,40 +20,36 @@ def animate_vectorfield(vectors, fname="animation", framerate=None, images=None,
     if D!=2:
         print("Only defined for 2D vectors")
         return
-    
-    # tmp solution ...
-
-    vectors = np.swapaxes(np.swapaxes(np.swapaxes(vectors, 0, 1), 1, 2), 2, 3)
 
     # from motion tracking
 
     extensions = ["gif", "mp4"]
     msg = f"Invalid extension {extension}. Expected one of {extensions}"
     assert extension in extension, msg
+    
     if images is not None:
-        Nx, Ny = images.shape[:2]
+        Nx, Ny = images.shape[1:3]
     else:
-        Nx, Ny = vectors.shape[:2]
+        Nx, Ny = vectors.shape[1:3]
 
-    x = np.linspace(0, Nx, vectors.shape[0])
-    y = np.linspace(0, Ny, vectors.shape[1])
+    x = np.linspace(0, Nx, vectors.shape[1])
+    y = np.linspace(0, Ny, vectors.shape[2])
 
-    block_size = Nx // vectors.shape[0]
-    print("min, max: ", np.min(vectors), np.max(vectors))
-    scale = np.max(np.abs(vectors)) #max(np.divide(vectors.shape[:2], block_size))
+
+    block_size = Nx // vectors.shape[1]
+    scale = (np.max(vectors) - np.min(vectors))  
     print("scale: ", scale)
 
-
-    figsize = (2 * Ny / vectors.shape[1], 2 * Nx / vectors.shape[0])
+    figsize = (2 * Ny / vectors.shape[2], 2 * Nx / vectors.shape[1])
     fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
     if images is not None:
         im = ax.imshow(images[:, :, 0], cmap=cm.gray)
-    
+
     Q = ax.quiver(
         y[::dx],
         x[::dx],
-        -vectors[::dx, ::dx, 1, 0],
-        vectors[::dx, ::dx, 0, 0],
+        -vectors[0, ::dx, ::dx, 1],
+        vectors[0, ::dx, ::dx, 0],
         color="r",
         units="xy",
         scale_units="inches",
@@ -63,7 +58,7 @@ def animate_vectorfield(vectors, fname="animation", framerate=None, images=None,
     ax.set_aspect("equal")
 
     def update(idx):
-        Q.set_UVC(-vectors[::dx, ::dx, 1, idx], vectors[::dx, ::dx, 0, idx])
+        Q.set_UVC(-vectors[idx, ::dx, ::dx, 1], vectors[idx, ::dx, ::dx, 0])
         
         if images is not None:
             im.set_array(images[:, :, idx])
@@ -75,7 +70,7 @@ def animate_vectorfield(vectors, fname="animation", framerate=None, images=None,
         Writer = animation.writers["imagemagick"]
     writer = Writer(fps=framerate)
 
-    N = vectors.shape[-1]
+    N = vectors.shape[0]
     anim = animation.FuncAnimation(fig, update, N)
 
     fname = os.path.splitext(fname)[0]

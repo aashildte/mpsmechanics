@@ -2,6 +2,7 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 from matplotlib import animation
 
 import mps
@@ -31,39 +32,41 @@ def setup_frame(vectors, dpi):
 
 def init_quiver(ax, vectors, x, y, dx, scale):
     return ax.quiver(
-        y[::dx],
-        x[::dx],
-        -vectors[0, ::dx, ::dx, 1],
+        vectors[0, ::dx, ::dx, 1],
         vectors[0, ::dx, ::dx, 0],
-        #color="r",
-        #units="xy",
-        #scale_units="inches",
+        color="r",
+        units="xy",
         scale=scale,
     )
 
-def init_magnitude(ax, scalars, x, y, vmax):
-    return ax.imshow(scalars[0,:,:,0], vmax=vmax)
 
-def animate_vectorfield(vectors, fname="animation", framerate=None, images=None, \
-            extension="mp4", dpi=300, dx=5):
+def init_magnitude(ax, scalars, x, y, norm):
+    if norm is not None:
+        return ax.imshow(scalars[0,:,:,0], \
+                origin="lower", norm=colors.PowerNorm(norm, vmax=np.max(scalars)))
+    return ax.imshow(scalars[0,:,:,0], vmax=np.max(scalars), origin="lower")
+
+
+def animate_vectorfield(vectors, label, unit, fname="animation", framerate=None, images=None, \
+            extension="mp4", dpi=300, dx=5, norm=False, scale=1):
 
     extensions = ["gif", "mp4"]
     msg = f"Invalid extension {extension}. Expected one of {extensions}"
-    assert extension in extension, msg
+    assert extension in extensions, msg
 
     D, x, y, axs, fig = setup_frame(vectors, dpi)
 
     if D==2:
         magnitude = calc_magnitude(vectors)
         normalized = normalize_values(vectors)
-    
-        scale = (np.max(vectors) - np.min(vectors))  
-        print("scale: ", scale)
-        vmax = np.max(magnitude)
 
         Q1 = init_quiver(axs[0], vectors, x, y, dx, scale)
-        Q2 = init_quiver(axs[1], normalized, x, y, dx, np.sum(normalized))
-        Q3 = init_magnitude(axs[2], magnitude, x, y, vmax)
+        Q2 = init_quiver(axs[1], normalized, x, y, dx, 1)
+        Q3 = init_magnitude(axs[2], magnitude, x, y, norm)
+
+        cb = fig.colorbar(Q3)
+        cb.set_label(label + " (" + unit + ")")
+        plt.axis("off")
 
         for i in range(3):
             axs[i].set_aspect("equal")
@@ -72,9 +75,9 @@ def animate_vectorfield(vectors, fname="animation", framerate=None, images=None,
             im = ax.imshow(images[:, :, 0], cmap=cm.gray)
 
         def update(idx):
-            Q1.set_UVC(-vectors[idx, ::dx, ::dx, 1], \
+            Q1.set_UVC(vectors[idx, ::dx, ::dx, 1], \
                     vectors[idx, ::dx, ::dx, 0])
-            Q2.set_UVC(-normalized[idx, ::dx, ::dx, 1], \
+            Q2.set_UVC(normalized[idx, ::dx, ::dx, 1], \
                     normalized[idx, ::dx, ::dx, 0])
             Q3.set_data(magnitude[idx,:,:,0])
 
@@ -116,9 +119,19 @@ def visualize_vectorfield(f_in, layers, save_data=True):
         data = read_prev_layer(f_in, layer, layer_fn, save_data)
 
         # average over time
-         
-        for key in data["all_values"].keys(): 
-            animate_vectorfield(data["all_values"][key], \
-                    framerate=0.1*mt_data.framerate, \
-                    fname=os.path.join(output_folder, "vectorfield_" + key))
+        powernorms = {"displacement" : None, \
+                      "principal strain" : 0.2, \
+                      "velocity" : 0.5,
+                      "xmotion" : None}
 
+        scales = {"displacement" : 2, \
+                      "principal strain" : 2, \
+                      "velocity" : 0.1, \
+                      "xmotion" : None}
+        
+        for key in data["all_values"].keys(): 
+            unit = data["units"][key]
+            animate_vectorfield(data["all_values"][key], key, unit,\
+                    framerate=mt_data.framerate, \
+                    fname=os.path.join(output_folder, "vectorfield_" + key),\
+                    norm=powernorms[key], scale=scales[key])

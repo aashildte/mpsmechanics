@@ -12,7 +12,7 @@ pipelines:
           - pip
         script: # Modify the commands below to build your repository.
 
-          - mkdir ~/.ssh
+          - mkdir -p ~/.ssh
           - echo $SSH_KEY > ~/.ssh/id_rsa.tmp # note: assumes base64 encoded ssh key without a passphrase
           - base64 -d ~/.ssh/id_rsa.tmp > ~/.ssh/id_rsa
           - chmod 600 ~/.ssh/id_rsa

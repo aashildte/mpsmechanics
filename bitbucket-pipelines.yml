@@ -1,0 +1,25 @@
+# This is a sample build configuration for Python.
+# Check our guides at https://confluence.atlassian.com/x/x4UWN for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: python:3.7
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - pip
+        script: # Modify the commands below to build your repository.
+
+          - mkdir ~/.ssh
+          - echo $SSH_KEY > ~/.ssh/id_rsa.tmp # note: assumes base64 encoded ssh key without a passphrase
+          - base64 -d ~/.ssh/id_rsa.tmp > ~/.ssh/id_rsa
+          - chmod 600 ~/.ssh/id_rsa
+          - base64 ~/.ssh/id_rsa
+
+          - apt update && apt install ffmpeg -y
+          - pip install -r requirements-dev.txt
+          - pip install git+git@bitbucket.org:finsberg/mps.git
+          - pip install . --upgrade
+          - python -m pytest test -vv

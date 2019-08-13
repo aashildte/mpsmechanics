@@ -22,4 +22,4 @@ pipelines:
           - pip install -r requirements-dev.txt
           - git clone git@bitbucket.org:finsberg/mps.git && cd mps && pip install . --upgrade && cd ..
           - pip install . --upgrade
-          - python -m pytest test -vv
+          - python -m pytest tests -vv

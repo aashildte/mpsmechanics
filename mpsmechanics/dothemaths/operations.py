@@ -121,41 +121,34 @@ def calc_max_ind(data):
     return np.argmax(data, axis=0)
 
 
-def calc_magnitude(data, over_time):
+def calc_magnitude(data):
     """
 
     Get the norm of the vector for every point (x, y).
 
     Args:
-        data - numpy array of dimension X x Y x D, where D is
-            arbitary; optionally of dimensions T x X x Y X D
-        over_time - boolean value; determines if T dimension
-            should be included or not
+        data - numpy array of dimension T x X x Y x D
+
+    Returns:
+        norm of data - numpy array of dimension T x X x Y x 1
 
     """
 
 
-    f = lambda x, i, j : np.linalg.norm(x)
-
-    return perform_operation(data, f, over_time=over_time)
+    return np.linalg.norm(data, axis=-1)[:,:,:,None]
 
 
-def normalize_values(data, over_time):
+def normalize_values(data):
     """
 
     Normalises each non-zero vector.
 
     Args:
         data - T x X x Y x 2 numpy array, original values
-        over_time - boolean value; determines if T dimension
-            should be included or not
 
     Returns:
         T x X x Y x 2 numpy array, normalized values
 
     """
-
-    f = lambda x, i, j: (1/np.linalg.norm(x))*x \
-            if np.linalg.norm(x) > 1E-10 else np.zeros(2)
-
-    return perform_operation(data, f, over_time=over_time)
+    np.seterr(divide='ignore', invalid='ignore')
+    return np.nan_to_num(data/calc_magnitude(data))

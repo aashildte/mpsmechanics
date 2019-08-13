@@ -20,6 +20,6 @@ pipelines:
 
           - apt update && apt install ffmpeg -y
           - pip install -r requirements-dev.txt
-          - pip install git+git@bitbucket.org:finsberg/mps.git
+          - pip install git+https://mewasul@bitbucket.org/finsberg/mps.git
           - pip install . --upgrade
           - python -m pytest test -vv

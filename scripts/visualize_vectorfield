@@ -22,7 +22,7 @@ import mpsmechanics as mc
 if __name__ == "__main__":
 
     try:
-        input_files = sys.argv[1:-1]
+        input_files = sys.argv[1:-2]
         layers = sys.argv[-2]
         scale = float(sys.argv[-1])
     except:

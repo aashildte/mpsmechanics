@@ -3,8 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="f004cc46-31e9-4eff-bebb-bbd27e820af8" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mpsmechanics/utils/iofuns/data_layer.py" beforeDir="false" afterPath="$PROJECT_DIR$/mpsmechanics/utils/iofuns/data_layer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mpsmechanics/utils/iofuns/position_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/mpsmechanics/utils/iofuns/position_data.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -47,8 +45,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/mpsmechanics/utils/iofuns/data_layer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="495">
-              <caret line="36" column="29" selection-start-line="36" selection-start-column="29" selection-end-line="36" selection-end-column="29" />
+            <state relative-caret-position="645">
+              <caret line="46" selection-start-line="46" selection-end-line="46" />
             </state>
           </provider>
         </entry>
@@ -65,7 +63,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/mpsmechanics/pillar_tracking/pillar_tracking.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2204">
+            <state relative-caret-position="2805">
               <caret line="199" selection-start-line="199" selection-end-line="199" />
               <folding>
                 <element signature="e#117#126#0" expanded="true" />
@@ -127,7 +125,7 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" fullScreen="true">
-    <option name="width" value="1680" />
+    <option name="width" value="834" />
     <option name="height" value="1050" />
   </component>
   <component name="ProjectView">
@@ -135,6 +133,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -176,7 +175,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -219,19 +217,19 @@
       <workItem from="1565304175570" duration="8680000" />
       <workItem from="1565457270486" duration="264000" />
       <workItem from="1565627535984" duration="1741000" />
-      <workItem from="1565722865904" duration="478000" />
+      <workItem from="1565722865904" duration="607000" />
+      <workItem from="1565884972833" duration="596000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="31315000" />
+    <option name="totallyTimeSpent" value="32040000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1680" height="1050" extended-state="0" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48979592" visible="true" weight="0.35836387" />
-      <window_info id="Structure" order="1" sideWeight="0.5102041" side_tool="true" visible="true" weight="0.35836387" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48877552" visible="true" weight="0.36263737" />
+      <window_info id="Structure" order="1" sideWeight="0.5112245" side_tool="true" visible="true" weight="0.36263737" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info active="true" anchor="bottom" id="Find" order="1" visible="true" weight="0.3244898" />
@@ -359,22 +357,8 @@
         <state relative-caret-position="-257" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/mpsmechanics/utils/iofuns/position_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="855">
-          <caret line="58" selection-start-line="58" selection-end-line="58" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mpsmechanics/pillar_tracking/pillar_tracking.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2204">
-          <caret line="199" selection-start-line="199" selection-end-line="199" />
-          <folding>
-            <element signature="e#117#126#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/mpsmechanics/utils/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/mpsmechanics/utils/iofuns/motion_data.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -385,9 +369,6 @@
           </folding>
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mpsmechanics/utils/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/mpsmechanics/utils/iofuns/save_values.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -403,10 +384,27 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/mpsmechanics/utils/iofuns/position_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="855">
+          <caret line="58" selection-start-line="58" selection-end-line="58" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mpsmechanics/pillar_tracking/pillar_tracking.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2805">
+          <caret line="199" selection-start-line="199" selection-end-line="199" />
+          <folding>
+            <element signature="e#117#126#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/mpsmechanics/utils/iofuns/data_layer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="36" column="29" selection-start-line="36" selection-start-column="29" selection-end-line="36" selection-end-column="29" />
+        <state relative-caret-position="645">
+          <caret line="46" selection-start-line="46" selection-end-line="46" />
         </state>
       </provider>
     </entry>

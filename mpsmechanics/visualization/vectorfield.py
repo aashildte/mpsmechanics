@@ -176,7 +176,6 @@ def visualize_vectorfield(f_in, layers, framerate_scale=1, save_data=True):
                       "velocity" : 1E-5}
 
         for key in data["all_values"].keys():
-
             if data["all_values"][key].shape[-1] != 2:
                 continue
 

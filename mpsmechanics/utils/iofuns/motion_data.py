@@ -18,7 +18,7 @@ from .data_layer import read_prev_layer
 from ...motion_tracking.motion_tracking import track_motion
 
 
-def read_mt_file(filename):
+def read_mt_file(filename, outdir, max_motion):
     """
 
     Passes on filename based on extension.
@@ -37,12 +37,12 @@ def read_mt_file(filename):
             "Unknown file formate"
 
     if ".nd2" in filename:
-        return _read_file_nd2(filename)
+        return _read_file_nd2(filename, outdir, max_motion)
 
     print("TODO : Implement csv file formate.")
 
 
-def _read_file_nd2(filename):
+def _read_file_nd2(filename, outdir, max_motion):
     """
     Gets displacement from motion tracking layer ... review this function
 
@@ -58,15 +58,11 @@ def _read_file_nd2(filename):
         size_y
     """
 
-    print("hei??")
 
     layer_name = "track_motion"
-    
-    print("hei??")
+    layer_fn = lambda f_in, save_data: track_motion(f_in, outdir, max_motion, save_data=save_data)
 
-    data = read_prev_layer(filename, layer_name, track_motion, save_data)
-    
-    print("hei??")
+    data = read_prev_layer(filename, layer_name, layer_fn, outdir, save_data)
 
     return data["data_disp"], data["scaling_factor"], data["angle"], \
             data["dt"], data["size_x"], data["size_y"]

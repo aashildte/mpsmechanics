@@ -8,9 +8,8 @@ Function for reading initial position file
 
 """
 
-
-
 import numpy as np
+import pandas as pd
 
 
 def read_pt_file(f_in):
@@ -32,7 +31,7 @@ def read_pt_file(f_in):
     elif(".npy" in f_in):
         return _read_pt_file_npy(f_in)
     else:
-        print("Error: Uknown file formate.")
+        print("Error: Unknown file format.")
 
 
 def _read_pt_file_npy(f_in):
@@ -51,8 +50,8 @@ def _read_pt_file_npy(f_in):
     data = np.load(f_in, allow_pickle=True).item()
 
     # convention : longitudal = x; transverse = y
-    
-    x_pos = data["positions_longitudal"]
+
+    x_pos = data["positions_longitudinal"]
     y_pos = data["positions_transverse"]
     radii = data["radii"]
 

@@ -11,6 +11,7 @@ can calculate the reference frame *after* the blocktracking algorithm
 import numpy as np
 import matplotlib.pyplot as plt
 
+from ..dothemaths.operations import calc_norm_over_time
 
 def convert_disp_data(frames, ref_index):
     """
@@ -18,19 +19,17 @@ def convert_disp_data(frames, ref_index):
     Converts displacement data in frames to new index.
 
     Args:
-        frames - numpy array of dimensions X x Y x D x T
+        frames - numpy array of dimensions T x X x Y x D
         ref_index - which index to use as reference
 
     Returns:
-        numpy array of dimensions X x Y x D x T
+        numpy array of dimensions T x X x Y x D
 
     """
-    print("ref_index: ", ref_index)
-    assert ref_index >= 0 and ref_index <= frames.shape[-1], \
+    assert ref_index >= 0 and ref_index <= frames.shape[0], \
             "Invalid reference index."
 
-    return frames - frames[:, :, :, ref_index][:, :, :, None]
-
+    return frames - frames[ref_index]
 
 def _find_longest_subinterval(diff_norm):
     """
@@ -116,7 +115,7 @@ def calculate_firstframe(frames):
     return 0
 
 
-def calculate_minimum_2step(frames):
+def calculate_minmax(frames):
     """
 
     Hypothesis: The maximum displacement will either actually be a
@@ -124,24 +123,23 @@ def calculate_minimum_2step(frames):
     determined from the mean which is the case.
 
     Args:
-        frames - numpy array of dimensions X x Y x 2 x T
+        frames - numpy array of dimensions T x X x Y x 2
 
     Returns:
         index for assumed minimum
 
     """
 
-    norm = np.sum(np.linalg.norm(frames, axis=2), \
-            axis=(0, 1))
-
+    norm = calc_norm_over_time(frames)
     min_index = np.argmax(norm)
     min_norm = norm[min_index]
     mean_norm = np.mean(norm)
-    
     if (min_norm - mean_norm) > mean_norm:
+        print("Mirror ...")
+        print("Reference: ", min_index)
         frames_shifted = convert_disp_data(frames, min_index)
-        norm = np.sum(np.linalg.norm(frames_shifted, \
-                axis=2), axis=(0, 1))
+        norm = calc_norm_over_time(frames_shifted)
         min_index = np.argmax(norm)
-
+        print("Reference: ", min_index)
+    
     return min_index

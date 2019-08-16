@@ -54,8 +54,6 @@ from mps import utils
 from mps import plotter
 from mps import analysis
 
-from .ref_frame import calculate_min_velocity_frame, calculate_minimum_2step, \
-        calculate_firstframe, convert_disp_data
 from ..utils.iofuns.save_values import save_dictionary
 
 def save_cache(fname, data):

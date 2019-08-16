@@ -121,6 +121,7 @@ def calc_beat_maxima_time(data):
     return _get_beat_maxima(data, \
             _get_local_intervals(data, eps=0.05))
 
+
 def calc_beat_maxima_2D(data):
     """
 
@@ -138,23 +139,3 @@ def calc_beat_maxima_2D(data):
     disp_norm = op.calc_norm_over_time(data)
 
     return calc_beat_maxima_time(disp_norm)
-
-
-def calc_beat_minmax(data):
-    """
-
-    From data on displacement over time only, this function
-    calculates the indices of the minima and maxima of each beat.
-
-    Args:
-        data - numpy array, displacement values over time
-
-    Returns:
-        list of minimum indices
-        list of maxima indices
-        
-    """
-
-    return calc_beat_maxima_2D(-1*data), \
-            calc_beat_maxima_2D(data)
-

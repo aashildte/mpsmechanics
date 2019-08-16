@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from .heartbeat import calc_beat_minmax
+from .heartbeat import calc_beat_maxima_time
 
 def calc_for_each_key(init_data, fn):
     """
@@ -61,6 +61,6 @@ def chip_statistics(data, displacement, dt):
     # general variables
 
     d_all["time"] = np.linspace(0, dt*len(displacement), len(displacement))
-    d_all["minima"], d_all["maxima"] = calc_beat_minmax(displacement)
+    d_all["maxima"] = calc_beat_maxima_time(d_all["over_time_avg"]["displacement"])
 
     return d_all

@@ -13,3 +13,4 @@ from .pillar_tracking.pillar_tracking import track_pillars
 from .visualization.overtime import visualize_over_time
 from .visualization.vectorfield import visualize_vectorfield
 from .statistical_analysis.statistical_analysis import calculate_stats_chips
+from .statistical_analysis.metrics import calculate_metrics

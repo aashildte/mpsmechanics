@@ -104,6 +104,14 @@ def _get_beat_maxima(disp_norm, local_intervals):
     return maxima
 
 
+def calc_beat_intervals(data):
+    maxima = calc_beat_maxima_time(data)
+
+    midpoints = [int((maxima[i] + maxima[i+1])/2) for i in range(len(maxima)-1)]
+
+    return [(midpoints[i], midpoints[i+1]-1) for i in range(len(midpoints)-1)]
+
+
 def calc_beat_maxima_time(data):
     """
 

@@ -13,7 +13,5 @@ pipelines:
         script: # Modify the commands below to build your repository.
           - apt update && apt install ffmpeg -y
           - pip install -r requirements-dev.txt
-          - git clone git@bitbucket.org:finsberg/mps.git
-          - export PYTHONPATH=$PWD/mps/mps:$PYTHONPATH
           - pip install . --upgrade
           - python -m pytest test -vv

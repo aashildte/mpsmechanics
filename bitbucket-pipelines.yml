@@ -10,8 +10,10 @@ pipelines:
     - step:
         caches:
           - pip
-        script: # Modify the commands below to build your repository.
+        script: # Modify the commands below to build your repository
           - apt update && apt install ffmpeg -y
           - pip install -r requirements-dev.txt
+          - git clone git@bitbucket.org:finsberg/mps.git
+          - cd mps && pip install . && cd ..
           - pip install . --upgrade
           - python -m pytest test -vv

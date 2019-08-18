@@ -718,7 +718,7 @@ def test_integration():
         filter_kernel_size=0,
     )
     assert motion_serial.run()
-    assert motion_serial.plot_all()
+    # assert motion_serial.plot_all()
 
     motion_paralell = mc.MotionTracking(
         mps_data,
@@ -730,7 +730,7 @@ def test_integration():
         filter_kernel_size=0,
     )
     assert motion_paralell.run()
-    assert motion_paralell.plot_all()
+    # assert motion_paralell.plot_all()
 
     for arr in motion_paralell._arrays:
         assert np.all(getattr(motion_serial, arr) == getattr(motion_paralell, arr))
@@ -790,7 +790,7 @@ def test_displacements():
         outdir="poly_circle",  # , serial=True,
     )
     # assert motion.run()
-    assert motion.plot_all()
+    # assert motion.plot_all()
 
     tot_displacement = np.linalg.norm([dx, dy]) * line_x
     x_displacement = -dx * line_x

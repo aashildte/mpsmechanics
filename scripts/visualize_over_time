@@ -31,8 +31,8 @@ if __name__ == "__main__":
         exit(-1)
 
     for f_in in input_files:
-        #try:
-        mc.visualize_over_time(f_in, layers)
-        #except Exception as e:
-        #    print("Could not run visualization over time; error ", e)
-        #    print("Launching next data set ..")
+        try:
+            mc.visualize_over_time(f_in, layers)
+        except Exception as e:
+            print("Could not run visualization over time; error ", e)
+            print("Launching next data set ..")

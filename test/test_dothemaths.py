@@ -17,7 +17,7 @@ def test_calc_projection_vectors():
     """
 
     alpha = np.pi/2
-    shape = (2, 2, 2, 1)
+    shape = (5, 4, 3, 1)
     data_org = np.tile(np.array((1, 1)), shape)
     data_exp = np.tile(np.array((0, 1)), shape)
 
@@ -34,7 +34,7 @@ def test_calc_projection_fraction():
     """
 
     alpha = np.pi/2
-    shape = (2, 2, 2, 1)
+    shape = (5, 4, 3, 1)
     data_org = np.tile(np.array((1, 1)), shape)
     data_exp = np.sqrt(2)/2*np.ones(shape)
 
@@ -50,7 +50,7 @@ def test_flip_values():
 
     """
 
-    shape = (2, 2, 2, 1)
+    shape = (5, 4, 3, 1)
     data_org = np.tile(np.array((1, -1)), shape)
     data_exp = np.tile(np.array((-1, 1)), shape)
 

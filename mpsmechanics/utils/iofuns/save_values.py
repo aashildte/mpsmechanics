@@ -9,7 +9,7 @@ import numpy as np
 
 from .folder_structure import get_input_properties, make_dir_structure
 
-def save_dictionary(outdir, layer, dictionary):
+def save_dictionary(input_file, layer, dictionary):
     """
 
     Function to saving data for a specific given layer.
@@ -20,14 +20,11 @@ def save_dictionary(outdir, layer, dictionary):
         dictionary - values to save
 
     """
-    '''
-    path, filename, ext = get_input_properties(input_file)
-    output_path = os.path.join(path, outdir, filename)
+    
+    path, filename, _ = get_input_properties(input_file)
+    output_path = os.path.join(path, filename)
     make_dir_structure(output_path)
 
     output_file = os.path.join(output_path, layer + ".npy")
-    '''
-
-    output_file = os.path.join(outdir, layer + ".npy")
 
     np.save(output_file, dictionary)

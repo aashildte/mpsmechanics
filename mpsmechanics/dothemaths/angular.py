@@ -31,10 +31,12 @@ def calc_projection_vectors(data, alpha):
     e_alpha = np.dot(np.array(((np.cos(alpha), -np.sin(alpha)),\
                                (np.sin(alpha), np.cos(alpha)))),\
                      np.array((1, 0)))
+ 
 
-    f_proj = lambda x, _: np.array(np.dot(x, e_alpha)*e_alpha)
+    f_dot = lambda x, _: np.dot(x, e_alpha)
+    f_proj = lambda x, axis: np.apply_over_axes(f_dot, x, axis)*e_alpha
 
-    return np.apply_over_axes(f_proj, data, -2)
+    return np.apply_over_axes(f_proj, data, -1)
 
 
 def calc_projection_fraction(data, alpha):
@@ -76,5 +78,6 @@ def flip_values(data):
         T x X x Y x 2 numpy array, flipped values
 
     """
-
-    return np.where(data[:, :, :, 1] > 0, data, -data)
+    
+    return np.where((data[:, :, :, 1] > 0)[:,:,:,None],
+                    data, -data)

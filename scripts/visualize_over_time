@@ -24,14 +24,15 @@ if __name__ == "__main__":
     try:
         input_files = sys.argv[1:-1]
         layers = sys.argv[-1]
+        assert(len(sys.argv[1:])>1)
     except:
         print('Expected arguments: files, layers (one string); ' + \
                'e.g. track_pillars */*/*.nd2 "visualize_chip')
         exit(-1)
 
     for f_in in input_files:
-        try:
-            mc.visualize_over_time(f_in, layers)
-        except Exception as e:
-            print("Could not run visualization over time; error ", e)
-            print("Launching next data set ..")
+        #try:
+        mc.visualize_over_time(f_in, layers)
+        #except Exception as e:
+        #    print("Could not run visualization over time; error ", e)
+        #    print("Launching next data set ..")

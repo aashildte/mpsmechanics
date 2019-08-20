@@ -54,10 +54,12 @@ def stats_over_time(f_in, layer_name, layer_fn, save_data):
     """
     
     output_folder = os.path.join(\
-            make_dir_layer_structure(f_in, "visualize_over_time"), layer_name)
+            make_dir_layer_structure(f_in, "visualize_over_time"), \
+            layer_name)
     make_dir_structure(output_folder)
     
-    data = read_prev_layer(f_in, layer_name, layer_fn, save_data)
+    data = read_prev_layer(f_in, layer_name, layer_fn, \
+            save_data=save_data)
 
     # average over time
 

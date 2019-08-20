@@ -69,8 +69,9 @@ def analyze_mechanics(input_file, save_data=True):
     """
 
     mt_data = mps.MPS(input_file)
-    data = read_prev_layer(input_file, "track_motion", track_motion, save_data)
-   
+    data = read_prev_layer(input_file, "track_motion", track_motion, \
+            save_data=save_data)
+
     disp_data = data["displacement vectors"]
     angle = data["angle"]
 

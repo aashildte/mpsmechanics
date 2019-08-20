@@ -34,8 +34,9 @@ def read_prev_layer(input_file, layer, layer_fn, outdir="", save_data=True):
     
     path, filename, ext = get_input_properties(input_file)
 
-    assert ext == "nd2", "File must be an nd2 file"
-
+    assert (ext == "nd2" or ext == "zip"), \
+            "File must be an nd2 or zip file"
+    
     data_path = os.path.join(os.path.join(outdir, path), layer + ".npy")
 
     print('Looking for file: ', data_path)

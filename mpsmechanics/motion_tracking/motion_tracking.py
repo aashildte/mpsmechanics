@@ -943,7 +943,7 @@ class MotionTracking(object):
         )
 
 
-def track_motion(input_file, outdir, max_motion=3, use_cache=True, save_data=True):
+def track_motion(input_file, use_cache=True, save_data=True):
     """
 
     Args:
@@ -959,8 +959,7 @@ def track_motion(input_file, outdir, max_motion=3, use_cache=True, save_data=Tru
     
     mt_data = mps.MPS(input_file)
     scaling_factor = mt_data.info['um_per_pixel']
-    motion = MotionTracking(mt_data, outdir=outdir, reference_frame="median", use_cache=use_cache,
-                            max_block_movement=max_motion)
+    motion = MotionTracking(mt_data, reference_frame="median", use_cache=use_cache)
 
     # get right reference frame
 
@@ -979,6 +978,7 @@ def track_motion(input_file, outdir, max_motion=3, use_cache=True, save_data=Tru
     d_all["angle"] = angle
 
     if(save_data):
-        save_dictionary(outdir, "track_motion", d_all)
-    
+        save_dictionary(input_file, "track_motion", d_all)
+
     return d_all
+

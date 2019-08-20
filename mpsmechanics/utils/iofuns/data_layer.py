@@ -11,7 +11,7 @@ import numpy as np
 
 from .folder_structure import get_input_properties
 
-def read_prev_layer(input_file, layer, layer_fn, outdir="", save_data=True):
+def read_prev_layer(input_file, layer, layer_fn, save_data=True):
     """
 
     Reads data from a layer "up" in the hierarchy. If already
@@ -24,7 +24,6 @@ def read_prev_layer(input_file, layer, layer_fn, outdir="", save_data=True):
         layer - string indicating which layer is needed – the program
             will look for a npy file with this prefix
         layer_fn - function to be called if data not avaiable
-        outdir - ??? @David
         save_data - default True; can be set to False
 
     Returns:
@@ -37,12 +36,12 @@ def read_prev_layer(input_file, layer, layer_fn, outdir="", save_data=True):
     assert (ext == "nd2" or ext == "zip"), \
             "File must be an nd2 or zip file"
     
-    data_path = os.path.join(os.path.join(outdir, path), layer + ".npy")
+    data_path = os.path.join(os.path.join(path, filename),\
+                             layer + ".npy")
 
     print('Looking for file: ', data_path)
     
     if not os.path.isfile(data_path):
-        #TODO @David outdir probably needs to be passed as an argument here too??
         print("Previous data not accessible. Recalculating ...")
         return layer_fn(input_file, save_data=save_data)
 

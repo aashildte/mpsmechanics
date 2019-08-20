@@ -12,7 +12,7 @@ import mps
 
 from ..motion_tracking.motion_tracking import track_motion
 from ..dothemaths.mechanical_quantities import calc_principal_strain
-from ..dothemaths.angular import calc_projection_values
+from ..dothemaths.angular import calc_projection_fraction
 from ..dothemaths.statistics import chip_statistics
 from ..utils.iofuns import motion_data as md
 from ..utils.iofuns.save_values import save_dictionary
@@ -43,7 +43,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
 
     displacement = (1/scale)*displacement
 
-    xmotion = calc_projection_values(displacement, angle).\
+    xmotion = calc_projection_fraction(displacement, angle).\
             reshape(dims[0], dims[1], dims[2], 1)
 
     velocity = 1/dt*(np.gradient(displacement, axis=0))

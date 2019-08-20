@@ -150,5 +150,6 @@ def normalize_values(data):
         T x X x Y x 2 numpy array, normalized values
 
     """
-    np.seterr(divide='ignore', invalid='ignore')
-    return np.nan_to_num(data/calc_magnitude(data))
+
+    return np.divide(data, calc_magnitude(data), \
+            out=np.zeros_like(data), where=data!=0) 

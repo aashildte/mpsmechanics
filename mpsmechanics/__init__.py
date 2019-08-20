@@ -1,3 +1,4 @@
+
 from . import dothemaths
 from . import fibre_direction
 from . import mechanical_analysis
@@ -13,3 +14,7 @@ from .visualization.overtime import visualize_over_time
 from .visualization.vectorfield import visualize_vectorfield
 from .statistical_analysis.statistical_analysis import calculate_stats_chips
 from .statistical_analysis.metrics import calculate_metrics
+
+from .dothemaths.angular import calc_projection_vectors, calc_projection_fraction, \
+        flip_values
+from .dothemaths.operations import calc_magnitude

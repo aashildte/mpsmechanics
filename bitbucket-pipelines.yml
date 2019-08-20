@@ -10,17 +10,10 @@ pipelines:
     - step:
         caches:
           - pip
-        script: # Modify the commands below to build your repository.
-
-          - mkdir -p ~/.ssh
-          - echo $SSH_KEY > ~/.ssh/id_rsa #.tmp # note: assumes base64 encoded ssh key without a passphrase
-            #- base64 -d ~/.ssh/id_rsa.tmp > ~/.ssh/id_rsa
-          - chmod 600 ~/.ssh/id_rsa
-            #- base64 ~/.ssh/id_rsa
-
+        script: # Modify the commands below to build your repository
           - apt update && apt install ffmpeg -y
           - pip install -r requirements-dev.txt
           - git clone git@bitbucket.org:finsberg/mps.git
-          - export PYTHONPATH=$PWD/mps/mps:$PYTHONPATH
+          - cd mps && pip install . && cd ..
           - pip install . --upgrade
           - python -m pytest test -vv

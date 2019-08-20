@@ -1,0 +1,8 @@
+-   repo: https://github.com/pre-commit/mirrors-pylint
+    rev: v2.3.1
+    hooks:
+    -   id: pylint
+        args:
+        - --max-line-length=70
+        - --ignore-imports=yes
+        - -d duplicate-code

@@ -947,7 +947,7 @@ def track_motion(input_file, use_cache=True, save_data=True):
     """
 
     Args:
-        input_file - nd2 file
+        input_file - nd2 or zip file
         use_cache - ?
         save_data - boolean value: save as npy file when finished, or not
 

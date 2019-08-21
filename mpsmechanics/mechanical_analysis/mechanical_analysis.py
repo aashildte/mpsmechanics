@@ -39,18 +39,15 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
 
     """
 
-    dims = displacement.shape
-
     displacement = (1/scale)*displacement
-
-    xmotion = calc_projection_fraction(displacement, angle).\
-            reshape(dims[0], dims[1], dims[2], 1)
-
+    
+    xmotion = calc_projection_fraction(displacement, angle)[:,:,:,None]
+    
     velocity = 1/dt*(np.gradient(displacement, axis=0))
-
+    
     threshold = 2       # um/s
     prevalence = (velocity > threshold).astype(int)
-
+    
     principal_strain = calc_principal_strain(displacement)
 
     return displacement, xmotion, velocity, prevalence, principal_strain
@@ -77,7 +74,9 @@ def analyze_mechanics(input_file, save_data=True):
 
     scale = mt_data.info["um_per_pixel"]
     dt = mt_data.dt
-    
+
+    print("Calculating mechanical quantities for " + input_file)
+
     displacement, xmotion, velocity, prevalence, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, dt)
     
@@ -95,6 +94,8 @@ def analyze_mechanics(input_file, save_data=True):
                       "xmotion" : r"??",
                       "principal strain" : r"-",
                       "prevalence" : r"-"}
+
+    print("Done calculating mechanical quantities for " + input_file)
 
     if save_data:
         save_dictionary(input_file, "analyze_mechanics" , d_all)

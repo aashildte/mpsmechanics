@@ -8,6 +8,19 @@ import numpy as np
 
 from .heartbeat import calc_beat_maxima_time, calc_beat_intervals
 
+
+def find_nonzero_scale(displacement):
+
+    dims = displacement.shape
+
+    t_dim, x_dim, y_dim, n_dim = dims
+    
+    entries = np.sum(np.any((displacement != 0), axis=0))
+    
+    return x_dim*y_dim/entries
+
+
+
 def calc_for_each_key(init_data, fn):
     """
 

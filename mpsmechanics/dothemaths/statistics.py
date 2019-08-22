@@ -83,12 +83,13 @@ def chip_statistics(data, displacement, dt):
     d_all["over_time_avg"] = calc_for_each_key(d_all["folded"], fn_mean)
     d_all["over_time_std"] = calc_for_each_key(d_all["folded"], fn_std)
 
-    d_all["over_time_avg"]["displacement"] *= scale_disp
-    d_all["over_time_avg"]["xmotion"] = np.divide(d_all["over_time_avg"]["xmotion"], scale_disp_time)
-    d_all["over_time_avg"]["angle"] = np.divide(d_all["over_time_avg"]["angle"], scale_disp_time)
-    d_all["over_time_avg"]["velocity"] *= scale_disp
-    d_all["over_time_avg"]["prevalence"] *= scale_disp
-    d_all["over_time_avg"]["principal strain"] *= scale_disp
+    for k in ("over_time_avg", "over_time_std"):
+        d_all[k]["displacement"] *= scale_disp
+        d_all[k]["xmotion"] = np.divide(d_all[k]["xmotion"], scale_disp_time)
+        d_all[k]["angle"] = np.divide(d_all[k]["angle"], scale_disp_time)
+        d_all[k]["velocity"] *= scale_disp
+        d_all[k]["prevalence"] *= scale_disp
+        d_all[k]["principal strain"] *= scale_disp
 
     # general variables
     d_all["time"] = np.linspace(0, (1/dt)*len(displacement), len(displacement))

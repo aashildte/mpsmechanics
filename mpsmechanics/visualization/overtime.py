@@ -15,7 +15,7 @@ from ..utils.iofuns.folder_structure import make_dir_structure, \
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 from ..pillar_tracking.pillar_tracking import track_pillars
 
-def plot_over_time(values, time, label, unit, path):
+def plot_over_time(ax, values, time, label, unit):
     """
 
     Args:
@@ -27,16 +27,12 @@ def plot_over_time(values, time, label, unit, path):
         ylabel - y axis label
 
     """
+    
+    ax.plot(time, values)
 
-    plt.plot(values)
+    label = (label.replace("_", " ")).capitalize()
 
-    label = label.replace("_", " ")
-
-    plt.ylabel(label + " (" + unit + ")")
-
-    filename = os.path.join(path, label) + ".png"
-    plt.savefig(filename, dpi=300)
-    plt.clf()
+    ax.set_ylabel(label + " (" + unit + ")")
 
 
 def stats_over_time(f_in, layer_name, layer_fn, save_data):
@@ -53,20 +49,38 @@ def stats_over_time(f_in, layer_name, layer_fn, save_data):
 
     """
     
-    output_folder = os.path.join(\
-            make_dir_layer_structure(f_in, "visualize_over_time"), \
-            layer_name)
-    make_dir_structure(output_folder)
+    output_folder = make_dir_layer_structure(f_in, "visualize_over_time")
     
     data = read_prev_layer(f_in, layer_name, layer_fn, \
             save_data=save_data)
-
+    time = data["time"]
     # average over time
 
-    for key in data["over_time_avg"].keys():
-        plot_over_time(data["over_time_avg"][key], data["time"],
-                       key, data["units"][key], output_folder)
+    N = len(list(data["over_time_avg"].keys())) + 2
 
+    fig, axs = plt.subplots(N, 1, figsize=(10, 2*N), sharex=True)
+
+    # special one for beatrate and intervals
+    axs[0].plot(data["time"], data["over_time_avg"]["displacement"])
+    
+    for m in data["maxima"]:
+        axs[0].axvline(x=time[m], c='r')
+    axs[0].set_ylabel("Displacement / Beatrate")
+    
+    axs[1].plot(data["time"], data["over_time_avg"]["displacement"])
+    for i in data["intervals"]:
+        axs[1].axvline(x=time[i[0]], c='g')
+        axs[1].axvline(x=time[i[1]], c='g')
+    axs[1].set_ylabel("Interval subdivision")
+
+    for (ax, key) in zip(axs[2:], data["over_time_avg"].keys()):
+        plot_over_time(ax, data["over_time_avg"][key], data["time"],
+                       key, data["units"][key])
+
+    axs[-1].set_xlabel(r"Time ($ms$)")
+    filename = os.path.join(output_folder, "analyze_mechanics.png")
+    plt.savefig(filename, dpi=300)
+    plt.clf()
 
 def visualize_over_time(f_in, layers, save_data=True):
     """

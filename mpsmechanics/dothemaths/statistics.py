@@ -8,18 +8,24 @@ import numpy as np
 
 from .heartbeat import calc_beat_maxima_time, calc_beat_intervals
 
-
-def find_nonzero_scale(displacement):
-
-    dims = displacement.shape
+def find_nonzeros_over_time(dist):
+    dims = dist.shape
 
     t_dim, x_dim, y_dim, n_dim = dims
     
-    entries = np.sum(np.any((displacement != 0), axis=0))
+    entries = np.sum(np.any((dist != 0), axis=-1), axis=(1, 2))
+
+    return 1/(x_dim*y_dim)*entries
+
+def find_nonzero_scale(dist):
+
+    dims = dist.shape
+
+    t_dim, x_dim, y_dim, n_dim = dims
+    
+    entries = np.sum(np.any((dist != 0), axis=0))
     
     return x_dim*y_dim/entries
-
-
 
 def calc_for_each_key(init_data, fn):
     """
@@ -62,6 +68,8 @@ def chip_statistics(data, displacement, dt):
     """
     d_all = {}
     
+    scale_disp_time = find_nonzeros_over_time(data["displacement"])
+    scale_disp = find_nonzero_scale(data["displacement"])
 
     # some transformations
     fn_folded = lambda x: np.linalg.norm(x, axis=3)
@@ -69,18 +77,24 @@ def chip_statistics(data, displacement, dt):
     fn_std = lambda x: np.std(x, axis=(1, 2))
     fn_max = lambda x : max(x)
 
-
     d_all["all_values"] = data
     d_all["folded"] = calc_for_each_key(data, fn_folded)
+
     d_all["over_time_avg"] = calc_for_each_key(d_all["folded"], fn_mean)
     d_all["over_time_std"] = calc_for_each_key(d_all["folded"], fn_std)
-    
-    # general variables
 
-    d_all["time"] = np.linspace(0, dt*len(displacement), len(displacement))
+    d_all["over_time_avg"]["displacement"] *= scale_disp
+    d_all["over_time_avg"]["xmotion"] = np.divide(d_all["over_time_avg"]["xmotion"], scale_disp_time)
+    d_all["over_time_avg"]["angle"] = np.divide(d_all["over_time_avg"]["angle"], scale_disp_time)
+    d_all["over_time_avg"]["velocity"] *= scale_disp
+    d_all["over_time_avg"]["prevalence"] *= scale_disp
+    d_all["over_time_avg"]["principal strain"] *= scale_disp
+
+    # general variables
+    d_all["time"] = np.linspace(0, (1/dt)*len(displacement), len(displacement))
     d_all["maxima"] = calc_beat_maxima_time(d_all["over_time_avg"]["displacement"])
     d_all["intervals"] = calc_beat_intervals(d_all["over_time_avg"]["displacement"])
-    
+
     fn_meanmax = lambda x : np.mean([max(x[i1:i2]) \
             for (i1, i2) in d_all["intervals"]])
 
@@ -91,7 +105,7 @@ def chip_statistics(data, displacement, dt):
 
     # separate for beatrate
 
-    d_all["metrics_max"]["beatrate"] = np.max(np.diff(d_all["maxima"]))
-    d_all["metrics_mean"]["beatrate"] = np.mean(np.diff(d_all["maxima"]))
+    d_all["metrics_max"]["beatrate"] = 1/dt*np.max(np.diff(d_all["maxima"]))
+    d_all["metrics_mean"]["beatrate"] = 1/dt*np.mean(np.diff(d_all["maxima"]))
 
     return d_all

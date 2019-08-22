@@ -12,7 +12,7 @@ import mps
 
 from ..motion_tracking.motion_tracking import track_motion
 from ..dothemaths.mechanical_quantities import calc_principal_strain
-from ..dothemaths.angular import calc_projection_fraction
+from ..dothemaths.angular import calc_angle_diff, calc_projection_fraction
 from ..dothemaths.statistics import chip_statistics
 from ..utils.iofuns import motion_data as md
 from ..utils.iofuns.save_values import save_dictionary
@@ -40,9 +40,11 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
     """
 
     displacement = (1/scale)*displacement
-    
-    xmotion = calc_projection_fraction(displacement, angle)[:,:,:,None]
-    
+
+    angle_diff = calc_angle_diff(displacement, angle)
+
+    xmotion = calc_projection_fraction(displacement, angle)
+
     velocity = 1/dt*(np.gradient(displacement, axis=0))
     
     threshold = 2       # um/s
@@ -50,7 +52,8 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
     
     principal_strain = calc_principal_strain(displacement)
 
-    return displacement, xmotion, velocity, prevalence, principal_strain
+    return displacement, xmotion, angle_diff, velocity, prevalence, \
+            principal_strain
 
 
 def analyze_mechanics(input_file, save_data=True):
@@ -71,13 +74,12 @@ def analyze_mechanics(input_file, save_data=True):
 
     disp_data = data["displacement vectors"]
     angle = data["angle"]
-
     scale = mt_data.info["um_per_pixel"]
-    dt = mt_data.dt
+    dt = mt_data.dt 
 
     print("Calculating mechanical quantities for " + input_file)
 
-    displacement, xmotion, velocity, prevalence, principal_strain = \
+    displacement, xmotion, angle_diff, velocity, prevalence, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, dt)
     
     # over space and time (original data)
@@ -85,6 +87,7 @@ def analyze_mechanics(input_file, save_data=True):
     values = {"displacement" : displacement,
               "velocity" : velocity,
               "xmotion" : xmotion,
+              "angle" : angle_diff,
               "principal strain" : principal_strain,
               "prevalence" : prevalence}
     
@@ -92,6 +95,7 @@ def analyze_mechanics(input_file, save_data=True):
     d_all["units"] = {"displacement" : r"$\mu m$",
                       "velocity" : r"$\mu m / s$",
                       "xmotion" : r"??",
+                      "angle" : "radians",
                       "principal strain" : r"-",
                       "prevalence" : r"-"}
 

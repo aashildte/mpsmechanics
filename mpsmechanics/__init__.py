@@ -17,4 +17,5 @@ from .statistical_analysis.metrics import calculate_metrics
 
 from .dothemaths.angular import calc_projection_vectors, calc_projection_fraction, \
         calc_angle_diff, flip_values
+from .dothemaths.heartbeat import calc_beat_maxima, calc_beat_intervals
 from .dothemaths.operations import calc_magnitude

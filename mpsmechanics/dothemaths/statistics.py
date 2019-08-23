@@ -6,7 +6,8 @@
 
 import numpy as np
 
-from .heartbeat import calc_beat_maxima_time, calc_beat_intervals
+from mpsmechanics.dothemaths.heartbeat import \
+        calc_beat_maxima, calc_beat_intervals
 
 def find_nonzeros_over_time(dist):
     dims = dist.shape
@@ -93,7 +94,7 @@ def chip_statistics(data, displacement, dt):
 
     # general variables
     d_all["time"] = np.linspace(0, (1/dt)*len(displacement), len(displacement))
-    d_all["maxima"] = calc_beat_maxima_time(d_all["over_time_avg"]["displacement"])
+    d_all["maxima"] = calc_beat_maxima(d_all["over_time_avg"]["displacement"])
     d_all["intervals"] = calc_beat_intervals(d_all["over_time_avg"]["displacement"])
 
     fn_meanmax = lambda x : np.mean([max(x[i1:i2]) \

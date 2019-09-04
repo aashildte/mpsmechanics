@@ -25,7 +25,6 @@ def setup_frame(vectors, pixels2um, dpi, images):
     block_size = Nx // vectors.shape[1]
 
     figsize = (14, 10)
-    
     fig, axs = plt.subplots(2, 3, figsize=figsize, dpi=dpi)
     return x, y, axs, fig
 
@@ -81,7 +80,8 @@ def plot2Dvalues(vectors, time_step, label, unit, dx, dpi, pixels2um, scale, ima
     axs[1, 1].set_title("Longitudinal (x)")
     axs[1, 2].set_title("Transversal (y)")
     plt.suptitle(f"Time step {time_step}")
-    
+    import matplotlib as mpl
+    mpl.rcParams["font.size"] = 10
     scale_ax = [1, len(x)/images.shape[0]]
 
     for i in range(2):
@@ -94,7 +94,7 @@ def plot2Dvalues(vectors, time_step, label, unit, dx, dpi, pixels2um, scale, ima
             axs[i,j].set_xticklabels(map(int, np.linspace(0, pixels2um*(images.shape[1]-1), 8)))
             axs[i,j].set_xlabel("$\mu m$")
             axs[i,j].set_ylabel("$\mu m$")
-    
+
     return magnitude, normalized, Q0, Q1, Q2, Q3, Q4, Q5, fig
 
 
@@ -189,3 +189,4 @@ def visualize_vectorfield(f_in, layers, framerate_scale=1, save_data=True):
                     mt_data.data.frames, framerate=framerate_scale*mt_data.framerate, \
                     fname=os.path.join(output_folder, "vectorfield_" + key),\
                     scale=scales[key], linscale=linscales[key])
+

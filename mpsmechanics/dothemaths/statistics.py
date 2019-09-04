@@ -107,7 +107,11 @@ def chip_statistics(data, displacement, dt):
 
     # separate for beatrate
 
-    d_all["metrics_max"]["beatrate"] = 1/dt*np.max(np.diff(d_all["maxima"]))
-    d_all["metrics_mean"]["beatrate"] = 1/dt*np.mean(np.diff(d_all["maxima"]))
+    if len(d_all["maxima"]) > 1:
+        d_all["metrics_max"]["beatrate"] = 1/dt*np.max(np.diff(d_all["maxima"]))
+        d_all["metrics_mean"]["beatrate"] = 1/dt*np.mean(np.diff(d_all["maxima"]))
+    else:
+        d_all["metrics_max"]["beatrate"] = 0
+        d_all["metrics_mean"]["beatrate"] = 0
 
     return d_all

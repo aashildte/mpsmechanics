@@ -3,7 +3,7 @@
 
 Point tracking related functions
 
-Åshild Telle / Simula Research Labratory / 2019
+Åshild Telle / Simula Research Laboratory / 2019
 
 """
 
@@ -44,17 +44,9 @@ def _define_pillars(p_values, tracking_type = 'large_radius', no_meshpts=200):
     angles = np.linspace(0, 2*np.pi, no_meshpts)
 
     for i in range(no_pillars):
-
-        # mesh points on the circumsphere of the circle
-        # @David keep the original as default maybe, and
-        # try variations in separate branches
-
         x_pos, y_pos, radius = p_values[i]
 
-        #TODO something like pillars[i, :, 0] = x_pos + radius*np.cos(angles)
-
         if tracking_type == "large_radius":
-
             for j in range(no_meshpts):
                 pillars[i, j, 0] = x_pos + radius*np.cos(angles[j])
                 pillars[i, j, 1] = y_pos + radius*np.sin(angles[j])
@@ -64,7 +56,6 @@ def _define_pillars(p_values, tracking_type = 'large_radius', no_meshpts=200):
             for j in range(no_meshpts):
                 pillars[i, j, 0] = x_pos + small_radius*np.cos(angles[j])
                 pillars[i, j, 1] = y_pos + small_radius*np.sin(angles[j])
-
         else:
             for j in range(no_meshpts):
                 random_radius = np.random.uniform(0, radius)
@@ -79,13 +70,14 @@ def _calculate_current_timestep(x_coords, y_coords, data_disp, pillars):
 
     Calculates values at given tracking points (defined by pillars)
     based on interpolation.
-
-    # TODO can we make this step faster?
+    
+    # TODO can we make this step faster by only interpolating in
+    # the relevant region?
 
     Args:
         x_coords - x coordinates, dimension X
         y_coords - y coordinates, dimension Y
-        data_disp[t] - numpy array of dimensions X x Y x 2
+        data_disp - numpy array of dimensions X x Y x 2
         pillars - numpy array of dimensions no_pillars x no_meshpts x 2
 
     Returns:
@@ -140,6 +132,7 @@ def _track_pillars_over_time(data_disp, pillars_mpoints, size_x, size_y,
     # store data - as an average of all meshpoints
     rel_values = np.zeros((T, no_pillars, no_meshpts, 2))
 
+    # TODO should be done in parallel, using threads
     for t in range(T):
         rel_values[t] = \
                 _calculate_current_timestep(x_coords, y_coords, \

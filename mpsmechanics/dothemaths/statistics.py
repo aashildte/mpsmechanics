@@ -9,26 +9,15 @@ import numpy as np
 from mpsmechanics.dothemaths.heartbeat import \
         calc_beat_maxima, calc_beat_intervals
 
-def find_nonzeros_over_time(dist):
-    dims = dist.shape
 
-    t_dim, x_dim, y_dim, n_dim = dims
-    
-    entries = np.sum(np.any((dist != 0), axis=-1), axis=(1, 2))
+def calc_filter_time(dist):
+    return np.any((dist != 0), axis=-1)
 
-    return 1/(x_dim*y_dim)*entries
+def calc_filter_all(dist):
+    return np.broadcast_to(np.any((dist != 0), axis=(0,-1)), dist.shape[:3])
+ 
 
-def find_nonzero_scale(dist):
-
-    dims = dist.shape
-
-    t_dim, x_dim, y_dim, n_dim = dims
-    
-    entries = np.sum(np.any((dist != 0), axis=0))
-    
-    return x_dim*y_dim/entries
-
-def calc_for_each_key(init_data, fn):
+def calc_for_each_key(init_data, fn, filter_map):
     """
 
     Performs a given operations for a dictionary with similar data
@@ -47,9 +36,29 @@ def calc_for_each_key(init_data, fn):
     d = {}
 
     for key in init_data.keys():
-        d[key] = fn(init_data[key])
+        d[key] = fn(init_data[key], filter_map[key])
 
     return d
+
+
+def fn_mean(x, filter_x):
+    y = np.zeros(x.shape[0])
+
+    for t in range(x.shape[0]):
+        z = np.extract(filter_x[t], x[t])
+        y[t] = np.mean(z)
+
+    return y
+
+
+def fn_std(x, filter_x):
+    y = np.zeros(x.shape[0])
+
+    for t in range(x.shape[0]):
+        z = np.extract(filter_x[t], x[t])
+        y[t] = np.std(z)
+
+    return y
 
 
 def chip_statistics(data, displacement, dt):
@@ -69,41 +78,38 @@ def chip_statistics(data, displacement, dt):
     """
     d_all = {}
     
-    scale_disp_time = find_nonzeros_over_time(data["displacement"])
-    scale_disp = find_nonzero_scale(data["displacement"])
+    filter_all = calc_filter_all(data["displacement"])
+    filter_time = calc_filter_time(data["displacement"])
+    
+    #filter_all = np.tile("True", dist.shape[:3])     # original values, no filter applied
+
+    time_filter = {"displacement" : filter_all, "velocity" : filter_all, \
+            "prevalence" : filter_all, "angle" : filter_time, "xmotion": filter_time, \
+            "principal strain": filter_all}
 
     # some transformations
-    fn_folded = lambda x: np.linalg.norm(x, axis=3)
-    fn_mean = lambda x: np.mean(x, axis=(1, 2))
-    fn_std = lambda x: np.std(x, axis=(1, 2))
-    fn_max = lambda x : max(x)
-
+    fn_folded = lambda x, _: np.linalg.norm(x, axis=3)
+    fn_max = lambda x, _ : max(x)
+    
     d_all["all_values"] = data
-    d_all["folded"] = calc_for_each_key(data, fn_folded)
+    d_all["folded"] = calc_for_each_key(data, fn_folded, time_filter)
 
-    d_all["over_time_avg"] = calc_for_each_key(d_all["folded"], fn_mean)
-    d_all["over_time_std"] = calc_for_each_key(d_all["folded"], fn_std)
-
-    for k in ("over_time_avg", "over_time_std"):
-        d_all[k]["displacement"] *= scale_disp
-        d_all[k]["xmotion"] = np.divide(d_all[k]["xmotion"], scale_disp_time)
-        d_all[k]["angle"] = np.divide(d_all[k]["angle"], scale_disp_time)
-        d_all[k]["velocity"] *= scale_disp
-        d_all[k]["prevalence"] *= scale_disp
-        d_all[k]["principal strain"] *= scale_disp
-
+    d_all["over_time_avg"] = calc_for_each_key(d_all["folded"], fn_mean, time_filter)
+    d_all["over_time_std"] = calc_for_each_key(d_all["folded"], fn_std, time_filter)
+    
+    
     # general variables
     d_all["time"] = np.linspace(0, (1/dt)*len(displacement), len(displacement))
     d_all["maxima"] = calc_beat_maxima(d_all["over_time_avg"]["displacement"])
     d_all["intervals"] = calc_beat_intervals(d_all["over_time_avg"]["displacement"])
 
-    fn_meanmax = lambda x : np.mean([max(x[i1:i2]) \
+    fn_meanmax = lambda x, _ : np.mean([max(x[i1:i2]) \
             for (i1, i2) in d_all["intervals"]])
 
     # metrics
 
-    d_all["metrics_max"] = calc_for_each_key(d_all["over_time_avg"], fn_max)
-    d_all["metrics_mean"] = calc_for_each_key(d_all["over_time_avg"], fn_meanmax)
+    d_all["metrics_max"] = calc_for_each_key(d_all["over_time_avg"], fn_max, time_filter)
+    d_all["metrics_mean"] = calc_for_each_key(d_all["over_time_avg"], fn_meanmax, time_filter)
 
     # separate for beatrate
 

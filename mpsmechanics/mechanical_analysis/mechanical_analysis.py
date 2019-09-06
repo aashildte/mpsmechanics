@@ -50,7 +50,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
     threshold = 2       # um/s
     prevalence = (velocity > threshold).astype(int)
     
-    principal_strain = calc_principal_strain(displacement, scale)   # or scale??
+    principal_strain = calc_principal_strain(displacement, scale)
 
     return displacement, xmotion, angle_diff, velocity, prevalence, \
             principal_strain
@@ -74,8 +74,12 @@ def analyze_mechanics(input_file, save_data=True):
 
     disp_data = data["displacement vectors"]
     angle = data["angle"]
-    scale = mt_data.info["um_per_pixel"]
+    
+    
+    scale = 8*mt_data.info["um_per_pixel"]
     dt = mt_data.dt 
+    
+    #import IPython; IPython.embed()
 
     print("Calculating mechanical quantities for " + input_file)
 

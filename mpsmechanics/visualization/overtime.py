@@ -7,6 +7,7 @@
 
 
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 
 from ..utils.iofuns.data_layer import read_prev_layer
@@ -15,7 +16,7 @@ from ..utils.iofuns.folder_structure import make_dir_structure, \
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 from ..pillar_tracking.pillar_tracking import track_pillars
 
-def plot_over_time(ax, values, time, label, unit):
+def plot_over_time(ax, avg_values, std_values, time, label, unit):
     """
 
     Args:
@@ -28,7 +29,9 @@ def plot_over_time(ax, values, time, label, unit):
 
     """
     
-    ax.plot(time, values)
+    ax.plot(time, avg_values)
+    ax.fill_between(time, np.zeros_like(time), \
+            std_values, color='gray', alpha=0.5)
 
     label = (label.replace("_", " ")).capitalize()
 
@@ -73,9 +76,12 @@ def stats_over_time(f_in, layer_name, layer_fn, save_data):
         axs[1].axvline(x=time[i[1]], c='g')
     axs[1].set_ylabel("Interval subdivision")
 
+    # then every other quantity
+
     for (ax, key) in zip(axs[2:], data["over_time_avg"].keys()):
-        plot_over_time(ax, data["over_time_avg"][key], data["time"],
-                       key, data["units"][key])
+        plot_over_time(ax, data["over_time_avg"][key], \
+                data["over_time_std"][key], data["time"],
+                key, data["units"][key])
 
     axs[-1].set_xlabel(r"Time ($ms$)")
     filename = os.path.join(output_folder, "analyze_mechanics.png")
@@ -93,3 +99,4 @@ def visualize_over_time(f_in, layers, save_data=True):
     for layer in layers:
         layer_fn = eval(layer)
         stats_over_time(f_in, layer, layer_fn, save_data)
+    print("Plots finished")

@@ -14,7 +14,7 @@ Module for analyzing mechanical properties from motion vector images:
 import numpy as np
 
 
-def calc_deformation_tensor(data):
+def calc_deformation_tensor(data, dx):
     """
     Computes the deformation tensor F from values in data
 
@@ -31,16 +31,16 @@ def calc_deformation_tensor(data):
     dvdx = np.gradient(data[:, :, :, 1], axis=0)
     dvdy = np.gradient(data[:, :, :, 1], axis=1)
 
-    F = np.swapaxes(np.swapaxes(np.swapaxes(np.swapaxes(\
-            np.array(((dudx, dudy), \
+    F = 1/dx*(np.swapaxes(np.swapaxes(np.swapaxes(np.swapaxes(\
+                np.array(((dudx, dudy), \
                       (dvdx, dvdy))), \
-                      0, -2), 1, -1), 0, 2), 1, 2) \
-             + np.eye(2)[None, None, None, :, :]
+                      0, -2), 1, -1), 0, 2), 1, 2)) \
+                + np.eye(2)[None, None, None, :, :]
 
     return F
 
 
-def calc_gl_strain_tensor(data):
+def calc_gl_strain_tensor(data, dx):
     """
     Computes the transpose along the third dimension of data; if data
     represents the deformation gradient tensor F (over time and 2 spacial
@@ -54,14 +54,14 @@ def calc_gl_strain_tensor(data):
 
     """
 
-    def_tensor = calc_deformation_tensor(data)
+    def_tensor = calc_deformation_tensor(data, dx)
 
     return 0.5*(np.matmul(def_tensor,
                           def_tensor.transpose(0, 1, 2, 4, 3)) - \
             np.eye(2)[None, None, None, :, :])
 
 
-def calc_principal_strain(data):
+def calc_principal_strain(data, dx):
     """
     Computes the principal strain defined to be the largest eigenvector
     (eigenvector corresponding to largest eigenvalue, scaled) of the
@@ -75,7 +75,7 @@ def calc_principal_strain(data):
 
     """
 
-    E = calc_gl_strain_tensor(data)
+    E = calc_gl_strain_tensor(data, dx)
 
     eigenvalues, eigenvectors = np.linalg.eig(E)
 

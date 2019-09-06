@@ -39,7 +39,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
 
     """
 
-    displacement = (1/scale)*displacement
+    displacement = scale*displacement
 
     angle_diff = calc_angle_diff(displacement, angle)
 
@@ -50,7 +50,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
     threshold = 2       # um/s
     prevalence = (velocity > threshold).astype(int)
     
-    principal_strain = calc_principal_strain(displacement)
+    principal_strain = calc_principal_strain(displacement, scale)   # or scale??
 
     return displacement, xmotion, angle_diff, velocity, prevalence, \
             principal_strain

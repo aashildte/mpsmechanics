@@ -21,4 +21,4 @@ from .dothemaths.angular import calc_projection_vectors, calc_projection_fractio
         calc_angle_diff, flip_values
 from .dothemaths.heartbeat import calc_beat_maxima, calc_beat_intervals
 from .dothemaths.operations import calc_magnitude
-from .dothemaths.mechanical_quantities import calc_gl_strain_tensor
+from .dothemaths.mechanical_quantities import calc_deformation_tensor, calc_gl_strain_tensor

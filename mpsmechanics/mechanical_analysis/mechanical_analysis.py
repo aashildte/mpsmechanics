@@ -41,8 +41,6 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
 
     displacement = scale*displacement
 
-    angle_diff = calc_angle_diff(displacement, angle)
-
     xmotion = calc_projection_fraction(displacement, angle)
 
     velocity = 1/dt*(np.gradient(displacement, axis=0))
@@ -91,7 +89,6 @@ def analyze_mechanics(input_file, save_data=True):
     values = {"displacement" : displacement,
               "velocity" : velocity,
               "xmotion" : xmotion,
-              "angle" : angle_diff,
               "principal strain" : principal_strain,
               "prevalence" : prevalence}
     
@@ -99,7 +96,6 @@ def analyze_mechanics(input_file, save_data=True):
     d_all["units"] = {"displacement" : r"$\mu m$",
                       "velocity" : r"$\mu m / s$",
                       "xmotion" : r"??",
-                      "angle" : "radians",
                       "principal strain" : r"-",
                       "prevalence" : r"-"}
 

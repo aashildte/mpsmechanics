@@ -46,16 +46,19 @@ def calculate_metrics_all(input_files):
     for k in data_keys:
         metrics_all[k] = []
 
-
     for f in input_files:
-        metrics_data = _data_to_dict(f)
+        try:
+            metrics_data = _data_to_dict(f)
 
-        metrics_all["Filename"] += [f] + [" "]*(len(metrics_data[" "]))
+            metrics_all["Filename"] += [f] + [" "]*(len(metrics_data[" "]))
 
-        assert list(metrics_data.keys()) == data_keys
+            assert list(metrics_data.keys()) == data_keys
         
-        for k in data_keys:
-            metrics_all[k] += metrics_data[k] + [" "]
+            for k in data_keys:
+               metrics_all[k] += metrics_data[k] + [" "]
+
+        except Exception as e:
+            print(f"Could not find metrics for {f}; error msg: {e}")
 
     fout = "metrics_summary.csv"
     pd.DataFrame(metrics_all).to_csv(fout, index=False)

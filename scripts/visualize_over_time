@@ -7,7 +7,7 @@ spacial distribution of given metrics for these.
 
 Run script as (with python 3)
 
-    visualize_mechanics [input files]
+    analyze_over_time [input files]
 
 where the input files are csv/nd2 files containing displacement data,
 (see README).
@@ -20,14 +20,13 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-
     try:
-        input_files = sys.argv[1:-1]
-        layers = sys.argv[-1]
         assert(len(sys.argv[1:])>1)
+        input_files = sys.argv[1:]
+        layers = "analyze_mechanics"
     except:
         print('Expected arguments: files, layers (one string); ' + \
-               'e.g. track_pillars */*/*.nd2 "visualize_chip')
+               'e.g. visualize_over_time */*/*.nd2')
         exit(-1)
 
     for f_in in input_files:

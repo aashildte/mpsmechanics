@@ -11,7 +11,7 @@ Calculates beat rate + gives interval splitting based on maxima
 from scipy.signal import find_peaks
 
 
-def calc_beat_intervals(data, disp_threshold=10):
+def calc_beat_intervals(data, disp_threshold=30):
     """
 
     From data on displacement over time only, this function
@@ -38,7 +38,7 @@ def calc_beat_intervals(data, disp_threshold=10):
     return intervals
 
 
-def calc_beat_maxima(disp_over_time, disp_threshold=10):
+def calc_beat_maxima(disp_over_time, disp_threshold=30):
     """
 
     From data on displacement over time only, this function

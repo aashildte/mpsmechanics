@@ -50,7 +50,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
     
     principal_strain = calc_principal_strain(displacement, scale)
 
-    return displacement, xmotion, angle_diff, velocity, prevalence, \
+    return displacement, xmotion, velocity, prevalence, \
             principal_strain
 
 
@@ -77,11 +77,9 @@ def analyze_mechanics(input_file, save_data=True):
     scale = 8*mt_data.info["um_per_pixel"]
     dt = mt_data.dt 
     
-    #import IPython; IPython.embed()
-
     print("Calculating mechanical quantities for " + input_file)
 
-    displacement, xmotion, angle_diff, velocity, prevalence, principal_strain = \
+    displacement, xmotion, velocity, prevalence, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, dt)
     
     # over space and time (original data)

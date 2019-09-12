@@ -7,10 +7,10 @@ spacial distribution of given metrics for these.
 
 Run script as (with python 3)
 
-    visualize_mechanics [input files]
+    visualize_vectorfield [input files] [scaling nuber]
 
 where the input files are csv/nd2 files containing displacement data,
-(see README).
+(see README), scaling number change in frame rate.
 
 Åshild Telle / Simula Research Labratory / 2019
 
@@ -22,12 +22,12 @@ import mpsmechanics as mc
 if __name__ == "__main__":
 
     try:
-        input_files = sys.argv[1:-2]
-        layers = sys.argv[-2]
+        input_files = sys.argv[1:-1]
+        layers = "analyze_mechanics"
         scale = float(sys.argv[-1])
     except:
         print('Expected arguments: files, layers (one string), scale for framerate (float); ' + \
-               'e.g. visualize_vectorfield */*/*.nd2 analyze_mechanics 0.2')
+               'e.g. visualize_vectorfield */*/*.nd2 0.2')
         exit(-1)
 
     for f_in in input_files:

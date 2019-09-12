@@ -47,13 +47,12 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
 
     velocity = mstos*np.divide(np.gradient(displacement, axis=0), np.gradient(time)[:,None,None,None]) 
 
-    threshold = 2       # um/s
-    prevalence = (velocity > threshold).astype(int)
+    #threshold = 2       # um/s
+    #prevalence = (velocity > threshold).astype(int)
     
     principal_strain = calc_principal_strain(displacement, scale)
 
-    return displacement, xmotion, velocity, prevalence, \
-            principal_strain
+    return displacement, xmotion, velocity, principal_strain
 
 
 def analyze_mechanics(input_file, save_data=True):
@@ -81,7 +80,7 @@ def analyze_mechanics(input_file, save_data=True):
     
     print("Calculating mechanical quantities for " + input_file)
 
-    displacement, xmotion, velocity, prevalence, principal_strain = \
+    displacement, xmotion, velocity, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, mt_data.time_stamps)
 
     # over space and time (original data)
@@ -89,15 +88,13 @@ def analyze_mechanics(input_file, save_data=True):
     values = {"displacement" : displacement,
               "velocity" : velocity,
               "xmotion" : xmotion,
-              "principal strain" : principal_strain,
-              "prevalence" : prevalence}
-    
+              "principal strain" : principal_strain}   
+
     d_all = chip_statistics(values, disp_data, dt) 
     d_all["units"] = {"displacement" : r"$\mu m$",
                       "velocity" : r"$\mu m / s$",
-                      "xmotion" : r"??",
-                      "principal strain" : r"-",
-                      "prevalence" : r"-"}
+                      "xmotion" : r"-",
+                      "principal strain" : r"-"}
 
     d_all["time"] = mt_data.time_stamps
 

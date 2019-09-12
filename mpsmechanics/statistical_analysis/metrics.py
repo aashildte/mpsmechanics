@@ -48,7 +48,8 @@ def calculate_metrics_all(input_files):
 
     for f in input_files:
         try:
-    
+            path, filename, ext = get_input_properties(f)
+
             assert ext == "nd2", "Error: Wrong file formate"
             assert "BF" in filename, "Error: Not a BF file?"
             
@@ -63,6 +64,8 @@ def calculate_metrics_all(input_files):
 
         except Exception as e:
             print(f"Could not find metrics for {f}; error msg: {e}")
+
+    print(metrics_all)
 
     fout = "metrics_summary.csv"
     pd.DataFrame(metrics_all).to_csv(fout, index=False)

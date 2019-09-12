@@ -67,6 +67,8 @@ def stats_over_time(f_in, layer_name, layer_fn, save_data):
     
     data = read_prev_layer(f_in, layer_name, layer_fn, \
             save_data=save_data)
+    
+    print("time: ", data["time"])
     time = data["time"]
     # average over time
 

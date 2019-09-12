@@ -958,12 +958,11 @@ def track_motion(input_file, use_cache=True, save_data=True):
     """
     
     mt_data = mps.MPS(input_file)
+
     scaling_factor = mt_data.info['um_per_pixel']
     motion = MotionTracking(mt_data, reference_frame="median", use_cache=use_cache)
     
     name = input_file[:-4]
-    #motion.plot_displacement_data(fname=name + "_disp" + ".png")
-    #motion.plot_velocity_data(fname=name + "_velocity" + ".png")
 
     # get right reference frame
 

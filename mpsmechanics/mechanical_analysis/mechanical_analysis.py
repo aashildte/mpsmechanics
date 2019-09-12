@@ -97,6 +97,8 @@ def analyze_mechanics(input_file, save_data=True):
                       "principal strain" : r"-",
                       "prevalence" : r"-"}
 
+    d_all["time"] = mt_data.time_stamps
+
     print("Done calculating mechanical quantities for " + input_file)
 
     if save_data:

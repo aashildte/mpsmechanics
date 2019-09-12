@@ -31,19 +31,23 @@ def calculate_metrics(input_file):
     data = read_prev_layer(input_file, \
                 "analyze_mechanics", analyze_mechanics)
 
-    keys = list(data["metrics_max"].keys())
+    keys = list(data["metrics_max_avg"].keys())
+    
     metrics_data = {}
-    metrics_data["Maximum value"] = []
-    metrics_data["Mean value"] = []
-
-    descriptions = [x.capitalize() for x in keys]
+    metrics_data[" "] = []
+    metrics_data["Maximum average value"] = []
+    metrics_data["Average average value"] = []
+    metrics_data["Maximum standard deviation"] = []
+    metrics_data["Average standard deviation"] = []
 
     for key in keys:
-        metrics_data["Maximum value"].append(data["metrics_max"][key])
-        metrics_data["Mean value"].append(data["metrics_mean"][key])
+        metrics_data[" "].append(key.capitalize())
+        metrics_data["Maximum average value"].append(data["metrics_max_avg"][key])
+        metrics_data["Average average value"].append(data["metrics_avg_avg"][key])
+        metrics_data["Maximum standard deviation"].append(data["metrics_max_std"][key])
+        metrics_data["Average standard deviation"].append(data["metrics_avg_std"][key])
 
     fout = os.path.join(os.path.join(path, filename), "metrics.csv")
+    pd.DataFrame(metrics_data).to_csv(fout, index=False)
 
-    pd_data = pd.DataFrame(metrics_data,
-                           columns=["Maximum value", "Mean value"])
-    pd_data.to_csv(fout, index_label=descriptions)
+    print(f"Data saved to file {fout}.")

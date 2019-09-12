@@ -96,10 +96,9 @@ def chip_statistics(data, displacement, dt):
 
     d_all["over_time_avg"] = calc_for_each_key(d_all["folded"], fn_mean, time_filter)
     d_all["over_time_std"] = calc_for_each_key(d_all["folded"], fn_std, time_filter)
-    
-    
+     
     # general variables
-    d_all["time"] = np.linspace(0, (1/dt)*len(displacement), len(displacement))
+    #d_all["time"] = np.linspace(0, (1/dt)*len(displacement), len(displacement))
     d_all["maxima"] = calc_beat_maxima(d_all["over_time_avg"]["displacement"])
     d_all["intervals"] = calc_beat_intervals(d_all["over_time_avg"]["displacement"])
 
@@ -108,16 +107,28 @@ def chip_statistics(data, displacement, dt):
 
     # metrics
 
-    d_all["metrics_max"] = calc_for_each_key(d_all["over_time_avg"], fn_max, time_filter)
-    d_all["metrics_mean"] = calc_for_each_key(d_all["over_time_avg"], fn_meanmax, time_filter)
+    d_all["metrics_max_avg"] = calc_for_each_key(d_all["over_time_avg"], fn_max, time_filter)
+    d_all["metrics_avg_avg"] = calc_for_each_key(d_all["over_time_avg"], fn_meanmax, time_filter)
+    #d_all["metrics_std_avg"] = calc_for_each_key(d_all["over_time_avg"], fn_std, time_filter)
+    d_all["metrics_max_std"] = calc_for_each_key(d_all["over_time_std"], fn_max, time_filter)
+    d_all["metrics_avg_std"] = calc_for_each_key(d_all["over_time_std"], fn_meanmax, time_filter)
+    #d_all["metrics_std_std"] = calc_for_each_key(d_all["over_time_std"], fn_std, time_filter)
 
     # separate for beatrate
 
     if len(d_all["maxima"]) > 1:
-        d_all["metrics_max"]["beatrate"] = 1/dt*np.max(np.diff(d_all["maxima"]))
-        d_all["metrics_mean"]["beatrate"] = 1/dt*np.mean(np.diff(d_all["maxima"]))
+        d_all["metrics_max_avg"]["beatrate"] = 1/dt*np.max(np.diff(d_all["maxima"]))
+        d_all["metrics_avg_avg"]["beatrate"] = 1/dt*np.mean(np.diff(d_all["maxima"]))
+        #d_all["metrics_std_avg"]["beatrate"] = np.std(1/dt*np.diff(d_all["maxima"]))
+        d_all["metrics_max_std"]["beatrate"] = 0
+        d_all["metrics_avg_std"]["beatrate"] = 0
+        #d_all["metrics_std_std"]["beatrate"] = 0
     else:
-        d_all["metrics_max"]["beatrate"] = 0
-        d_all["metrics_mean"]["beatrate"] = 0
+        d_all["metrics_max_avg"]["beatrate"] = 0
+        d_all["metrics_avg_avg"]["beatrate"] = 0
+        #d_all["metrics_std_avg"]["beatrate"] = 0
+        d_all["metrics_max_std"]["beatrate"] = 0
+        d_all["metrics_avg_std"]["beatrate"] = 0
+        #d_all["metrics_std_std"]["beatrate"] = 0
 
     return d_all

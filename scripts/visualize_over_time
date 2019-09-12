@@ -21,7 +21,6 @@ import mpsmechanics as mc
 
 if __name__ == "__main__":
     try:
-        assert(len(sys.argv[1:])>1)
         input_files = sys.argv[1:]
         layers = "analyze_mechanics"
     except:

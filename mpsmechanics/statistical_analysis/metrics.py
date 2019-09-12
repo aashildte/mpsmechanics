@@ -48,6 +48,10 @@ def calculate_metrics_all(input_files):
 
     for f in input_files:
         try:
+    
+            assert ext == "nd2", "Error: Wrong file formate"
+            assert "BF" in filename, "Error: Not a BF file?"
+            
             metrics_data = _data_to_dict(f)
 
             metrics_all["Filename"] += [f] + [" "]*(len(metrics_data[" "]))

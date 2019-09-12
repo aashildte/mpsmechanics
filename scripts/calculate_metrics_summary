@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+
+"""
+
+Run script as
+
+calculate_metrics *.nd2
+
+"""
+
+import sys
+import mpsmechanics as mc
+
+if __name__ == "__main__":
+    input_files = sys.argv[1:]
+    mc.calculate_metrics_all(input_files)
+

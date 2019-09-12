@@ -15,9 +15,9 @@ if __name__ == "__main__":
     input_files = sys.argv[1:]
 
     for f in input_files:
-        #try:
-        mc.calculate_metrics(f)
-        #except Exception as e:
-        #    print("Could not run mechanical analysis; error ", e)
-        #    print("Launching next data set ..")
+        try:
+            mc.calculate_metrics(f)
+        except Exception as e:
+            print("Could not run mechanical analysis; error ", e)
+            print("Launching next data set ..")
 

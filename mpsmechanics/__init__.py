@@ -13,7 +13,7 @@ from .pillar_tracking.pillar_tracking import track_pillars
 from .visualization.overtime import visualize_over_time
 from .visualization.vectorfield import plot_at_peak, animate_vectorfield, visualize_vectorfield
 from .statistical_analysis.statistical_analysis import calculate_stats_chips
-from .statistical_analysis.metrics import calculate_metrics
+from .statistical_analysis.metrics import calculate_metrics, calculate_metrics_all
 
 from .utils.iofuns.data_layer import read_prev_layer
 

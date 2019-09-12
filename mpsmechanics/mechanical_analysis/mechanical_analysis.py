@@ -19,7 +19,7 @@ from ..utils.iofuns.save_values import save_dictionary
 from ..utils.iofuns.data_layer import read_prev_layer
 
 
-def _calc_mechanical_quantities(displacement, scale, angle, dt):
+def _calc_mechanical_quantities(displacement, scale, angle, time):
     """
     
     Derived quantities - reshape to match expected data structure for
@@ -29,7 +29,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
         displacement - displacement data, T x X x Y x 2 numpy array
         scale - scaling factor (pixels to um)
         angle - angle chamber is tilted with
-        dt - time step (frame rate)
+        time - all time steps
 
     Returns:
         displacement in um - T x X x Y x 2
@@ -43,8 +43,10 @@ def _calc_mechanical_quantities(displacement, scale, angle, dt):
 
     xmotion = calc_projection_fraction(displacement, angle)
 
-    velocity = 1/dt*(np.gradient(displacement, axis=0))
-    
+    mstos = 1E3
+
+    velocity = mstos*np.divide(np.gradient(displacement, axis=0), np.gradient(time)[:,None,None,None]) 
+
     threshold = 2       # um/s
     prevalence = (velocity > threshold).astype(int)
     
@@ -80,8 +82,8 @@ def analyze_mechanics(input_file, save_data=True):
     print("Calculating mechanical quantities for " + input_file)
 
     displacement, xmotion, velocity, prevalence, principal_strain = \
-            _calc_mechanical_quantities(disp_data, scale, angle, dt)
-    
+            _calc_mechanical_quantities(disp_data, scale, angle, mt_data.time_stamps)
+
     # over space and time (original data)
 
     values = {"displacement" : displacement,

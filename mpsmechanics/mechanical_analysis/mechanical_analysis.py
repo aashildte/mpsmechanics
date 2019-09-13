@@ -54,6 +54,35 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
 
     return displacement, xmotion, velocity, principal_strain
 
+    
+def _calc_beatrate(disp_folded, maxima, intervals):
+
+    data = {"metrics_max_avg" : {},
+            "metrics_avg_avg" : {}}
+
+    _, X, Y, _ = disp_folded.shape
+    num_beats = len(maxima) - 1
+
+    beatrate_spatial = np.zeros(num_beats, X, Y, 1)
+
+    i1, i2 = intervals[0]
+    #argmax_last_interval = np.argmax(disp_folded[0:i1])
+
+    for i in range(num_beats):
+        pass 
+
+
+    if len(d_all["maxima"]) > 1:
+        d_all["metrics_max_avg"]["beatrate"] = 1/dt*np.max(np.diff(d_all["maxima"]))
+        d_all["metrics_avg_avg"]["beatrate"] = 1/dt*np.mean(np.diff(d_all["maxima"]))
+    else:
+        d_all["metrics_max_avg"]["beatrate"] = np.nan
+        d_all["metrics_avg_avg"]["beatrate"] = np.nan
+
+
+
+
+
 
 def analyze_mechanics(input_file, save_data=True):
     """

@@ -35,7 +35,20 @@ def _data_to_dict(input_file):
     return metrics_data
 
 
-def calculate_metrics_all(input_files):
+def _calculate_metrics_file(input_file, metrics_all, data_keys):
+    path, filename, ext = get_input_properties(input_file)
+
+    metrics_data = _data_to_dict(input_file)
+    metrics_all["Filename"] += [input_file] + \
+            [" "]*(len(metrics_data[" "]))
+
+    assert list(metrics_data.keys()) == data_keys
+
+    for k in data_keys:
+       metrics_all[k] += metrics_data[k] + [" "]
+
+
+def calculate_metrics_all(input_files, debug_mode):
 
     data_keys = [" ", "Maximum average value", "Average average value", \
             "Maximum standard deviation", "Average standard deviation"]
@@ -43,34 +56,25 @@ def calculate_metrics_all(input_files):
     metrics_all = {}
 
     metrics_all["Filename"] = []
+
     for k in data_keys:
         metrics_all[k] = []
 
     for f in input_files:
-        try:
-            path, filename, ext = get_input_properties(f)
-
-            assert ext == "nd2", "Error: Wrong file formate"
-            assert "BF" in filename, "Error: Not a BF file?"
-            
-            metrics_data = _data_to_dict(f)
-
-            metrics_all["Filename"] += [f] + [" "]*(len(metrics_data[" "]))
-
-            assert list(metrics_data.keys()) == data_keys
-        
-            for k in data_keys:
-               metrics_all[k] += metrics_data[k] + [" "]
-
-        except Exception as e:
-            print(f"Could not find metrics for {f}; error msg: {e}")
-
-    print(metrics_all)
+        if debug_mode:
+            _calculate_metrics_file(f, metrics_all, data_keys)
+       
+        else:
+            try:
+                _calculate_metrics_file(f, metrics_all, data_keys)
+            except Exception as e:
+                print(f"Could not find metrics for {f}; error msg: {e}")
 
     fout = "metrics_summary.csv"
     pd.DataFrame(metrics_all).to_csv(fout, index=False)
 
     print(f"Data saved to file {fout}.")
+
 
 def calculate_metrics(input_file):
     """

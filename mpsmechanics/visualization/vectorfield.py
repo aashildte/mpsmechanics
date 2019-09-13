@@ -243,49 +243,43 @@ def plot_at_peak(vectors, label, unit, pixels2um, images, fname="vector_fields",
     plt.savefig(filename)
 
 
-def visualize_vectorfield(f_in, layers, framerate_scale=1, save_data=True):
+def visualize_vectorfield(f_in, framerate_scale=1, save_data=True):
     """
 
     Visualize fields - "main function"
 
     """
-    layers = layers.split(" ")
 
     mt_data = mps.MPS(f_in)
     pixels2um = mt_data.info["um_per_pixel"]
 
-    for layer in layers:
-        layer_fn = eval(layer)
-    
-        output_folder = os.path.join(\
-                make_dir_layer_structure(f_in, \
-                "visualize_vectorfield"), layer)
-        make_dir_structure(output_folder)
+    output_folder = make_dir_layer_structure(f_in, "visualize_vectorfield")
+    make_dir_structure(output_folder)
 
-        data = read_prev_layer(f_in, layer, layer_fn, save_data)
+    data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)
 
-        linscales = {"displacement" : 0.5*np.max(data["all_values"]["displacement"]), \
-                      "principal strain" : 0.001*np.max(data["all_values"]["principal strain"]), \
-                      "velocity" : 0.25*np.max(data["all_values"]["velocity"]),
-                      "xmotion" : None, "prevalence" : None}
+    linscales = {"displacement" : 0.5*np.max(data["all_values"]["displacement"]), \
+                  "principal strain" : 0.001*np.max(data["all_values"]["principal strain"]), \
+                  "velocity" : 0.25*np.max(data["all_values"]["velocity"]),
+                  "xmotion" : None, "prevalence" : None}
 
-        scales = {"displacement" : 6E-5, \
-                      "principal strain" : 6E-5, \
-                      "velocity" : 1E-6,
-                      "xmotion" : None,
-                      "prevalence" : None}
+    scales = {"displacement" : 6E-5, \
+                  "principal strain" : 6E-5, \
+                  "velocity" : 1E-6,
+                  "xmotion" : None,
+                  "prevalence" : None}
 
-        for key in ["displacement", "principal strain", "velocity"]:
+    for key in ["displacement", "principal strain", "velocity"]:
 
-            unit = data["units"][key]
-            print("Plots for " + key + " ...")
-            plot_at_peak(data["all_values"][key], key, unit, pixels2um, mt_data.data.frames, \
-                    fname=os.path.join(output_folder, "vectorfield_" + key),
-                    scale=scales[key], linscale=linscales[key])
+        unit = data["units"][key]
+        print("Plots for " + key + " ...")
+        plot_at_peak(data["all_values"][key], key, unit, pixels2um, mt_data.data.frames, \
+                fname=os.path.join(output_folder, "vectorfield_" + key),
+                scale=scales[key], linscale=linscales[key])
 
-            animate_vectorfield(data["all_values"][key], key, unit, pixels2um, \
-                    mt_data.data.frames, framerate=framerate_scale*mt_data.framerate, \
-                    fname=os.path.join(output_folder, "vectorfield_" + key),\
-                    scale=scales[key], linscale=linscales[key])
+        animate_vectorfield(data["all_values"][key], key, unit, pixels2um, \
+                mt_data.data.frames, framerate=framerate_scale*mt_data.framerate, \
+                fname=os.path.join(output_folder, "vectorfield_" + key),\
+                scale=scales[key], linscale=linscales[key])
 
-        print("Visualization done, finishing ..")
+    print("Visualization done, finishing ..")

@@ -8,73 +8,53 @@ Functions related to command line arguments
 
 """
 
-from argparse import ArgumentParser
+import os
+import glob
 
 
-def _string_to_ints(calc_str):
+def get_input_files(s_files):
     """
+    
+    Reads in files and foldersfrom a list (like sys.argv), filters
+    out those that are likely to be valid files.
 
-    Converts a string on the form "2 4 6" to a list [2, 4, 6].
+    Assesses whether the script should be run in debug mode or not.
 
     Args:
-        calc_str: String with integers separated by spaces
-
+        list of files, folders, etc., e.g. from command line
+    
     Returns:
-        Sorted list containing the same integers.
-
-    """
-    if not calc_str:
-        return []
-
-    calc_str = list(map(int, calc_str.split(" ")))
-    calc_str.sort()
-
-    return calc_str
-
-
-def get_cl_input(arg_keys=()):
-    """
-
-    Reads command line and transforms into useful variables.
-
-    Args:
-        arg_keys: Optional, key pairs for options for which
-            to add to argument parser
-    Returns:
-        argument parser structure
+        debug - boolean value; perform in debug mode or not
+        input_files - list, BF nd2 files from s_files
 
     """
 
-    parser = ArgumentParser()
+    debug = "-d" in s_files or "--debug" in s_files
 
-    # default arguments
+    # read in files
 
-    parser.add_argument("vars", nargs="+")
+    input_args = []
+    for x in s_files:
+        input_args.extend(glob.glob(x))
+    
+    # condition: only include BF/nd2 files
+    cond = lambda x : "BF" in x and "nd2" in x
 
-    # optional arguments
-    for option in arg_keys:
-        parser.add_argument(*option[0], **option[1])
+    # walk through all files and folders
+    input_files = []
 
-    args = parser.parse_args()
+    for x in input_args:
+        if os.path.isfile(x):
+            if cond(x):
+                input_files.append(x)
+        elif os.path.isdir(x):
+            # if folders, replace with all files in subfolders
+            
+            for root, _, files in os.walk(x):
+                for f in files:
+                    filename = os.path.join(root, f)
+                    if cond(f):
+                        input_files.append(filename)
 
-    input_files = args.vars[:-1]
-    calc_properties = args.vars[-1]
+    return debug, input_files
 
-    # per default, "p" or "plot" is reserved for ids for all scripts
-    try:
-        args.plot = _string_to_ints(args.plot)
-    except:
-        pass
-
-    try:
-        assert input_files
-        calc_properties = _string_to_ints(calc_properties)
-
-    except:
-        print("Give files name and integers indicationg values of " +
-              "interests + possibly optional arguments on the " +
-              "command line (see README file and/or top of " +
-              "given script).")
-        exit(-1)
-
-    return input_files, calc_properties, args

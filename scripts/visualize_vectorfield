@@ -20,19 +20,17 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
+    scale = float(sys.argv[-1])
+    debug_mode, input_files = mc.get_input_files(sys.argv[1:-1])
 
-    try:
-        input_files = sys.argv[1:-1]
-        layers = "analyze_mechanics"
-        scale = float(sys.argv[-1])
-    except:
-        print('Expected arguments: files, layers (one string), scale for framerate (float); ' + \
-               'e.g. visualize_vectorfield */*/*.nd2 0.2')
-        exit(-1)
-
-    for f_in in input_files:
-        try:
-            mc.visualize_vectorfield(f_in, layers, scale)
-        except Exception as e:
-            print("Could not run visualization; error ", e)
-            print("Launching next data set ..")
+    for f in input_files:
+        if debug_mode:
+            mc.visualize_vectorfield(f, scale)
+        else:
+            try:
+                mc.visualize_vectorfield(f, scale)
+            
+            except Exception as e:
+                print(f"Could not run visualize_vectorfield; error msg: {e}")
+                if f is not input_files[-1]:
+                    print("Launching script for next file ...") 

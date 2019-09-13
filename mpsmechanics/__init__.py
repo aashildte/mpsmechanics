@@ -16,6 +16,7 @@ from .statistical_analysis.statistical_analysis import calculate_stats_chips
 from .statistical_analysis.metrics import calculate_metrics, calculate_metrics_all
 
 from .utils.iofuns.data_layer import read_prev_layer
+from .utils.iofuns.command_line import get_input_files
 
 from .dothemaths.angular import calc_projection_vectors, calc_projection_fraction, \
         calc_angle_diff, flip_values

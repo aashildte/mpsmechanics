@@ -4,11 +4,18 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    input_files = sys.argv[1:]
+    debug_mode, input_files = mc.get_input_files(sys.argv[1:])
 
     for f in input_files:
-        try:
-            motion = mc.track_motion(f)
-        except Exception as e:
-            print("Could not run motion tracking; error ", e)
-            print("Launching next data set ..")
+        if debug_mode:
+            mc.track_motion(f)
+        else:
+            try:
+                mc.track_motion(f)
+            
+            except Exception as e:
+                print(f"Could not run track_motion; error msg: {e}")
+                if f is not input_files[-1]:
+                    print("Launching script for next file ...")
+
+

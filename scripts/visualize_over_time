@@ -20,17 +20,16 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    try:
-        input_files = sys.argv[1:]
-        layers = "analyze_mechanics"
-    except:
-        print('Expected arguments: files, layers (one string); ' + \
-               'e.g. visualize_over_time */*/*.nd2')
-        exit(-1)
+    debug_mode, input_files = mc.get_input_files(sys.argv[1:])
 
-    for f_in in input_files:
-        try:
-            mc.visualize_over_time(f_in, layers)
-        except Exception as e:
-            print("Could not run visualization over time; error ", e)
-            print("Launching next data set ..")
+    for f in input_files:
+        if debug_mode:
+            mc.visualize_over_time(f)
+        else:
+            try:
+                mc.visualize_over_time(f)
+            
+            except Exception as e:
+                print(f"Could not run visualize_over_time; error msg: {e}")
+                if f is not input_files[-1]:
+                    print("Launching script for next file ...") 

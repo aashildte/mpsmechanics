@@ -26,12 +26,18 @@ import sys
 import mpsmechanics as mc
 
 if __name__ == "__main__":
-    input_files = sys.argv[1:]
+    
+    debug_mode, input_files = mc.get_input_files(sys.argv[1:])
 
     for f in input_files:
-        try:
+        if debug_mode:
             mc.analyze_mechanics(f)
-        except Exception as e:
-            print("Could not run mechanical analysis; error ", e)
-            print("Launching next data set ..")
+        else:
+            try:
+                mc.analyze_mechanics(f)
+            
+            except Exception as e:
+                print(f"Could not run analyze_mechanics; error msg: {e}")
+                if f is not input_files[-1]:
+                    print("Launching script for next file ...")
 

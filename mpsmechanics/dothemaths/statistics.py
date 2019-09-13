@@ -114,21 +114,5 @@ def chip_statistics(data, displacement, dt):
     d_all["metrics_avg_std"] = calc_for_each_key(d_all["over_time_std"], fn_meanmax, time_filter)
     #d_all["metrics_std_std"] = calc_for_each_key(d_all["over_time_std"], fn_std, time_filter)
 
-    # separate for beatrate
-
-    if len(d_all["maxima"]) > 1:
-        d_all["metrics_max_avg"]["beatrate"] = 1/dt*np.max(np.diff(d_all["maxima"]))
-        d_all["metrics_avg_avg"]["beatrate"] = 1/dt*np.mean(np.diff(d_all["maxima"]))
-        #d_all["metrics_std_avg"]["beatrate"] = np.std(1/dt*np.diff(d_all["maxima"]))
-        d_all["metrics_max_std"]["beatrate"] = 0
-        d_all["metrics_avg_std"]["beatrate"] = 0
-        #d_all["metrics_std_std"]["beatrate"] = 0
-    else:
-        d_all["metrics_max_avg"]["beatrate"] = 0
-        d_all["metrics_avg_avg"]["beatrate"] = 0
-        #d_all["metrics_std_avg"]["beatrate"] = 0
-        d_all["metrics_max_std"]["beatrate"] = 0
-        d_all["metrics_avg_std"]["beatrate"] = 0
-        #d_all["metrics_std_std"]["beatrate"] = 0
 
     return d_all

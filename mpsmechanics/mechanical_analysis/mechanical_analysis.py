@@ -58,7 +58,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
 
     data = defaultdict(dict)
 
-    if len(maxima)==0:
+    if len(maxima)<2:
         data["metrics_max_avg"] = np.nan
         data["metrics_avg_avg"] = np.nan
         data["metrics_max_std"] = np.nan

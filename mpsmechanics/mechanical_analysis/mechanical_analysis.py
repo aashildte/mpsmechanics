@@ -9,6 +9,7 @@ Computes mechanical quantities over space and time.
 
 import numpy as np
 import mps
+from collections import defaultdict
 
 from ..motion_tracking.motion_tracking import track_motion
 from ..dothemaths.mechanical_quantities import calc_principal_strain
@@ -43,45 +44,58 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
 
     xmotion = calc_projection_fraction(displacement, angle)
 
-    mstos = 1E3
+    ms_to_s = 1E3
 
-    velocity = mstos*np.divide(np.gradient(displacement, axis=0), np.gradient(time)[:,None,None,None]) 
+    velocity = ms_to_s*np.divide(np.gradient(displacement, axis=0), \
+            np.gradient(time)[:,None,None,None]) 
 
-    #threshold = 2       # um/s
-    #prevalence = (velocity > threshold).astype(int)
-    
     principal_strain = calc_principal_strain(displacement, scale)
 
     return displacement, xmotion, velocity, principal_strain
 
     
-def _calc_beatrate(disp_folded, maxima, intervals):
+def _calc_beatrate(disp_folded, maxima, intervals, time):
 
-    data = {"metrics_max_avg" : {},
-            "metrics_avg_avg" : {}}
+    data = defaultdict(dict)
 
-    _, X, Y, _ = disp_folded.shape
-    num_beats = len(maxima) - 1
+    if len(maxima)==0:
+        data["metrics_max_avg"] = np.nan
+        data["metrics_avg_avg"] = np.nan
+        data["metrics_max_std"] = np.nan
+        data["metrics_avg_std"] = np.nan
+        return data
 
-    beatrate_spatial = np.zeros(num_beats, X, Y, 1)
+    _, X, Y = disp_folded.shape
+    num_intervals = len(maxima) - 1
 
-    i1, i2 = intervals[0]
-    #argmax_last_interval = np.argmax(disp_folded[0:i1])
+    beatrate_spatial = np.zeros((num_intervals, X, Y))
+    beatrate_avg = np.zeros(num_intervals)
+    beatrate_std = np.zeros(num_intervals)
 
-    for i in range(num_beats):
-        pass 
+    i1 = intervals[0][0]
+    argmax_prev = np.argmax(disp_folded[0:i1], axis=0)
 
+    intervals_ext = intervals + [(intervals[-1][1], -1)]
 
-    if len(d_all["maxima"]) > 1:
-        d_all["metrics_max_avg"]["beatrate"] = 1/dt*np.max(np.diff(d_all["maxima"]))
-        d_all["metrics_avg_avg"]["beatrate"] = 1/dt*np.mean(np.diff(d_all["maxima"]))
-    else:
-        d_all["metrics_max_avg"]["beatrate"] = np.nan
-        d_all["metrics_avg_avg"]["beatrate"] = np.nan
+    for i in range(num_intervals):
+        i1, i2 = intervals_ext[i] 
+        argmax_current = i1 + np.argmax(disp_folded[i1:i2], axis=0)
+        
+        for x in range(X):
+            for y in range(Y):
+                j1, j2 = argmax_prev[x, y], argmax_current[x, y]
+                beatrate_spatial[i,x,y] = time[j2] - time[j1]
+        
+        beatrate_avg[i] = np.mean(beatrate_spatial[i])
+        beatrate_std[i] = np.std(beatrate_spatial[i])
+        np.copyto(argmax_prev, argmax_current)
 
+    data["metrics_max_avg"] = np.max(beatrate_avg) 
+    data["metrics_avg_avg"] = np.mean(beatrate_avg)
+    data["metrics_max_std"] = np.max(beatrate_std) 
+    data["metrics_avg_std"] = np.mean(beatrate_std)
 
-
-
+    return beatrate_spatial, data
 
 
 def analyze_mechanics(input_file, save_data=True):
@@ -95,14 +109,13 @@ def analyze_mechanics(input_file, save_data=True):
         dictionary with relevant output values (TBA)
 
     """
-
+    
     mt_data = mps.MPS(input_file)
     data = read_prev_layer(input_file, "track_motion", track_motion, \
             save_data=save_data)
 
     disp_data = data["displacement vectors"]
     angle = data["angle"]
-    
     
     scale = 8*mt_data.info["um_per_pixel"]
     dt = mt_data.dt 
@@ -120,12 +133,26 @@ def analyze_mechanics(input_file, save_data=True):
               "principal strain" : principal_strain}   
 
     d_all = chip_statistics(values, disp_data, dt) 
+
+    d_all["time"] = mt_data.time_stamps
+
+    br_spa, data_beatrate = \
+            _calc_beatrate(d_all["folded"]["displacement"], \
+                           d_all["maxima"], d_all["intervals"],
+                           d_all["time"])
+
+    d_all["beatrate_spatial"] = br_spa
+
+    for k in ["metrics_max_avg", "metrics_avg_avg", \
+            "metrics_max_std", "metrics_avg_std"]:
+        d_all[k]["beatrate"] = data_beatrate[k]
+
     d_all["units"] = {"displacement" : r"$\mu m$",
                       "velocity" : r"$\mu m / s$",
                       "xmotion" : r"-",
-                      "principal strain" : r"-"}
+                      "principal strain" : r"-",
+                      "beatrate" : "ms"}
 
-    d_all["time"] = mt_data.time_stamps
 
     print("Done calculating mechanical quantities for " + input_file)
 

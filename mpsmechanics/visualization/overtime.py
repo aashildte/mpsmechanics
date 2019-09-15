@@ -16,7 +16,22 @@ from ..utils.iofuns.folder_structure import make_dir_structure, \
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 from ..pillar_tracking.pillar_tracking import track_pillars
 
-def plot_over_time(ax, avg_values, std_values, time, intervals, label, unit):
+    
+def get_minmax_values(avg_values, std_values, value_range):
+    np.warnings.filterwarnings('ignore')
+
+    def_min = value_range[0]*np.ones(std_values.shape)
+    subvalues = avg_values - std_values
+    minvalues = np.where(subvalues < value_range[0], def_min, subvalues)
+
+    def_max = value_range[1]*np.ones(std_values.shape)
+    subvalues = avg_values + std_values
+    maxvalues = np.where(subvalues > value_range[1], def_max, subvalues)
+
+    return minvalues, maxvalues
+
+def plot_over_time(ax, avg_values, std_values, time, intervals, \
+        label, unit, value_range):
     """
 
     Args:
@@ -35,10 +50,7 @@ def plot_over_time(ax, avg_values, std_values, time, intervals, label, unit):
             ax.axvline(x=time[i[0]], c='g', alpha=0.8)
         ax.axvline(x=time[i[1]], c='g', alpha=0.8)
 
-    zeros = np.zeros_like(time)
-    subvalues = avg_values - std_values
-    minvalues = np.where(subvalues < 0, zeros, subvalues)
-    maxvalues = avg_values + std_values
+    minvalues, maxvalues = get_minmax_values(avg_values, std_values, value_range)
 
     ax.plot(time, avg_values)
     ax.fill_between(time, minvalues, \
@@ -68,27 +80,35 @@ def stats_over_time(f_in, save_data):
     time = data["time"]
     # average over time
 
-    N = len(list(data["over_time_avg"].keys()))
+    N = len(list(data["over_time_avg"].keys())) + 1
 
     fig, axs = plt.subplots(N, 1, figsize=(10, 2*N), sharex=True)
 
-    # special one for beatrate and intervals
+    # special one for beatrate
     
-    #for m in data["maxima"]:
-    #    axs[0].axvline(x=time[m], c='r')
-    #axs[0].set_ylabel("Displacement / Beatrate")
-    
+    x_vals = [time[x] for x in [i[0] for i in data["intervals"]] + \
+                    [data["intervals"][-1][1]]]
+    mean = data["beatrate_avg"]
+    std = data["beatrate_std"]
+
+    axs[0].errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
+    axs[0].set_ylabel("Beatrate")
 
     # then every other quantity
 
-    for (ax, key) in zip(axs, data["over_time_avg"].keys()):
+    minmax = {"displacement" : (0, np.nan),
+              "velocity" : (0, np.nan),
+              "xmotion" : (0, 1),
+              "principal strain" : (0, np.nan)}
+
+    for (ax, key) in zip(axs[1:], data["over_time_avg"].keys()):
         plot_over_time(ax, data["over_time_avg"][key], \
                 data["over_time_std"][key], data["time"],
-                data["intervals"], key, data["units"][key])
+                data["intervals"], key, data["units"][key], minmax[key])
 
     axs[-1].set_xlabel(r"Time ($ms$)")
     filename = os.path.join(output_folder, "analyze_mechanics.png")
-    plt.savefig(filename, dpi=300)
+    plt.savefig(filename, dpi=500)
     plt.clf()
 
 

@@ -95,7 +95,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     data["metrics_max_std"] = np.max(beatrate_std) 
     data["metrics_avg_std"] = np.mean(beatrate_std)
 
-    return beatrate_spatial, data
+    return beatrate_spatial, beatrate_avg, beatrate_std, data
 
 
 def analyze_mechanics(input_file, save_data=True):
@@ -136,12 +136,14 @@ def analyze_mechanics(input_file, save_data=True):
 
     d_all["time"] = mt_data.time_stamps
 
-    br_spa, data_beatrate = \
+    br_spa, beatrate_avg, beatrate_std, data_beatrate = \
             _calc_beatrate(d_all["folded"]["displacement"], \
                            d_all["maxima"], d_all["intervals"],
                            d_all["time"])
 
     d_all["beatrate_spatial"] = br_spa
+    d_all["beatrate_avg"] = beatrate_avg
+    d_all["beatrate_std"] = beatrate_std
 
     for k in ["metrics_max_avg", "metrics_avg_avg", \
             "metrics_max_std", "metrics_avg_std"]:

@@ -29,7 +29,6 @@ def get_input_files(s_files):
 
     """
 
-    debug = "-d" in s_files or "--debug" in s_files
 
     # read in files
 
@@ -56,5 +55,5 @@ def get_input_files(s_files):
                     if cond(f):
                         input_files.append(filename)
 
-    return debug, input_files
+    return input_files
 

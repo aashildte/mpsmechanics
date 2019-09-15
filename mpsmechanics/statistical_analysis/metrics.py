@@ -48,7 +48,7 @@ def _calculate_metrics_file(input_file, metrics_all, data_keys):
        metrics_all[k] += metrics_data[k] + [" "]
 
 
-def calculate_metrics_all(input_files, debug_mode):
+def calculate_metrics_all(input_files, debug_mode, output_file):
 
     data_keys = [" ", "Maximum average value", "Average average value", \
             "Maximum standard deviation", "Average standard deviation"]
@@ -70,10 +70,9 @@ def calculate_metrics_all(input_files, debug_mode):
             except Exception as e:
                 print(f"Could not find metrics for {f}; error msg: {e}")
 
-    fout = "metrics_summary.csv"
-    pd.DataFrame(metrics_all).to_csv(fout, index=False)
+    pd.DataFrame(metrics_all).to_csv(output_file, index=False)
 
-    print(f"Data saved to file {fout}.")
+    print(f"Data saved to file {output_file}.")
 
 
 def calculate_metrics(input_file):

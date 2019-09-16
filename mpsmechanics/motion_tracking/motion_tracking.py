@@ -879,7 +879,8 @@ def track_motion(input_file, save_data=True):
     mt_data = mps.MPS(input_file)
 
     scaling_factor = mt_data.info['um_per_pixel']
-    motion = MotionTracking(mt_data, reference_frame="median")
+    block_size=3
+    motion = MotionTracking(mt_data, block_size=block_Size, reference_frame="median")
     
     name = input_file[:-4]
 
@@ -898,6 +899,7 @@ def track_motion(input_file, save_data=True):
     d_all = {}
     d_all["displacement vectors"] = data_disp
     d_all["angle"] = angle
+    d_all["block size"] = int(block_size / data.info["um_per_pixel"])
 
     if(save_data):
         save_dictionary(input_file, "track_motion", d_all)

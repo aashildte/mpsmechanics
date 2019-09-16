@@ -120,7 +120,7 @@ def analyze_mechanics(input_file, save_data=True):
     disp_data = data["displacement vectors"]
     angle = data["angle"]
     
-    scale = 8*mt_data.info["um_per_pixel"]
+    scale = 9*mt_data.info["um_per_pixel"]       # 9 = block size
     dt = mt_data.dt 
     
     print("Calculating mechanical quantities for " + input_file)

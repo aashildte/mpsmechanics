@@ -12,6 +12,7 @@ import mps
 from collections import defaultdict
 
 from ..motion_tracking.motion_tracking import track_motion
+from ..motion_tracking.ref_frame import convert_disp_data, calculate_minmax
 from ..dothemaths.mechanical_quantities import calc_principal_strain
 from ..dothemaths.angular import calc_angle_diff, calc_projection_fraction
 from ..dothemaths.statistics import chip_statistics
@@ -42,6 +43,8 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
 
     displacement = scale*displacement
 
+    displacement_minmax = convert_disp_data(displacement, calculate_minmax(displacement))
+
     xmotion = calc_projection_fraction(displacement, angle)
 
     ms_to_s = 1E3
@@ -51,7 +54,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
 
     principal_strain = calc_principal_strain(displacement, scale)
 
-    return displacement, xmotion, velocity, principal_strain
+    return displacement, displacement_minmax, xmotion, velocity, principal_strain
 
     
 def _calc_beatrate(disp_folded, maxima, intervals, time):
@@ -84,7 +87,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
         for x in range(X):
             for y in range(Y):
                 j1, j2 = argmax_prev[x, y], argmax_current[x, y]
-                beatrate_spatial[i,x,y] = time[j2] - time[j1]
+                beatrate_spatial[i,x,y] = 1E3/(time[j2] - time[j1])
         
         beatrate_avg[i] = np.mean(beatrate_spatial[i])
         beatrate_std[i] = np.std(beatrate_spatial[i])
@@ -122,12 +125,13 @@ def analyze_mechanics(input_file, save_data=True):
     
     print("Calculating mechanical quantities for " + input_file)
 
-    displacement, xmotion, velocity, principal_strain = \
+    displacement, displacement_minmax, xmotion, velocity, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, mt_data.time_stamps)
 
     # over space and time (original data)
 
     values = {"displacement" : displacement,
+              "displacement max diff." : displacement_minmax,
               "velocity" : velocity,
               "xmotion" : xmotion,
               "principal strain" : principal_strain}   
@@ -150,10 +154,11 @@ def analyze_mechanics(input_file, save_data=True):
         d_all[k]["beatrate"] = data_beatrate[k]
 
     d_all["units"] = {"displacement" : r"$\mu m$",
+                      "displacement max diff." : r"$\mu m$",
                       "velocity" : r"$\mu m / s$",
                       "xmotion" : r"-",
                       "principal strain" : r"-",
-                      "beatrate" : "ms"}
+                      "beatrate" : "beats/s"}
 
 
     print("Done calculating mechanical quantities for " + input_file)

@@ -53,31 +53,6 @@ from mps import analysis
 
 from ..utils.iofuns.save_values import save_dictionary
 
-def save_cache(fname, data):
-    with open(cachename(fname), "wb") as fid:
-        np.save(fid, data, allow_pickle=True)
-
-
-def load_cache(fname):
-    with open(cachename(fname), "rb") as fid:
-        d = np.load(fid, allow_pickle=True).item()
-    return d
-
-
-def cachename(fname):
-    return Path(os.path.splitext(fname)[0] + ".npy")
-
-
-# else:
-
-#     def save_cache(fname, data):
-#         utils.dict2h5(cachename(fname), data)
-
-#     def load_cache(fname):
-#         return utils.load_dict_from_h5(cachename(fname))
-
-#     def cachename(fname):
-#         return Path(os.path.splitext(fname)[0] + '.npy')
 
 logger = utils.get_logger(__name__)
 contraction_data_keys = [
@@ -399,8 +374,6 @@ class MotionTracking(object):
         reference_frame="mean",
         delay=None,
         outdir=None,
-        use_cache=True,
-        reset_cache=False,
         serial=False,
         filter_kernel_size=8,
         loglevel=logging.INFO,
@@ -467,48 +440,8 @@ class MotionTracking(object):
                 + str(__version__)
             ).encode("utf-8")
         ).hexdigest()
-        self._cachename = outdir.joinpath(f"motion_data")
-        self.use_cache = use_cache
-        self._load_cache(reset_cache)
 
-    def _load_cache(self, reset):
-        """
-        Load results that is already saved
-        """
-        if self.use_cache:
-            if cachename(self._cachename).is_file():
-                if reset:
-                    cachename(self._cachename).unlink()
-                    d = {}
-                else:
-                    try:
-                        d = load_cache(self._cachename)
-                    except (pickle.UnpicklingError, OSError) as e:
-                        logger.warning(e, exc_info=True)
-                        logger.warning(
-                            "Unable to load cache - please rerun analysis"
-                        )
-                        d = {}
-            else:
-                d = {}
-
-            computed = d.pop("computed", {})
-            for k, v in computed.items():
-                self.computed[k] = v
-
-            for name, value in d.items():
-                setattr(self, f"_{name}", value)
-
-    def _save_cache(self):
-        """Save results to cache for faster retrieving
-        """
-        if self.use_cache:
-            try:
-                save_cache(self._cachename, self.cache)
-            except OSError as ex:
-                logger.warning(ex, exc_info=True)
-                logger.warning("Unable to save cache")
-
+    
     def _init_arrays(self):
 
         self.computed = dict(
@@ -614,7 +547,6 @@ class MotionTracking(object):
             f"Done with edge detection - Elapsed time = {t1-t0:.2f} seconds"
         )
         self.computed["edges"] = True
-        self._save_cache()
 
     def _get_velocities(self):
 
@@ -646,7 +578,6 @@ class MotionTracking(object):
             f"Done getting velocities - Elapsed time = {t1-t0:.2f} seconds"
         )
         self.computed["velocities"] = True
-        self._save_cache()
 
     def _get_displacements(self):
 
@@ -683,7 +614,6 @@ class MotionTracking(object):
             )
         )
         self.computed["displacements"] = True
-        self._save_cache()
     
     def _get_angle(self):
         """
@@ -711,7 +641,6 @@ class MotionTracking(object):
         
         self._angle = np.arctan(slope)
         self.computed["angle"] = True
-        self._save_cache()
 
     @property
     def angle(self):
@@ -793,16 +722,6 @@ class MotionTracking(object):
             )
         return self._displacement_data
 
-    @property
-    def cache(self):
-
-        cache = {}
-        for attr in self._arrays:
-            key = f"_{attr}"
-            if hasattr(self, key):
-                cache[attr] = getattr(self, key)
-        cache["computed"] = self.computed
-        return cache
 
     def plot_displacement_data(self, fname=None):
         if fname is None:
@@ -943,7 +862,7 @@ class MotionTracking(object):
         )
 
 
-def track_motion(input_file, use_cache=True, save_data=True):
+def track_motion(input_file, save_data=True):
     """
 
     Args:
@@ -960,7 +879,7 @@ def track_motion(input_file, use_cache=True, save_data=True):
     mt_data = mps.MPS(input_file)
 
     scaling_factor = mt_data.info['um_per_pixel']
-    motion = MotionTracking(mt_data, reference_frame="median", use_cache=use_cache)
+    motion = MotionTracking(mt_data, reference_frame="median")
     
     name = input_file[:-4]
 

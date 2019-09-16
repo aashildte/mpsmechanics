@@ -30,6 +30,7 @@ def get_minmax_values(avg_values, std_values, value_range):
 
     return minvalues, maxvalues
 
+
 def plot_over_time(ax, avg_values, std_values, time, intervals, \
         label, unit, value_range):
     """
@@ -97,6 +98,7 @@ def stats_over_time(f_in, save_data):
     # then every other quantity
 
     minmax = {"displacement" : (0, np.nan),
+              "displacement max diff." : (0, np.nan),
               "velocity" : (0, np.nan),
               "xmotion" : (0, 1),
               "principal strain" : (0, np.nan)}

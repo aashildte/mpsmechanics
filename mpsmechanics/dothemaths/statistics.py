@@ -83,8 +83,12 @@ def chip_statistics(data, displacement, dt):
     
     #filter_all = np.tile("True", dist.shape[:3])     # original values, no filter applied
 
-    time_filter = {"displacement" : filter_all, "velocity" : filter_all, \
-            "prevalence" : filter_all, "angle" : filter_time, "xmotion": filter_time, \
+    time_filter = {"displacement" : filter_all, \
+            "displacement max diff." : filter_all, \
+            "velocity" : filter_all, \
+            "prevalence" : filter_all, \
+            "angle" : filter_time, \
+            "xmotion": filter_time, \
             "principal strain": filter_all}
 
     # some transformations

@@ -4,6 +4,9 @@
 
 """
 
+import os
+import pandas
+
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
@@ -13,107 +16,83 @@ from ..utils.iofuns.data_layer import read_prev_layer
 from ..pillar_tracking.pillar_tracking import track_pillars
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
-def _read_data(input_files, layer_name, layer_fn):
-    """
 
-    Detects folder structure; loads data.
+def _get_file_info(f_in, doses, pacing, media):
 
-    TODO maybe move to iofuns.
-    TODO 2 - for now this won't work on Windows
 
-    """
+    for d in doses:
+        if d in f_in:
+            break
+        d = None
 
-    all_maxima = defaultdict(lambda : defaultdict(dict))
+    for p in pacing:
+        if p in f_in:
+            break
+        p = None
+
+    for m in media:
+        if m in f_in:
+            break
+        n = None
+
+    error_msg = "Error ({}): Folder structure not as expected. ".format(f_in) + \
+            "Please give a folder s.t. where dose is in {}".format(doses) + \
+            ", pacing is in {} and medium is in {}".format(pacing, media)
+
+    assert (d is not None and p is not None and m is not None), error_msg
+
+    return d, (p, m)
+
+
+def _read_data(input_files, debug_mode):
+    
+    doses = ["Dose0", "Dose1", "Dose2", "Dose3", "Dose4", "Dose5", "Dose6"]
+    pacing = ["spont", "1Hz"]
+    media = ["SM", "MM"]
+
+    all_data = defaultdict(dict)
 
     for f_in in input_files:
-        path, filename, _ = get_input_properties(f_in)
 
-        dose, media = path.split("/")[-2:]
+        if "Dose0_1pm" in f_in:        # I'm not sure what this measures
+            continue
 
-        try:
-            data = read_prev_layer(f_in, layer_name, layer_fn)
-        
-            all_maxima[dose][media][filename] = \
-                np.max(data["over_time_avg"]["displacement_um"])  # e.g.
-        except Exception as e:
-            print("Could not run statistical analysis; error ", e)
-            print("Launching next data set ..")
-        
+        dose, key_pref = _get_file_info(f_in, doses, pacing, media)
+ 
+        if not debug_mode:
+            try:
+                data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics)
+            except Exception as e:
+                print(f"Could not run script; error msg: {e}")
+        else:
+            data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics)
 
-    doses_keys = list(all_maxima.keys())
-    media_keys = list(all_maxima[doses_keys[0]].keys())
+        for key_s1 in list(data["metrics_max_avg"].keys()):
+            for key_s2 in ["metrics_max_avg", "metrics_avg_avg", "metrics_max_std", "metrics_avg_std"]:
+                key = key_pref + (key_s1, key_s2[8:]) 
+                all_data[key][dose] = data[key_s2][key_s1]
 
-    return doses_keys, media_keys, all_maxima
-
-
-def _sort_keys(keys, sort_by):
-    """
-
-    Given a set of keys, sort it by substrings as indicated in
-    sort_by. Default here *can* be alphabetically maybe, but for
-    now we'll raise an error.
-
-    TODO need to check that no key in sort_by is a substring of
-    another one.
-
-    """
-    
-    assert len(keys) == len(sort_by), \
-            "Error: Length not preserved? Check substrings."
-
-    keys_sorted = []
-
-    for key1 in sort_by:
-        for key2 in keys:
-            if key1 in key2:
-                keys_sorted.append(key2)
-                break
-
-    assert len(keys) == len(keys_sorted), \
-            "Error: Length not preserved? Check substrings."
-
-    return keys_sorted
+    return doses, pacing, media, all_data
 
 
+def calculate_stats_chips(input_files, debug_mode, output_folder):
 
-def calculate_stats_chips(input_files, layers, sort_by):
-    """
+    doses, pacing, media, all_data = _read_data(input_files, debug_mode)
 
-    For now this is only meant to give average and std/avg for
-    different doses, maximum over time, average over all pillars.
-    Eventually we can do more here ...
+    for key in all_data.keys():
+        data_per_dose = defaultdict(list)
 
-    """
-    
-    layers = layers.split(" ")
-    sort_by = sort_by.split(" ")
+        for d in doses:
+            if not np.isnan(all_data[key][d]):
+                data_per_dose[d].append(all_data[key][d])
 
-    
-    for layer in layers:
-        layer_fn = eval(layer)
+        output_file = os.path.join(output_folder, key.join("_") + ".csv")
 
-        doses_keys, media_keys, all_maxima = _read_data(input_files, \
-                layer, layer_fn)
+        metrics_data = {}
+        metrics_data
 
-        # expected structure: doses / media / data
+        pd.DataFrame(metrics_data).to_csv(output_file, index=False)
 
-        stats = defaultdict(lambda : defaultdict(tuple))
 
-        doses_keys = _sort_keys(doses_keys, sort_by)
-
-        avgs = []
-        stds = []
-
-        print("dose, media, avg, avg/std, values")
-
-        for dose in doses_keys:
-            for media in media_keys:
-                values = np.array(list(all_maxima[dose][media].values()))
-                
-                avg = np.mean(values)
-                std = np.std(values)/avg        # normalised!
-                stats[dose][media] = (avg, std)
-                # TODO to file or to dictionary -> next layer
-                avgs.append(avg)
-                stds.append(std)
-                print(dose, media, avg, std, values)
+        print(key)
+        print(avg_per_dose)

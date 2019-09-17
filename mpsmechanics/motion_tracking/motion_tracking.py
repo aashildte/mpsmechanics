@@ -876,8 +876,12 @@ def track_motion(input_file, save_data=True):
 
     """
     
+    np.seterr(invalid='ignore')
     mt_data = mps.MPS(input_file)
-
+ 
+    assert mt_data.num_frames != 1, \
+        "Error: Single frame used as input"
+    
     scaling_factor = mt_data.info['um_per_pixel']
     block_size=3
     motion = MotionTracking(mt_data, block_size=block_size, reference_frame="median")

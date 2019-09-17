@@ -61,42 +61,42 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
 
     data = defaultdict(dict)
 
-    if len(maxima)<2:
+    if len(maxima)<3:
         data["metrics_max_avg"] = np.nan
         data["metrics_avg_avg"] = np.nan
         data["metrics_max_std"] = np.nan
         data["metrics_avg_std"] = np.nan
-        return data
+        beatrate_spatial, beatrate_avg, beatrate_std = [np.nan]*3
+    else:
+        _, X, Y = disp_folded.shape
+        num_intervals = len(maxima) - 1
 
-    _, X, Y = disp_folded.shape
-    num_intervals = len(maxima) - 1
+        beatrate_spatial = np.zeros((num_intervals, X, Y))
+        beatrate_avg = np.zeros(num_intervals)
+        beatrate_std = np.zeros(num_intervals)
 
-    beatrate_spatial = np.zeros((num_intervals, X, Y))
-    beatrate_avg = np.zeros(num_intervals)
-    beatrate_std = np.zeros(num_intervals)
+        i1 = intervals[0][0]
+        argmax_prev = np.argmax(disp_folded[0:i1], axis=0)
 
-    i1 = intervals[0][0]
-    argmax_prev = np.argmax(disp_folded[0:i1], axis=0)
+        intervals_ext = intervals + [(intervals[-1][1], -1)]
 
-    intervals_ext = intervals + [(intervals[-1][1], -1)]
+        for i in range(num_intervals):
+            i1, i2 = intervals_ext[i] 
+            argmax_current = i1 + np.argmax(disp_folded[i1:i2], axis=0)
+            
+            for x in range(X):
+                for y in range(Y):
+                    j1, j2 = argmax_prev[x, y], argmax_current[x, y]
+                    beatrate_spatial[i,x,y] = 1E3/(time[j2] - time[j1])
+            
+            beatrate_avg[i] = np.mean(beatrate_spatial[i])
+            beatrate_std[i] = np.std(beatrate_spatial[i])
+            np.copyto(argmax_prev, argmax_current)
 
-    for i in range(num_intervals):
-        i1, i2 = intervals_ext[i] 
-        argmax_current = i1 + np.argmax(disp_folded[i1:i2], axis=0)
-        
-        for x in range(X):
-            for y in range(Y):
-                j1, j2 = argmax_prev[x, y], argmax_current[x, y]
-                beatrate_spatial[i,x,y] = 1E3/(time[j2] - time[j1])
-        
-        beatrate_avg[i] = np.mean(beatrate_spatial[i])
-        beatrate_std[i] = np.std(beatrate_spatial[i])
-        np.copyto(argmax_prev, argmax_current)
-
-    data["metrics_max_avg"] = np.max(beatrate_avg) 
-    data["metrics_avg_avg"] = np.mean(beatrate_avg)
-    data["metrics_max_std"] = np.max(beatrate_std) 
-    data["metrics_avg_std"] = np.mean(beatrate_std)
+        data["metrics_max_avg"] = np.max(beatrate_avg) 
+        data["metrics_avg_avg"] = np.mean(beatrate_avg)
+        data["metrics_max_std"] = np.max(beatrate_std) 
+        data["metrics_avg_std"] = np.mean(beatrate_std)
 
     return beatrate_spatial, beatrate_avg, beatrate_std, data
 
@@ -113,10 +113,10 @@ def analyze_mechanics(input_file, save_data=True):
 
     """
     
-    mt_data = mps.MPS(input_file)
     data = read_prev_layer(input_file, "track_motion", track_motion, \
             save_data=save_data)
 
+    mt_data = mps.MPS(input_file)
     disp_data = data["displacement vectors"]
     angle = data["angle"]
     

@@ -102,7 +102,6 @@ def chip_statistics(data, displacement, dt):
     d_all["over_time_std"] = calc_for_each_key(d_all["folded"], fn_std, time_filter)
      
     # general variables
-    #d_all["time"] = np.linspace(0, (1/dt)*len(displacement), len(displacement))
     d_all["maxima"] = calc_beat_maxima(d_all["over_time_avg"]["displacement"])
     d_all["intervals"] = calc_beat_intervals(d_all["over_time_avg"]["displacement"])
 
@@ -110,13 +109,17 @@ def chip_statistics(data, displacement, dt):
             for (i1, i2) in d_all["intervals"]])
 
     # metrics
+    if len(d_all["intervals"]) > 1:
 
-    d_all["metrics_max_avg"] = calc_for_each_key(d_all["over_time_avg"], fn_max, time_filter)
-    d_all["metrics_avg_avg"] = calc_for_each_key(d_all["over_time_avg"], fn_meanmax, time_filter)
-    #d_all["metrics_std_avg"] = calc_for_each_key(d_all["over_time_avg"], fn_std, time_filter)
-    d_all["metrics_max_std"] = calc_for_each_key(d_all["over_time_std"], fn_max, time_filter)
-    d_all["metrics_avg_std"] = calc_for_each_key(d_all["over_time_std"], fn_meanmax, time_filter)
-    #d_all["metrics_std_std"] = calc_for_each_key(d_all["over_time_std"], fn_std, time_filter)
+        d_all["metrics_max_avg"] = calc_for_each_key(d_all["over_time_avg"], fn_max, time_filter)
+        d_all["metrics_avg_avg"] = calc_for_each_key(d_all["over_time_avg"], fn_meanmax, time_filter)
+        d_all["metrics_max_std"] = calc_for_each_key(d_all["over_time_std"], fn_max, time_filter)
+        d_all["metrics_avg_std"] = calc_for_each_key(d_all["over_time_std"], fn_meanmax, time_filter)
 
+    else:
+        for m in ["metrics_max_avg", "metrics_avg_avg", "metrics_max_std", "metrics_avg_std"]:
+            for k in data.keys():
+                d_all[m] = {}
+                d_all[m][k] = np.nan
 
     return d_all

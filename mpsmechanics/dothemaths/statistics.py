@@ -61,7 +61,7 @@ def fn_std(x, filter_x):
     return y
 
 
-def chip_statistics(data, displacement, dt):
+def chip_statistics(data):
     """
 
     Args:

@@ -5,7 +5,7 @@
 """
 
 import os
-import pandas
+import pandas as pd
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,26 +39,26 @@ def _get_file_info(f_in, doses, pacing, media):
             "Please give a folder s.t. where dose is in {}".format(doses) + \
             ", pacing is in {} and medium is in {}".format(pacing, media)
 
-    assert (d is not None and p is not None and m is not None), error_msg
+    assert (d in doses and p in pacing and m in media), error_msg
 
-    return d, (p, m)
+    return d, p, m
 
 
 def _read_data(input_files, debug_mode):
     
     doses = ["Dose0", "Dose1", "Dose2", "Dose3", "Dose4", "Dose5", "Dose6"]
-    pacing = ["spont", "1Hz"]
+    pacings = ["spont", "1Hz"]
     media = ["SM", "MM"]
 
-    all_data = defaultdict(dict)
+    all_data = defaultdict(lambda : defaultdict(lambda : defaultdict(list)))
 
     for f_in in input_files:
 
         if "Dose0_1pm" in f_in:        # I'm not sure what this measures
             continue
 
-        dose, key_pref = _get_file_info(f_in, doses, pacing, media)
- 
+        dose, pacing, medium = _get_file_info(f_in, doses, pacings, media)
+
         if not debug_mode:
             try:
                 data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics)
@@ -69,8 +69,9 @@ def _read_data(input_files, debug_mode):
 
         for key_s1 in list(data["metrics_max_avg"].keys()):
             for key_s2 in ["metrics_max_avg", "metrics_avg_avg", "metrics_max_std", "metrics_avg_std"]:
-                key = key_pref + (key_s1, key_s2[8:]) 
-                all_data[key][dose] = data[key_s2][key_s1]
+                key_f = (pacing, key_s1, key_s2[8:]) 
+                if not np.isnan(data[key_s2][key_s1]):
+                    all_data[key_f][medium][dose].append(data[key_s2][key_s1])
 
     return doses, pacing, media, all_data
 
@@ -79,20 +80,20 @@ def calculate_stats_chips(input_files, debug_mode, output_folder):
 
     doses, pacing, media, all_data = _read_data(input_files, debug_mode)
 
+    os.makedirs(output_folder, exist_ok=True)
+
     for key in all_data.keys():
-        data_per_dose = defaultdict(list)
-
-        for d in doses:
-            if not np.isnan(all_data[key][d]):
-                data_per_dose[d].append(all_data[key][d])
-
-        output_file = os.path.join(output_folder, key.join("_") + ".csv")
+        data_per_dose = all_data[key] 
+        output_file = os.path.join(output_folder, \
+                "_".join(key) + ".csv") 
 
         metrics_data = {}
-        metrics_data
+        metrics_data["Dose"] = [str(x) for x in range(len(doses))]
 
-        pd.DataFrame(metrics_data).to_csv(output_file, index=False)
+        for m in ["SM", "MM"]:
+            metrics_data[m + "_mean"] = [np.mean(np.array(data_per_dose[m][d])) for d in doses]
+            metrics_data[m + "_std"] = [np.mean(np.array(data_per_dose[m][d])) for d in doses]
+            metrics_data[m + "_n"] = [len(data_per_dose[m][d]) for d in doses]
 
-
-        print(key)
-        print(avg_per_dose)
+        pd.DataFrame(metrics_data).to_csv(output_file, index=False, header=["Dose", "SM", "SM", "SM", "MM", "MM", "MM"])       
+        print(f"Data saved to {output_file}.")

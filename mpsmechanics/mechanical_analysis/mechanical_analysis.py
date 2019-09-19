@@ -136,7 +136,7 @@ def analyze_mechanics(input_file, save_data=True):
               "xmotion" : xmotion,
               "principal strain" : principal_strain}   
 
-    d_all = chip_statistics(values, disp_data, dt) 
+    d_all = chip_statistics(values) 
 
     d_all["time"] = mt_data.time_stamps
 

@@ -194,8 +194,19 @@ def track_pillars(f_disp, outdir, L=50E-6, R=10E-6, E=2.63E-6, \
     f_pts = _find_pillar_positions_file(outdir)
 
     # displacement data and positions of pillars
-    data_disp, scaling_factor, angle, dt, size_x, size_y = \
-            read_mt_file(f_disp, outdir, max_motion)
+    mt_data = read_prev_layer(input_file, "track_motion", track_motion, \
+                    save_data=save_data)
+
+    mps_data = mps.MPS(input_file)
+    #disp_data = data["displacement vectors"]
+    #angle = data["angle"]
+    
+    scale = mt_data["block size"]*mps_data.info["um_per_pixel"]
+    
+    #dt = mt_data.dt 
+
+    #data_disp, scaling_factor, angle, dt, size_x, size_y 
+
     pillars_mpoints = read_pt_file(f_pts)
 
     print("Tracking pillars for data set: ", f_disp)

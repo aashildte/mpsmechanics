@@ -228,7 +228,6 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
 
 
 
-def track_pillars_init(pillar_design, input_file)
-
+def track_pillars_init(pillar_design, input_file):
     positions = perform_pillar_detection(pillar_design, input_file, save_values=False)
     track_pillars(input_file, positions)

@@ -160,7 +160,7 @@ def _track_pillars_over_time(disp_data, pillar_positions, size_x, size_y,
 
 
 def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
-        save_data=True, tracking_type='large_radius', no_tracking_pts=200):
+                    tracking_type='large_radius', no_tracking_pts=200):
     """
 
     Tracks points corresponding to "pillars" over time.
@@ -171,7 +171,8 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
         L - ??
         R - ??
         E - ??
-        save_data - to store values or not; default value True
+        tracking_type - ??
+        no_tracking_pts - ??
 
     Returns:
         dictionary with calculated values
@@ -180,7 +181,7 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
 
     # displacement data and positions of pillars
     mt_data = read_prev_layer(f_disp, "track_motion", track_motion, \
-                    save_data=save_data)
+                    save_data=True)         # TODO figure out code flow for saving data
 
     mps_data = mps.MPS(f_disp)
     disp_data = mt_data["displacement vectors"]
@@ -221,13 +222,18 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
 
     print(f"Pillar tracking for {f_disp} finished")
 
-    if save_data:
-        save_dictionary(f_disp, "track_pillars" , d_all)
-
     return d_all
 
 
 
-def track_pillars_init(pillar_design, input_file):
-    positions = perform_pillar_detection(pillar_design, input_file, save_values=False)
-    track_pillars(input_file, positions)
+def track_pillars_init(pillar_design, input_file, save_data):
+    path, filename, _ = get_input_properties(input_file)
+
+    positions = perform_pillar_detection(pillar_design, input_file, \
+            outdir=os.path.join(path, filename, "pillar_tracking"))
+    data = track_pillars(input_file, positions)
+
+    if save_data:
+        save_dictionary(f_disp, "track_pillars" , data)
+
+    return data

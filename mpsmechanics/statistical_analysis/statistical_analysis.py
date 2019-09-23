@@ -16,7 +16,6 @@ from ..utils.iofuns.data_layer import read_prev_layer
 from ..pillar_tracking.pillar_tracking import track_pillars
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
-
 def _get_file_info(f_in, doses, pacing, media):
 
 
@@ -50,7 +49,7 @@ def _read_data(input_files, debug_mode):
     pacings = ["spont", "1Hz"]
     media = ["SM", "MM"]
 
-    all_data = defaultdict(lambda : defaultdict(lambda : defaultdict(list)))
+    all_data = defaultdict(lambda : defaultdict(lambda : defaultdict(lambda : defaultdict(list))))
 
     for f_in in input_files:
 
@@ -69,9 +68,9 @@ def _read_data(input_files, debug_mode):
 
         for key_s1 in list(data["metrics_max_avg"].keys()):
             for key_s2 in ["metrics_max_avg", "metrics_avg_avg", "metrics_max_std", "metrics_avg_std"]:
-                key_f = (pacing, key_s1, key_s2[8:]) 
+                key_f = (key_s1, key_s2[8:]) 
                 if not np.isnan(data[key_s2][key_s1]):
-                    all_data[key_f][medium][dose].append(data[key_s2][key_s1])
+                    all_data[key_f][dose][pacing][medium].append(data[key_s2][key_s1])
 
     return doses, pacing, media, all_data
 
@@ -90,10 +89,16 @@ def calculate_stats_chips(input_files, debug_mode, output_folder):
         metrics_data = {}
         metrics_data["Dose"] = [str(x) for x in range(len(doses))]
 
-        for m in ["SM", "MM"]:
-            metrics_data[m + "_mean"] = [np.mean(np.array(data_per_dose[m][d])) for d in doses]
-            metrics_data[m + "_std"] = [np.mean(np.array(data_per_dose[m][d])) for d in doses]
-            metrics_data[m + "_n"] = [len(data_per_dose[m][d]) for d in doses]
+        for m in media:
+            for p in pacing:
+                metrics_data[m + "_" + p + "_mean"] = [np.mean(np.array(data_per_dose[d][p][m])) for d in doses]
+                metrics_data[m + "_" + p + "_std"] = [np.mean(np.array(data_per_dose[d][p][m])) for d in doses]
+                metrics_data[m + "_" + p + "_n"] = [len(data_per_dose[d][p][m]) for d in doses]
 
-        pd.DataFrame(metrics_data).to_csv(output_file, index=False, header=["Dose", "SM", "SM", "SM", "MM", "MM", "MM"])       
+        headers = ["Dose"]
+        for m in media:
+            for p in pacing:
+                headers += ["{} / {}".format(m, p)]*3
+
+        pd.DataFrame(metrics_data).to_csv(output_file, index=False, header=headers)
         print(f"Data saved to {output_file}.")

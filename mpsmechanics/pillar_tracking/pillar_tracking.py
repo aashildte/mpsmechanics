@@ -9,8 +9,9 @@ Point tracking related functions
 
 import os
 import numpy as np
-
 import mps
+
+#from pillar_detection.utility import perform_pillar_detection
 
 from ..motion_tracking.motion_tracking import track_motion
 
@@ -159,7 +160,7 @@ def _track_pillars_over_time(disp_data, pillar_positions, size_x, size_y,
     return rel_values, abs_values
 
 
-def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
+def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E6, \
                     tracking_type='large_radius', no_tracking_pts=200):
     """
 
@@ -178,6 +179,8 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
         dictionary with calculated values
 
     """
+
+    E = 2.63E6   # TODO must be mistake in pillar tracking script??
 
     # displacement data and positions of pillars
     mt_data = read_prev_layer(f_disp, "track_motion", track_motion, \
@@ -213,12 +216,6 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
 
     d_all = {}
     d_all["all_values"] = values
-    d_all["units"] = {"relative_displacement_px" : "px",
-                     "relative_displacement_um" : "$\mu m$",
-                    "absolute_displacement_px" : "px",
-                     "absolute_displacement_um" : "$\mu m$",
-                     "force" : "$F$",
-                     "force_per_area" : "$F/mm^2$"}
 
     print(f"Pillar tracking for {f_disp} finished")
 
@@ -226,14 +223,22 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E-6, \
 
 
 
-def track_pillars_init(pillar_design, input_file, save_data):
+def track_pillars_sgvalue(input_file, save_data=True):
     path, filename, _ = get_input_properties(input_file)
+ 
+    # tmp solution; let's get values from pillar_tracking/track_pillars
 
-    positions = perform_pillar_detection(pillar_design, input_file, \
-            outdir=os.path.join(path, filename, "pillar_tracking"))
-    data = track_pillars(input_file, positions)
+    f_in = os.path.join(path, filename, "pillar_tracking", "track_pillars.npy")
+    data_all = np.load(f_in, allow_pickle=True).item()
+
+    # one value per pillar
+
+    data_pillars = {"values" : {}, "units" : {}}
+
+    for k in data_all["all_values"].keys():
+        data_pillars["values"][k] = np.mean(data_all["all_values"][k], axis=-2)
 
     if save_data:
-        save_dictionary(f_disp, "track_pillars" , data)
+        save_dictionary(input_file, "track_pillars_sgvalue" , data_pillars)
 
-    return data
+    return data_pillars

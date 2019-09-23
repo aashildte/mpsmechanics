@@ -16,11 +16,6 @@ from ..motion_tracking.ref_frame import convert_disp_data, calculate_minmax
 from ..dothemaths.mechanical_quantities import calc_principal_strain
 from ..dothemaths.angular import calc_angle_diff, calc_projection_fraction
 from ..dothemaths.statistics import chip_statistics
-<<<<<<< HEAD
-=======
-from ..pillar_tracking.pillar_tracking import track_pillars_sgvalue
-
->>>>>>> d7ca2780e8ff8323858e583a2b2b4a8b90041d53
 from ..utils.iofuns.save_values import save_dictionary
 from ..utils.iofuns.data_layer import read_prev_layer
 

@@ -12,7 +12,6 @@ import sys
 import os
 import mpsmechanics as mc
 
-
 from argparse import ArgumentParser
 
 
@@ -45,4 +44,4 @@ if __name__ == "__main__":
 
     mc.calculate_stats_chips(input_files, debug_mode, output_folder)
 
-    print(f"Calculations finished, results saved in folder {ouput_folder}")
+    print(f"Calculations finished, results saved in folder {output_folder}")

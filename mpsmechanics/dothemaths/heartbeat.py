@@ -11,7 +11,7 @@ Calculates beat rate + gives interval splitting based on maxima
 from scipy.signal import find_peaks
 
 
-def calc_beat_intervals(data, disp_threshold=30):
+def calc_beat_intervals(data, disp_threshold=20):
     """
 
     From data on displacement over time only, this function
@@ -21,7 +21,7 @@ def calc_beat_intervals(data, disp_threshold=30):
     Args:
         disp_over_time - numpy array, displacement values over time
         dist_threshold - minimum requirement for length of a peak
-            to be counted as a peak; default value 10
+            to be counted as a peak; default value 20
 
     Returns:
         list of 2-tuples, defining the beat intervals
@@ -30,15 +30,28 @@ def calc_beat_intervals(data, disp_threshold=30):
 
     maxima = calc_beat_maxima(data,
                               disp_threshold=disp_threshold)
+
+    if len(maxima) < 3:
+        return []
+
     midpoints = [int((maxima[i] + maxima[i+1])/2) \
             for i in range(len(maxima)-1)]
+
+    dist1 = midpoints[1] - midpoints[0]
+    if dist1 < midpoints[0]:
+        midpoints = [midpoints[0] - dist1] + midpoints
+
+    dist2 = midpoints[-1] - midpoints[-2]
+    if midpoints[-1] + dist2 < len(data):
+        midpoints += [midpoints[-1] + dist2]
+
     intervals = [(midpoints[i], midpoints[i+1]) \
             for i in range(len(midpoints)-1)]
 
     return intervals
 
 
-def calc_beat_maxima(disp_over_time, disp_threshold=30):
+def calc_beat_maxima(disp_over_time, disp_threshold=20):
     """
 
     From data on displacement over time only, this function
@@ -47,7 +60,7 @@ def calc_beat_maxima(disp_over_time, disp_threshold=30):
     Args:
         disp_over_time - numpy array, displacement values over time
         dist_threshold - minimum requirement for length of a peak
-            to be counted as a peak; default value 10
+            to be counted as a peak; default value 20
 
     Returns:
         list of integers, defining the maximum indices

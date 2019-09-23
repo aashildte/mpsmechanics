@@ -10,11 +10,6 @@ from mpsmechanics.dothemaths.heartbeat import \
         calc_beat_maxima, calc_beat_intervals
 
 
-def calc_filter_time(dist):
-    return np.any((dist != 0), axis=-1)
-
-def calc_filter_all(dist):
-    return np.broadcast_to(np.any((dist != 0), axis=(0,-1)), dist.shape[:3])
  
 
 def calc_for_each_key(init_data, fn, filter_map):
@@ -61,7 +56,7 @@ def fn_std(x, filter_x):
     return y
 
 
-def chip_statistics(data):
+def chip_statistics(data, time_filter):
     """
 
     Args:
@@ -78,21 +73,9 @@ def chip_statistics(data):
     """
     d_all = {}
     
-    filter_all = calc_filter_all(data["displacement"])
-    filter_time = calc_filter_time(data["displacement"])
     
-    #filter_all = np.tile("True", dist.shape[:3])     # original values, no filter applied
-
-    time_filter = {"displacement" : filter_all, \
-            "displacement max diff." : filter_all, \
-            "velocity" : filter_all, \
-            "prevalence" : filter_all, \
-            "angle" : filter_time, \
-            "xmotion": filter_time, \
-            "principal strain": filter_all}
-
     # some transformations
-    fn_folded = lambda x, _: np.linalg.norm(x, axis=3)
+    fn_folded = lambda x, _: np.linalg.norm(x, axis=-1)
     fn_max = lambda x, _ : max(x)
     
     d_all["all_values"] = data

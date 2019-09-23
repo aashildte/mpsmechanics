@@ -83,25 +83,32 @@ def stats_over_time(f_in, save_data):
 
     N = len(list(data["over_time_avg"].keys())) + 1
 
-    fig, axs = plt.subplots(N, 1, figsize=(10, 2*N), sharex=True)
+    fig, axs = plt.subplots(N, 1, figsize=(14, 3*N), sharex=True)
 
     # special one for beatrate
     
-    x_vals = [time[x] for x in [i[0] for i in data["intervals"]] + \
-                    [data["intervals"][-1][1]]]
-    mean = data["beatrate_avg"]
-    std = data["beatrate_std"]
+    maxima = data["maxima"]
+    
+    if len(maxima) > 3:
+        x_vals = [(time[maxima[i+1]] + time[maxima[i]])/2 \
+                        for i in range(len(maxima)-1)]
+        mean = data["beatrate_avg"]
+        std = data["beatrate_std"]
+    
+        for m in maxima:
+            axs[0].axvline(x=time[m], c='r', alpha=0.4)
 
-    axs[0].errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
-    axs[0].set_ylabel("Beatrate")
+        axs[0].errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
+        axs[0].set_ylabel("Beatrate")
 
     # then every other quantity
-
+    # TODO range should be defined earlier!
     minmax = {"displacement" : (0, np.nan),
               "displacement max diff." : (0, np.nan),
               "velocity" : (0, np.nan),
               "xmotion" : (0, 1),
-              "principal strain" : (0, np.nan)}
+              "principal strain" : (0, np.nan),
+              "force_per_area" : (0, np.nan)}
 
     for (ax, key) in zip(axs[1:], data["over_time_avg"].keys()):
         plot_over_time(ax, data["over_time_avg"][key], \

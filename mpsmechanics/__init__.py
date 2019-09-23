@@ -9,7 +9,7 @@ from . import statistical_analysis
 
 from .mechanical_analysis.mechanical_analysis import analyze_mechanics
 from .motion_tracking.motion_tracking import track_motion, MotionTracking
-from .pillar_tracking.pillar_tracking import track_pillars
+from .pillar_tracking.pillar_tracking import track_pillars, track_pillars_sgvalue
 from .visualization.overtime import visualize_over_time
 from .visualization.vectorfield import plot_at_peak, animate_vectorfield, visualize_vectorfield
 from .statistical_analysis.statistical_analysis import calculate_stats_chips

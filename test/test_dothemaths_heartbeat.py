@@ -31,7 +31,7 @@ def test_calc_beat_intervals():
 
     """
     data_org = np.tile(np.array((0, 0, 1, 2, 1, 0, 0)), 4)
-    data_exp = [(6 + 7*i, 6+7*(i+1)) for i in range(2)]
+    data_exp = [(6 + 7*i, 6+7*(i+1)) for i in range(3)]
 
     assert np.allclose(data_exp,
             mc.calc_beat_intervals(data_org, disp_threshold=1))

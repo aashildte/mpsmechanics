@@ -13,9 +13,9 @@ import glob
 import numpy as np
 import mps
 
-def _valid_input_file(input_file):
+def _valid_input_file(input_file, t):
     
-    if not "BF" in input_file:
+    if not t in input_file:
         return False
     
     if not "nd2" in input_file:
@@ -24,7 +24,7 @@ def _valid_input_file(input_file):
     return True
 
 
-def get_input_files(s_files):
+def get_input_files(s_files, t="BF"):
     """
     
     Reads in files and foldersfrom a list (like sys.argv), filters
@@ -34,7 +34,8 @@ def get_input_files(s_files):
 
     Args:
         list of files, folders, etc., e.g. from command line
-    
+        t - type; default BF, can be Cyan (or ?)
+        
     Returns:
         debug - boolean value; perform in debug mode or not
         input_files - list, BF nd2 files from s_files
@@ -60,7 +61,7 @@ def get_input_files(s_files):
             for root, _, files in os.walk(x):
                 for f in files:
                     filename = os.path.join(root, f)
-                    if _valid_input_file(filename):
+                    if _valid_input_file(filename, t):
                         input_files.append(filename)
 
     return input_files

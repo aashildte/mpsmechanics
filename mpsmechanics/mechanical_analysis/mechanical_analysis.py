@@ -52,6 +52,28 @@ def define_filters(disp, pillars):
 
     return filters
 
+def define_units():
+    return {"displacement" : r"$\mu m$",
+                      "displacement max diff." : r"$\mu m$",
+                      "velocity" : r"$\mu m / s$",
+                      "xmotion" : r"-",
+                      "principal strain" : r"-",
+                      "beatrate" : "beats/s",
+                      "relative_displacement_px" : "px",
+                      "relative_displacement_um" : "$\mu m$",
+                      "absolute_displacement_px" : "px",
+                      "absolute_displacement_um" : "$\mu m$",
+                      "force" : "$N$",
+                      "force_per_area" : "$N/mm^2$"}
+
+def define_value_range():
+    return {"displacement" : (0, np.nan),
+              "displacement max diff." : (0, np.nan),
+              "velocity" : (0, np.nan),
+              "xmotion" : (0, 1),
+              "principal strain" : (0, np.nan),
+              "force_per_area" : (0, np.nan)}
+
 
 def _calc_mechanical_quantities(displacement, scale, angle, time):
     """
@@ -160,7 +182,7 @@ def analyze_mechanics(input_file, save_data=True):
     displacement, displacement_minmax, xmotion, velocity, principal_strain = \
             _calc_mechanical_quantities(disp_data, scale, angle, mt_data.time_stamps)
    
-    pillars = track_pillars_sgvalue(input_file, save_data=False)
+    #pillars = track_pillars_sgvalue(input_file, save_data=False)
 
     # over space and time (original data)
 
@@ -168,8 +190,9 @@ def analyze_mechanics(input_file, save_data=True):
               "displacement max diff." : displacement_minmax,
               "velocity" : velocity,
               "xmotion" : xmotion,
-              "principal strain" : principal_strain,
-              "force_per_area" : pillars["values"]["force_per_area"]}
+              "principal strain" : principal_strain}
+
+    #"force_per_area" : pillars["values"]["force_per_area"]}
 
     filters = define_filters(displacement, pillars)
 
@@ -190,18 +213,8 @@ def analyze_mechanics(input_file, save_data=True):
             "metrics_max_std", "metrics_avg_std"]:
         d_all[k]["beatrate"] = data_beatrate[k]
 
-    d_all["units"] = {"displacement" : r"$\mu m$",
-                      "displacement max diff." : r"$\mu m$",
-                      "velocity" : r"$\mu m / s$",
-                      "xmotion" : r"-",
-                      "principal strain" : r"-",
-                      "beatrate" : "beats/s",
-                      "relative_displacement_px" : "px",
-                      "relative_displacement_um" : "$\mu m$",
-                      "absolute_displacement_px" : "px",
-                      "absolute_displacement_um" : "$\mu m$",
-                      "force" : "$N$",
-                      "force_per_area" : "$N/mm^2$"}
+    d_all["units"] = define_units()
+    d_all["range"] = define_value_range()
 
     print("Done calculating mechanical quantities for " + input_file)
 

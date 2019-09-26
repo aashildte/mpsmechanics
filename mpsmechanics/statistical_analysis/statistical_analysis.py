@@ -47,16 +47,19 @@ def _read_data(input_files, debug_mode):
     
     doses = ["Dose0", "Dose1", "Dose2", "Dose3", "Dose4", "Dose5", "Dose6"]
     pacings = ["spont", "1Hz"]
-    media = ["SM", "MM"]
+    chips = ["MM_1A_", "MM_1B_", "MM_3_", "MM_4A_", "MM_4B_", "MM_4_", \
+            "SM_1_", "SM_2A_", "SM_2B_", "SM_3_", "SM_4_"] 
 
-    all_data = defaultdict(lambda : defaultdict(lambda : defaultdict(lambda : defaultdict(list))))
-
+    all_data = defaultdict(lambda : defaultdict(lambda : defaultdict(float)))
     for f_in in input_files:
 
         if "Dose0_1pm" in f_in:        # I'm not sure what this measures
             continue
 
-        dose, pacing, medium = _get_file_info(f_in, doses, pacings, media)
+        if "MM_4B" in f_in:
+            continue
+
+        dose, pacing, ch = _get_file_info(f_in, doses, pacings, chips)
 
         if not debug_mode:
             try:
@@ -67,22 +70,39 @@ def _read_data(input_files, debug_mode):
             data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics)
 
         for key_s1 in list(data["metrics_max_avg"].keys()):
-            for key_s2 in ["metrics_max_avg", "metrics_avg_avg", "metrics_max_std", "metrics_avg_std"]:
-                key_f = (key_s1, key_s2[8:]) 
+            for key_s2 in ["metrics_avg_avg", "metrics_avg_std"]:
+                key_f = (pacing, key_s1, key_s2[8:]) 
                 if not np.isnan(data[key_s2][key_s1]):
-                    all_data[key_f][dose][pacing][medium].append(data[key_s2][key_s1])
+                    all_data[key_f][dose][ch] = data[key_s2][key_s1]
 
-    return doses, pacing, media, all_data
+    normalized = normalize_data(all_data, doses, chips)
+    media = ["SM", "MM"]
+
+    return doses, pacing, media, normalized
+
+
+def normalize_data(all_data, doses, chips):
+
+    normalized = defaultdict(lambda : defaultdict(lambda : defaultdict(list)))
+
+    for key in all_data.keys():
+        for d in doses:
+            for ch in chips:
+                medium = ch.split("_")[0]
+                if all_data[key][d][ch] > 0 and all_data[key]["Dose0"][ch] > 0: 
+                    normalized[key][d][medium].append(all_data[key][d][ch]/all_data[key]["Dose0"][ch])
+
+    return normalized
 
 
 def calculate_stats_chips(input_files, debug_mode, output_folder):
 
-    doses, pacing, media, all_data = _read_data(input_files, debug_mode)
+    doses, pacing, media, norm_data = _read_data(input_files, debug_mode)
 
     os.makedirs(output_folder, exist_ok=True)
 
-    for key in all_data.keys():
-        data_per_dose = all_data[key] 
+    for key in norm_data.keys():
+        data_per_dose = norm_data[key] 
         output_file = os.path.join(output_folder, \
                 "_".join(key) + ".csv") 
 
@@ -90,15 +110,14 @@ def calculate_stats_chips(input_files, debug_mode, output_folder):
         metrics_data["Dose"] = [str(x) for x in range(len(doses))]
 
         for m in media:
-            for p in pacing:
-                metrics_data[m + "_" + p + "_mean"] = [np.mean(np.array(data_per_dose[d][p][m])) for d in doses]
-                metrics_data[m + "_" + p + "_std"] = [np.mean(np.array(data_per_dose[d][p][m])) for d in doses]
-                metrics_data[m + "_" + p + "_n"] = [len(data_per_dose[d][p][m]) for d in doses]
+            metrics_data[m + "_mean"] = [np.mean(np.array(data_per_dose[d][m])) for d in doses]
+            metrics_data[m + "_sem"] = [np.std(np.array(data_per_dose[d][m]))/np.sqrt(len(data_per_dose[d][m])) for d in doses]
+            metrics_data[m + "_n"] = [len(data_per_dose[d][m]) for d in doses]
 
         headers = ["Dose"]
         for m in media:
-            for p in pacing:
-                headers += ["{} / {}".format(m, p)]*3
+            headers += ["{}".format(m)]*3
+        print("headers: ", headers)
 
         pd.DataFrame(metrics_data).to_csv(output_file, index=False, header=headers)
         print(f"Data saved to {output_file}.")

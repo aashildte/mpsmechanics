@@ -100,20 +100,15 @@ def stats_over_time(f_in, save_data):
 
         axs[0].errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
         axs[0].set_ylabel("Beatrate")
+    
 
     # then every other quantity
-    # TODO range should be defined earlier!
-    minmax = {"displacement" : (0, np.nan),
-              "displacement max diff." : (0, np.nan),
-              "velocity" : (0, np.nan),
-              "xmotion" : (0, 1),
-              "principal strain" : (0, np.nan),
-              "force_per_area" : (0, np.nan)}
 
     for (ax, key) in zip(axs[1:], data["over_time_avg"].keys()):
         plot_over_time(ax, data["over_time_avg"][key], \
-                data["over_time_std"][key], data["time"],
-                data["intervals"], key, data["units"][key], minmax[key])
+                data["over_time_std"][key], data["time"], \
+                data["intervals"], key, data["units"][key], \
+                        data["range"][key])
 
     axs[-1].set_xlabel(r"Time ($ms$)")
     filename = os.path.join(output_folder, "analyze_mechanics.png")

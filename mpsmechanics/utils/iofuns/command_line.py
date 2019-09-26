@@ -10,59 +10,57 @@ Functions related to command line arguments
 
 import os
 import glob
-import numpy as np
-import mps
 
-def _valid_input_file(input_file, t):
-    
-    if not t in input_file:
+def _valid_input_file(input_file, filetype):
+
+    if not filetype in input_file:
         return False
-    
+
     if not "nd2" in input_file:
         return False
 
     return True
 
 
-def get_input_files(s_files, t="BF"):
+def _walk_glob(argument_list):
+    input_files = []
+    for arg in argument_list:
+        input_files.extend(glob.glob(arg))
+
+    return input_files
+
+
+def get_input_files(argument_list, filetype="BF"):
     """
-    
+
     Reads in files and foldersfrom a list (like sys.argv), filters
     out those that are likely to be valid files.
 
     Assesses whether the script should be run in debug mode or not.
 
     Args:
-        list of files, folders, etc., e.g. from command line
+        s_files - list of files, folders, etc., e.g. from command line
         t - type; default BF, can be Cyan (or ?)
-        
+
     Returns:
         debug - boolean value; perform in debug mode or not
         input_files - list, BF nd2 files from s_files
 
     """
 
-    # read in files
-
-    input_args = []
-    for x in s_files:
-        input_args.extend(glob.glob(x))
-    
-    # walk through all files and folders
     input_files = []
 
-    for x in input_args:
-        if os.path.isfile(x):
-            if _valid_input_file(x):
-                input_files.append(x)
-        elif os.path.isdir(x):
+    for a_file in _walk_glob(argument_list):
+        if os.path.isfile(a_file):
+            if _valid_input_file(a_file, filetype):
+                input_files.append(a_file)
+        elif os.path.isdir(a_file):
+
             # if folders, replace with all files in subfolders
-            
-            for root, _, files in os.walk(x):
-                for f in files:
-                    filename = os.path.join(root, f)
-                    if _valid_input_file(filename, t):
+            for root, _, files in os.walk(a_file):
+                for f_in in files:
+                    filename = os.path.join(root, f_in)
+                    if _valid_input_file(filename, filetype):
                         input_files.append(filename)
 
     return input_files
-

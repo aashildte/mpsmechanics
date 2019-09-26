@@ -8,6 +8,7 @@ Calculates beat rate + gives interval splitting based on maxima
 
 """
 
+import numpy as np
 from scipy.signal import find_peaks
 
 
@@ -25,7 +26,7 @@ def calc_beat_intervals(data, disp_threshold=20):
 
     Returns:
         list of 2-tuples, defining the beat intervals
- 
+
     """
 
     maxima = calc_beat_maxima(data,
@@ -64,7 +65,7 @@ def calc_beat_maxima(disp_over_time, disp_threshold=20):
 
     Returns:
         list of integers, defining the maximum indices
-        
+
     """
 
     maxima, _ = find_peaks(disp_over_time, \
@@ -72,3 +73,51 @@ def calc_beat_maxima(disp_over_time, disp_threshold=20):
                            distance=disp_threshold)
 
     return maxima
+
+def _calc_spatial_max(num_intervals, intervals, disp_folded):
+    intervals += [(intervals[-1][1], -1)]
+    start_in = intervals[0][0]
+    argmax_list = [np.argmax(disp_folded[0:start_in], axis=0)]
+
+    for i in range(num_intervals):
+        start_in, stop_in = intervals[i]
+        argmax_list += (start_in + \
+                np.argmax(disp_folded[start_in:stop_in], axis=0))
+
+    return argmax_list
+
+
+def calc_beatrate(disp_folded, maxima, intervals, time):
+    """
+
+    Args:
+
+    Returns:
+
+    """
+
+    if len(maxima) < 3:
+        return [np.array]*3
+
+    _, x_dim, y_dim = disp_folded.shape
+
+    num_intervals = len(maxima) - 1
+
+    beatrate_spatial = np.zeros((num_intervals, x_dim, y_dim))
+
+    argmax_list = _calc_spatial_max(num_intervals, intervals,
+                                    disp_folded)
+
+    for i in range(len(argmax_list)-1):
+        for _x in range(x_dim):
+            for _y in range(y_dim):
+                start_in = argmax_list[i, _x, _y]
+                stop_in = argmax_list[i+1, _x, _y]
+                beatrate_spatial[i, _x, _y] = \
+                        1e3 / (time[start_in] - time[stop_in])
+
+    return beatrate_spatial, \
+            [np.mean(beatrate_spatial[i]) \
+                for i in range(num_intervals)], \
+            [np.std(beatrate_spatial[i]) \
+                for i in range(num_intervals)]

@@ -75,17 +75,13 @@ def calc_beat_maxima(disp_over_time, disp_threshold=20):
     return maxima
 
 def _calc_spatial_max(num_intervals, intervals, disp_folded):
-    intervals += [(intervals[-1][1], -1)]
-    start_in = intervals[0][0]
-    argmax_list = [np.argmax(disp_folded[0:start_in], axis=0)]
+    argmax_list = []
 
-    for i in range(num_intervals):
-        start_in, stop_in = intervals[i]
-        argmax_list += (start_in + \
-                np.argmax(disp_folded[start_in:stop_in], axis=0))
+    for (start_in, stop_in) in intervals:
+        argmax_list += [(start_in + \
+                np.argmax(disp_folded[start_in:stop_in], axis=0))]
 
-    return argmax_list
-
+    return np.array(argmax_list)
 
 def calc_beatrate(disp_folded, maxima, intervals, time):
     """
@@ -101,9 +97,9 @@ def calc_beatrate(disp_folded, maxima, intervals, time):
 
     _, x_dim, y_dim = disp_folded.shape
 
-    num_intervals = len(maxima) - 1
+    num_intervals = len(intervals)
 
-    beatrate_spatial = np.zeros((num_intervals, x_dim, y_dim))
+    beatrate_spatial = np.zeros((num_intervals-1, x_dim, y_dim))
 
     argmax_list = _calc_spatial_max(num_intervals, intervals,
                                     disp_folded)
@@ -114,10 +110,11 @@ def calc_beatrate(disp_folded, maxima, intervals, time):
                 start_in = argmax_list[i, _x, _y]
                 stop_in = argmax_list[i+1, _x, _y]
                 beatrate_spatial[i, _x, _y] = \
-                        1e3 / (time[start_in] - time[stop_in])
+                        1e3 / (time[stop_in] - time[start_in])
 
-    return beatrate_spatial, \
-            [np.mean(beatrate_spatial[i]) \
-                for i in range(num_intervals)], \
-            [np.std(beatrate_spatial[i]) \
-                for i in range(num_intervals)]
+    beatrate_avg = np.array([np.mean(beatrate_spatial[i]) \
+                for i in range(num_intervals-1)])
+    beatrate_std = np.array([np.std(beatrate_spatial[i]) \
+                for i in range(num_intervals-1)])
+
+    return beatrate_spatial, beatrate_avg, beatrate_std

@@ -17,8 +17,6 @@ from ..pillar_tracking.pillar_tracking import track_pillars
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
 def _get_file_info(f_in, doses, pacing, media):
-
-
     for d in doses:
         if d in f_in:
             break

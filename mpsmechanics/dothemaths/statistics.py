@@ -62,6 +62,22 @@ def fun_std(org_values, filter_x):
     return all_values
 
 
+def calc_xmotion_metrics(avg, std, intervals):
+    metr = {}
+
+    intervals_avg = [np.mean(avg[i1:i2]) \
+            for (i1, i2) in intervals]
+    intervals_std = [np.mean(std[i1:i2]) \
+            for (i1, i2) in intervals]
+
+    metr["metrics_max_avg"] = np.max(intervals_avg)
+    metr["metrics_avg_avg"] = np.mean(intervals_avg)
+    metr["metrics_max_std"] = np.max(intervals_std)
+    metr["metrics_avg_std"] = np.mean(intervals_std)
+
+    return metr
+
+
 def chip_statistics(data):
     """
 
@@ -102,14 +118,16 @@ def chip_statistics(data):
             calc_for_each_key(d_all["folded"], fun_std, time_filter)
 
     # general variables
+    max_diff_key = "displacement maximum difference"
+
     d_all["maxima"] = \
-        calc_beat_maxima(d_all["over_time_avg"]["displacement"])
+        calc_beat_maxima(d_all["over_time_avg"][max_diff_key])
     d_all["intervals"] = \
-        calc_beat_intervals(d_all["over_time_avg"]["displacement"])
+        calc_beat_intervals(d_all["over_time_avg"][max_diff_key])
 
     fun_meanmax = lambda x, _: np.mean([max(x[i1:i2]) \
             for (i1, i2) in d_all["intervals"]])
-
+ 
     # metrics
     if len(d_all["intervals"]) > 1:
         d_all["metrics_max_avg"] = \
@@ -124,6 +142,15 @@ def chip_statistics(data):
         d_all["metrics_avg_std"] = \
                 calc_for_each_key(d_all["over_time_std"], \
                 fun_meanmax, time_filter)
+    
+        # special case for xmotion
+
+        xmotion_metrics = calc_xmotion_metrics(d_all["over_time_avg"]["xmotion"],
+                                               d_all["over_time_std"]["xmotion"],
+                                               d_all["intervals"])
+
+        for key in xmotion_metrics.keys():
+            d_all[key]["xmotion"] = xmotion_metrics[key]
 
     else:
         for st_metric in ["metrics_max_avg", "metrics_avg_avg", \
@@ -131,5 +158,5 @@ def chip_statistics(data):
             for k in quantities.keys():
                 d_all[st_metric] = {}
                 d_all[st_metric][k] = np.nan
-
+    
     return d_all

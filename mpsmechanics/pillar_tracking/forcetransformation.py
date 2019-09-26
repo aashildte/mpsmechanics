@@ -6,7 +6,6 @@ TODO
 1) remove magical numbers
 2) more descriptive names maybe? Eg F -> force
 
-David Cleres / UC Berkeley / 2019
 Åshild Telle / Simula Research Labratory / 2019
 
 """
@@ -38,8 +37,7 @@ def displacement_to_force_area(delta_max, E, L, R, area):
 
 def displacement_to_force(delta_max, E, L, R):
     """
-    all inputs in meters
-    F return force in N
+    all inputs in meters; returns force in N
 
     Args:
         ?

@@ -13,37 +13,8 @@ Module for analyzing mechanical properties from motion vector images:
 
 import numpy as np
 
-from . import operations as op
 
-def calc_prevalence(data, threshold):
-    """
-
-    Computes a true/false array for whether the displacement surpasses
-    a given threshold.
-
-    This property only makes sense over time.
-
-    Args:
-        data - T x X x Y x 2 numpy array
-        threshold - cut-of value, in space/time units; should be scaled
-            already - meaning that the movement can be compared on a
-            unit scale
-        over_time - boolean value; determines if T dimension
-            should be included or not
-
-    Returns:
-        prevalence - T x X x Y x 2 numpy boolean array
-
-    """
-
-    dxdt = np.gradient(data, axis=0)
-
-    f_th = lambda x, i, j, th=threshold: (np.linalg.norm(x) > th)
-
-    return op.perform_operation(dxdt, f_th, over_time=True)
-
-
-def calc_deformation_tensor(data):
+def calc_deformation_tensor(data, dx):
     """
     Computes the deformation tensor F from values in data
 
@@ -53,42 +24,44 @@ def calc_deformation_tensor(data):
     Returns:
         F, deformation tensor, of dimensions T x X x Y x 4
 
-    """    
+    """
 
     dudx = np.gradient(data[:, :, :, 0], axis=0)
     dudy = np.gradient(data[:, :, :, 0], axis=1)
     dvdx = np.gradient(data[:, :, :, 1], axis=0)
     dvdy = np.gradient(data[:, :, :, 1], axis=1)
 
-    F = np.swapaxes(np.swapaxes(np.swapaxes(np.swapaxes(\
-            np.array(((dudx, dudy), \
+    F = 1/dx*(np.swapaxes(np.swapaxes(np.swapaxes(np.swapaxes(\
+                np.array(((dudx, dudy), \
                       (dvdx, dvdy))), \
-                      0, -2), 1, -1), 0, 2), 1, 2) \
-             + np.eye(2)[None, None, None, :, :]
+                      0, -2), 1, -1), 0, 2), 1, 2)) \
+                + np.eye(2)[None, None, None, :, :]
 
     return F
 
 
-def calc_cauchy_green_deformation_tensor(data):
+def calc_gl_strain_tensor(data, dx):
     """
     Computes the transpose along the third dimension of data; if data
     represents the deformation gradient tensor F (over time and 2 spacial
-    dimensions) this corresponds to the cauchy green tensor C.
+    dimensions) this corresponds to the Green-Lagrange strain tensor E.
 
     Args:
         data - numpy array of dimensions T x X x Y x 2 x 2
 
     Returns
-        C, numpy array of dimensions T x X x Y x 2 x 2
+        numpy array of dimensions T x X x Y x 2 x 2
 
     """
 
-    F = calc_deformation_tensor(data)
+    def_tensor = calc_deformation_tensor(data, dx)
 
-    return 0.5*(np.matmul(F, F.transpose(0, 1, 2, 4, 3)) -  np.eye(2)[None, None, None, :, :])
+    return 0.5*(np.matmul(def_tensor,
+                          def_tensor.transpose(0, 1, 2, 4, 3)) - \
+            np.eye(2)[None, None, None, :, :])
 
 
-def calc_principal_strain(data):
+def calc_principal_strain(data, dx):
     """
     Computes the principal strain defined to be the largest eigenvector
     (eigenvector corresponding to largest eigenvalue, scaled) of the
@@ -101,27 +74,16 @@ def calc_principal_strain(data):
         principal strain - numpy array of dimension T x X x Y x 2
 
     """
-    
-    C = calc_cauchy_green_deformation_tensor(data)
-    
-    T, X, Y, _, _ = C.shape
 
-    eigenvalues, eigenvectors = np.linalg.eig(C)
+    E = calc_gl_strain_tensor(data, dx)
 
-    eigen_filter = np.abs(eigenvalues[:,:,:,0]) > np.abs(eigenvalues[:,:,:,1])
+    eigenvalues, eigenvectors = np.linalg.eig(E)
 
-    # TODO there must be a numpy function for this ..
+    eigen_filter = np.abs(eigenvalues[:, :, :, 0]) \
+            > np.abs(eigenvalues[:, :, :, 1])
+    eigen1 = eigenvalues[:, :, :, 0][:, :, :, None]\
+            *eigenvectors[:, :, :, 0]
+    eigen2 = eigenvalues[:, :, :, 1][:, :, :, None]\
+            *eigenvectors[:, :, :, 1]
 
-    pr_strain = np.zeros((T, X, Y, 2))
-
-    for t in range(T):
-        for x in range(X):
-            for y in range(Y):
-                if(eigen_filter[t, x, y]):
-                    pr_strain[t, x, y] = eigenvalues[t, x, y, 0]*\
-                            eigenvectors[t, x, y, 0]
-                else:
-                    pr_strain[t, x, y] = eigenvalues[t, x, y, 1]*\
-                            eigenvectors[t, x, y, 1] 
-    
-    return pr_strain
+    return np.where(eigen_filter[:, :, :, None], eigen1, eigen2)

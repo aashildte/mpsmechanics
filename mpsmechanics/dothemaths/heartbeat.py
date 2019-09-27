@@ -93,18 +93,17 @@ def calc_beatrate(disp_folded, maxima, intervals, time):
     """
 
     if len(maxima) < 3:
-        return [np.array]*3
+        return [np.nan]*3
 
     _, x_dim, y_dim = disp_folded.shape
 
-    num_intervals = len(intervals)
-
-    beatrate_spatial = np.zeros((num_intervals-1, x_dim, y_dim))
-
     argmax_list = _calc_spatial_max(num_intervals, intervals,
                                     disp_folded)
+    
+    num_intervals = len(argmax_list)
+    beatrate_spatial = np.zeros((num_intervals-1, x_dim, y_dim))
 
-    for i in range(len(argmax_list)-1):
+    for i in range(num_intervals-1):
         for _x in range(x_dim):
             for _y in range(y_dim):
                 start_in = argmax_list[i, _x, _y]
@@ -116,5 +115,5 @@ def calc_beatrate(disp_folded, maxima, intervals, time):
                 for i in range(num_intervals-1)])
     beatrate_std = np.array([np.std(beatrate_spatial[i]) \
                 for i in range(num_intervals-1)])
-
+    
     return beatrate_spatial, beatrate_avg, beatrate_std

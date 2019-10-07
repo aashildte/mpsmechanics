@@ -23,6 +23,7 @@ def _valid_input_file(input_file, filetype):
 
 
 def _walk_glob(argument_list):
+
     input_files = []
     for arg in argument_list:
         input_files.extend(glob.glob(arg))
@@ -47,7 +48,6 @@ def get_input_files(argument_list, filetype="BF"):
         input_files - list, BF nd2 files from s_files
 
     """
-
     input_files = []
 
     for a_file in _walk_glob(argument_list):
@@ -55,7 +55,6 @@ def get_input_files(argument_list, filetype="BF"):
             if _valid_input_file(a_file, filetype):
                 input_files.append(a_file)
         elif os.path.isdir(a_file):
-
             # if folders, replace with all files in subfolders
             for root, _, files in os.walk(a_file):
                 for f_in in files:

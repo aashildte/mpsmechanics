@@ -26,7 +26,7 @@ def setup_frame(vectors, dpi, images, num_rows, num_cols):
     figsize = (14, 10)
     fig, axes = plt.subplots(num_rows, num_cols, \
                              figsize=figsize, dpi=dpi)
-    axes.flatten()
+    axes = axes.flatten()
 
     return x, y, axes, fig
 
@@ -62,32 +62,27 @@ def plt_magnitude(axis, i, scalars, vmin, vmax, cmap):
 
 
 def _set_axes(axes, x, images, pixels2um):
-    scale_ax = [1, len(x)/images.shape[0]]
+    scale_ax = [1] + (len(axes)-1)*[len(x)/images.shape[0]]
 
-    for axis in axes:
-        axes.set_aspect("equal")
+    for (axis, scale) in zip(axes, scale_ax):
+        axis.set_aspect("equal")
 
-        axes.set_yticks(np.linspace(0, scale_ax[i]*images.shape[0]-1, 8))
-        axes.set_yticklabels(map(int, np.linspace(0, pixels2um*(images.shape[0]-1), 8)))
-        axes.set_xticks(np.linspace(0, scale_ax[i]*images.shape[1]-1, 5))
-        axes.set_xticklabels(map(int, np.linspace(0, pixels2um*(images.shape[1]-1), 5)))
-        axes.set_xlabel("$\mu m$")
-        axes.set_ylabel("$\mu m$")
+        axis.set_yticks(np.linspace(0, scale*images.shape[0]-1, 8))
+        axis.set_yticklabels(map(int, np.linspace(0, pixels2um*(images.shape[0]-1), 8)))
+        axis.set_xticks(np.linspace(0, scale*images.shape[1]-1, 5))
+        axis.set_xticklabels(map(int, np.linspace(0, pixels2um*(images.shape[1]-1), 5)))
+        axis.set_xlabel("$\mu m$")
+        axis.set_ylabel("$\mu m$")
 
 
 def plot_1Dvalues(scalars, time_step, label, num_arrows, dpi, pixels2um, scale, images):
-    x, y, axes, fig = setup_frame(vectors, dpi, images, 2, 1)
+    x, y, axes, fig = setup_frame(scalars, dpi, images, 1, 2)
     subplots = []
-
-    block_size = len(x) // vectors.shape[1]
-    scale_n = max(np.divide(vectors.shape[1:3], block_size))
-
-    scale_xy = np.max(np.abs(vectors))
 
     subplots.append(axes[0].imshow(images[:,:,time_step], cmap=cm.gray))
     subplots.append(plt_magnitude(axes[1], time_step, scalars[:, :, :, 0], \
-                       0, np.max(magnitude), "viridis"))
-    cb = fig.colorbar(subplots[1], ax=axes[1, 0])
+                       0, np.max(scalars), "viridis"))
+    cb = fig.colorbar(subplots[1], ax=axes[1])
     cb.set_label(label)
 
     axes[0].set_title("Original images")
@@ -107,7 +102,7 @@ def plot_2Dvalues(vectors, time_step, label, num_arrows, dpi, pixels2um, scale, 
     magnitude = calc_magnitude(vectors)
     normalized = normalize_values(vectors)
 
-    x, y, axes, fig = setup_frame(vectors, dpi, images)
+    x, y, axes, fig = setup_frame(vectors, dpi, images, 2, 3)
 
     block_size = len(x) // vectors.shape[1]
     scale_n = max(np.divide(vectors.shape[1:3], block_size))
@@ -137,7 +132,7 @@ def plot_2Dvalues(vectors, time_step, label, num_arrows, dpi, pixels2um, scale, 
 
     axes[5].set_title("Transversal (y)")
 
-    plt.suptitle("Time step {time_step}".format())
+    plt.suptitle("Time step {}".format(time_step))
  
     _set_axes(axes, x, images, pixels2um)
 
@@ -174,7 +169,7 @@ def plot_4Dvalues(vectors, time_step, label, dpi, pixels2um, scale, images):
         images - original images
 
     """
-    x, y, axes, fig = setup_frame(vectors, dpi, images)
+    x, y, axes, fig = setup_frame(vectors, dpi, images, 2, 3)
 
     block_size = len(x) // vectors.shape[1]
     scale_n = max(np.divide(vectors.shape[1:3], block_size))
@@ -224,7 +219,7 @@ def animate_vectorfield(vectors, label, pixels2um, images, fname="animation", \
         framerate=None, extension="mp4", dpi=300, dx=3, scale=1):
 
     extensions = ["gif", "mp4"]
-    msg = "Invalid extension {extension}. Expected one of {extensions}".format()
+    msg = "Invalid extension {}. Expected one of {}".format(extension, extensions)
     assert extension in extensions, msg
 
     num_dims = vectors.shape[3:]
@@ -236,7 +231,7 @@ def animate_vectorfield(vectors, label, pixels2um, images, fname="animation", \
     elif num_dims == (2, 2):
         fig, update = plot_4Dvalues(vectors, 0, label, dpi, pixels2um, scale, images)
     else:
-        print("Error: shape of {num_dims} not recognized.".format())
+        print("Error: shape of {} not recognized.".format(num_dims))
         return
 
     # Set up formatting for the movie files
@@ -250,7 +245,7 @@ def animate_vectorfield(vectors, label, pixels2um, images, fname="animation", \
     anim = animation.FuncAnimation(fig, update, N)
 
     fname = os.path.splitext(fname)[0]
-    anim.save("{fname}.{extension}".format(), writer=writer)
+    anim.save("{}.{}".format(fname, extension), writer=writer)
 
 
 def plot_at_peak(vectors, label, pixels2um, images, fname="vector_fields", \
@@ -272,7 +267,7 @@ def plot_at_peak(vectors, label, pixels2um, images, fname="vector_fields", \
         plot_4Dvalues(vectors, peak, label, dpi, pixels2um, scale, images)
 
     else:
-        print("Error: shape of {num_dims} not recognized.".format())
+        print("Error: shape of {} not recognized.".format(num_dims))
         return
 
     filename = fname + "." + extension

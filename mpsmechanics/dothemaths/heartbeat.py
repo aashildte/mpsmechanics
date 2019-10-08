@@ -74,7 +74,7 @@ def calc_beat_maxima(disp_over_time, disp_threshold=20):
 
     return maxima
 
-def _calc_spatial_max(num_intervals, intervals, disp_folded):
+def _calc_spatial_max(intervals, disp_folded):
     argmax_list = []
 
     for (start_in, stop_in) in intervals:
@@ -97,10 +97,9 @@ def calc_beatrate(disp_folded, maxima, intervals, time):
 
     _, x_dim, y_dim = disp_folded.shape
 
-    argmax_list = _calc_spatial_max(num_intervals, intervals,
-                                    disp_folded)
-    
+    argmax_list = _calc_spatial_max(intervals, disp_folded)
     num_intervals = len(argmax_list)
+    
     beatrate_spatial = np.zeros((num_intervals-1, x_dim, y_dim))
 
     for i in range(num_intervals-1):

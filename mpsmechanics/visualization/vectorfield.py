@@ -2,7 +2,6 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 from matplotlib import cm
 from matplotlib import animation
 
@@ -13,7 +12,6 @@ from ..utils.iofuns.folder_structure import make_dir_structure, \
         make_dir_layer_structure
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
-from ..pillar_tracking.pillar_tracking import track_pillars
 
 def setup_frame(vectors, pixels2um, dpi, images):
 
@@ -225,7 +223,8 @@ def plot_at_peak(vectors, label, unit, pixels2um, images, fname="vector_fields",
     if D==1:
         print("TODO: Implement for 1D values")
         return
-    elif D==(2,):
+
+    if D==(2,):
         
         peak = np.argmax(calc_norm_over_time(vectors))
         plot2Dvalues(vectors, peak, label, unit, dx, dpi, pixels2um, scale, images, linscale)
@@ -253,7 +252,8 @@ def visualize_vectorfield(f_in, framerate_scale=1, save_data=True):
     mt_data = mps.MPS(f_in)
     pixels2um = mt_data.info["um_per_pixel"]
 
-    output_folder = make_dir_layer_structure(f_in, "visualize_vectorfield")
+    output_folder = make_dir_layer_structure(f_in, \
+            os.path.join("mpsmechanics", "visualize_vectorfield"))
     make_dir_structure(output_folder)
 
     data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)

@@ -11,13 +11,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from ..utils.iofuns.data_layer import read_prev_layer
-from ..utils.iofuns.folder_structure import make_dir_structure, \
-        make_dir_layer_structure
+from ..utils.iofuns.folder_structure import get_input_properties
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
-from ..pillar_tracking.pillar_tracking import track_pillars
 
-    
+
 def get_minmax_values(avg_values, std_values, value_range):
+    """
+
+    Calculates avg +- std; cuts of values outside given value range.
+
+    TODO: We can probably split this into two functions.
+
+    """
     np.warnings.filterwarnings('ignore')
 
     def_min = value_range[0]*np.ones(std_values.shape)
@@ -31,35 +36,63 @@ def get_minmax_values(avg_values, std_values, value_range):
     return minvalues, maxvalues
 
 
-def plot_over_time(ax, avg_values, std_values, time, intervals, \
-        label, unit, value_range):
+def plot_intervals(axis, time, intervals):
     """
 
     Args:
-        values - 1D numpy array, assumed to be
-            relevant values over time, uniformly
-            distributed (same time step)
+        axis - subplot
         time - 1D numpy array for time steps
-        label - generates file name
-        ylabel - y axis label
+        intervals - intervals used to define each beat
 
     """
 
     if len(intervals) > 0:
 
         for i in intervals:
-            ax.axvline(x=time[i[0]], c='g', alpha=0.8)
-        ax.axvline(x=time[i[1]], c='g', alpha=0.8)
+            axis.axvline(x=time[i[0]], c='g', alpha=0.8)
+        axis.axvline(x=time[intervals[-1][1]], c='g', alpha=0.8)
+
+
+def plot_over_time(axis, avg_values, std_values, time, \
+        label, value_range):
+    """
+
+    Args:
+        axis - subplot
+        avg_values - 1D numpy array, assumed to be
+            relevant values over time, uniformly
+            distributed (same time step)
+        std_values - same
+        time - 1D numpy array for time steps
+        label - description
+        value_range - minimum, maximum range
+
+    """
+
 
     minvalues, maxvalues = get_minmax_values(avg_values, std_values, value_range)
 
-    ax.plot(time, avg_values)
-    ax.fill_between(time, minvalues, \
+    axis.plot(time, avg_values)
+    axis.fill_between(time, minvalues, \
             maxvalues, color='gray', alpha=0.5)
 
-    label = (label.replace("_", " ")).capitalize()
+    axis.set_ylabel(label)
 
-    ax.set_ylabel(label + " (" + unit + ")")
+
+def _plot_beatrate(axis, data, time):
+    maxima = data["maxima"]
+
+    if len(maxima) > 3:
+        x_vals = [(time[maxima[i+1]] + time[maxima[i]])/2 \
+                        for i in range(len(maxima)-1)]
+        mean = data["beatrate_avg"]
+        std = data["beatrate_std"]
+
+        for maximum in maxima:
+            axis.axvline(x=time[maximum], c='r', alpha=0.4)
+
+        axis.errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
+        axis.set_ylabel("Beatrate")
 
 
 def stats_over_time(f_in, save_data):
@@ -73,44 +106,36 @@ def stats_over_time(f_in, save_data):
             output_values in a 'cache' or not)
 
     """
-    
-    output_folder = make_dir_layer_structure(f_in, "visualize_over_time")
-    
-    data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)
-    
+
+    path, filename, _ = get_input_properties(f_in)
+    output_folder = os.path.join(path, filename, "mpsmechanics")
+
+    data = read_prev_layer(f_in, "analyze_mechanics", \
+            analyze_mechanics, save_data)
+
     time = data["time"]
     # average over time
 
-    N = len(list(data["over_time_avg"].keys())) + 1
+    num_subplots = len(list(data["over_time_avg"].keys())) + 1
 
-    fig, axs = plt.subplots(N, 1, figsize=(14, 3*N), sharex=True)
+    _, axes = plt.subplots(num_subplots, 1, \
+            figsize=(14, 3*num_subplots), sharex=True)
 
     # special one for beatrate
-    
-    maxima = data["maxima"]
-    
-    if len(maxima) > 3:
-        x_vals = [(time[maxima[i+1]] + time[maxima[i]])/2 \
-                        for i in range(len(maxima)-1)]
-        mean = data["beatrate_avg"]
-        std = data["beatrate_std"]
-    
-        for m in maxima:
-            axs[0].axvline(x=time[m], c='r', alpha=0.4)
 
-        axs[0].errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
-        axs[0].set_ylabel("Beatrate")
-    
+    _plot_beatrate(axes[0], data, time)
 
     # then every other quantity
 
-    for (ax, key) in zip(axs[1:], data["over_time_avg"].keys()):
-        plot_over_time(ax, data["over_time_avg"][key], \
+    for (axis, key) in zip(axes[1:], data["over_time_avg"].keys()):
+        label = (key.replace("_", " ")).capitalize() + " (" + \
+                data["units"][key] + ")"
+        plot_over_time(axis, data["over_time_avg"][key], \
                 data["over_time_std"][key], data["time"], \
-                data["intervals"], key, data["units"][key], \
-                        data["range"][key])
+                label, data["range"][key])
+        plot_intervals(axis, data["time"], data["intervals"])
 
-    axs[-1].set_xlabel(r"Time ($ms$)")
+    axes[-1].set_xlabel(r"Time ($ms$)")
     filename = os.path.join(output_folder, "analyze_mechanics.png")
     plt.savefig(filename, dpi=500)
     plt.clf()
@@ -122,7 +147,7 @@ def visualize_over_time(f_in, save_data=True):
     Visualize mechanics - "main function"
 
     """
-    
+
     stats_over_time(f_in, save_data)
 
     print("Plots finished")

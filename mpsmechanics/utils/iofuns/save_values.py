@@ -22,9 +22,11 @@ def save_dictionary(input_file, layer, dictionary):
     """
     
     path, filename, _ = get_input_properties(input_file)
-    output_path = os.path.join(path, filename)
+    output_path = os.path.join(path, filename, "mpsmechanics")
     make_dir_structure(output_path)
 
     output_file = os.path.join(output_path, layer + ".npy")
+
+    print(f"Values saved in {output_file}.")
 
     np.save(output_file, dictionary)

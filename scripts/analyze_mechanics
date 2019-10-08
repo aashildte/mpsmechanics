@@ -23,9 +23,8 @@ where the input files are nd2/npy files containing displacement data.
 """
 
 import sys
-import mpsmechanics as mc
-
 from argparse import ArgumentParser
+import mpsmechanics as mc
 
 
 def cl_parser(args):
@@ -37,8 +36,8 @@ def cl_parser(args):
             nargs="+")
 
     parser.add_argument("-d", "--debug", \
-            help="Run script in debug mode",
-            action="store_true")
+                        help="Run script in debug mode",
+                        action="store_true")
 
     args = parser.parse_args()
 
@@ -55,10 +54,14 @@ if __name__ == "__main__":
     for f in input_files:
         if debug_mode:
             mc.analyze_mechanics(f)
+            mc.calculate_metrics(f)
+            mc.visualize_over_time(f)
         else:
             try:
                 mc.analyze_mechanics(f)
-            
+                mc.calculate_metrics(f)
+                mc.visualize_over_time(f)
+
             except Exception as e:
                 print(f"Could not run analyze_mechanics; error msg: {e}")
                 if f is not input_files[-1]:

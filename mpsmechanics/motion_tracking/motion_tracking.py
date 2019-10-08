@@ -867,7 +867,6 @@ def track_motion(input_file, save_data=True):
 
     Args:
         input_file - nd2 or zip file
-        use_cache - ?
         save_data - boolean value: save as npy file when finished, or not
 
     Returns:
@@ -905,8 +904,9 @@ def track_motion(input_file, save_data=True):
     d_all["angle"] = angle
     d_all["block size"] = int(block_size / mt_data.info["um_per_pixel"])
 
+    print("Motion tracking done.")
+
     if(save_data):
         save_dictionary(input_file, "track_motion", d_all)
 
     return d_all
-

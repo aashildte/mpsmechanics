@@ -93,7 +93,8 @@ def calculate_metrics(input_file):
 
     metrics_data = _data_to_dict(input_file)
 
-    fout = os.path.join(os.path.join(path, filename), "metrics.csv")
+    folder = os.path.join(path, filename, "mpsmechanics")
+    fout = os.path.join(folder, "metrics.csv")
     pd.DataFrame(metrics_data).to_csv(fout, index=False)
 
     print(f"Data saved to file {fout}.")

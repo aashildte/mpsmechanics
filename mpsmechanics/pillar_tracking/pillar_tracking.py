@@ -21,7 +21,7 @@ from ..utils.iofuns.save_values import save_dictionary
 from .forcetransformation import displacement_to_force, \
         displacement_to_force_area
 
-def _define_pillars(p_values, tracking_type = 'random_radius', no_meshpts=200):
+def _define_pillars(p_values, tracking_type = 'large_radius', no_meshpts=200):
     """
 
     Defines circle to mark the pillar's circumference, based on
@@ -50,38 +50,24 @@ def _define_pillars(p_values, tracking_type = 'random_radius', no_meshpts=200):
         # try variations in separate branches
 
         x_pos, y_pos, radius = p_values[i]
+
         #TODO something like pillars[i, :, 0] = x_pos + radius*np.cos(angles)
 
         if tracking_type == "large_radius":
+
             for j in range(no_meshpts):
                 pillars[i, j, 0] = x_pos + radius*np.cos(angles[j])
                 pillars[i, j, 1] = y_pos + radius*np.sin(angles[j])
 
         elif tracking_type == "small_radius":
-            small_radius = radius - 15
+            small_radius = radius - 9
             for j in range(no_meshpts):
                 pillars[i, j, 0] = x_pos + small_radius*np.cos(angles[j])
                 pillars[i, j, 1] = y_pos + small_radius*np.sin(angles[j])
 
-        elif tracking_type == "layer_radius":
-            step_size = 3
-            points_per_layer = 40
-            current_radius = radius - 24
-            angles = np.linspace(0, 2 * np.pi, points_per_layer)
-            for j in range(no_meshpts):
-
-                print('j=', j)
-
-                if j % points_per_layer == 0:
-                    print('in if loop j=', j)
-                    current_radius = current_radius + step_size
-
-                pillars[i, j, 0] = x_pos + current_radius * np.cos(angles[j % points_per_layer])
-                pillars[i, j, 1] = y_pos + current_radius * np.sin(angles[j % points_per_layer])
-
         else:
             for j in range(no_meshpts):
-                random_radius = np.random.uniform(0, radius - 9) #reduce a bit the radius to ensure being inside
+                random_radius = np.random.uniform(0, radius)
                 pillars[i, j, 0] = x_pos + random_radius*np.cos(angles[j])
                 pillars[i, j, 1] = y_pos + random_radius*np.sin(angles[j])
 
@@ -192,7 +178,7 @@ def _find_pillar_positions_file(outdir):
 
 
 def track_pillars(f_disp, outdir, L=50E-6, R=10E-6, E=2.63E-6, \
-        save_data=True, tracking_type='random_radius', no_meshpts=200, max_motion=3):
+        save_data=True, tracking_type='large_radius', no_meshpts=200, max_motion=3):
     """
 
     Tracks points corresponding to "pillars" over time.

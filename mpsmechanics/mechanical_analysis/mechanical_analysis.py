@@ -127,10 +127,14 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     beatrate_spatial, beatrate_avg, beatrate_std = \
             calc_beatrate(disp_folded, maxima, intervals, time)
 
-    data["metrics_max_avg"] = np.max(beatrate_avg)
-    data["metrics_avg_avg"] = np.mean(beatrate_avg)
-    data["metrics_max_std"] = np.max(beatrate_std)
-    data["metrics_avg_std"] = np.mean(beatrate_std)
+    if len(beatrate_avg)==0:
+        data["metrics_max_avg"] = data["metrics_avg_avg"] = \
+                data["metrics_max_std"] = data["metrics_avg_std"] = 0
+    else:
+        data["metrics_max_avg"] = np.max(beatrate_avg)
+        data["metrics_avg_avg"] = np.mean(beatrate_avg)
+        data["metrics_max_std"] = np.max(beatrate_std)
+        data["metrics_avg_std"] = np.mean(beatrate_std)
 
     return beatrate_spatial, beatrate_avg, beatrate_std, data
 

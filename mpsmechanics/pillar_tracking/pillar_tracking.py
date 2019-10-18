@@ -160,14 +160,14 @@ def _track_pillars_over_time(disp_data, pillar_positions, size_x, size_y,
     return rel_values, abs_values
 
 
-def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E6, \
-                    tracking_type='large_radius', no_tracking_pts=200):
+def track_pillars(input_file, pillar_positions, L=50E-6, R=10E-6, E=2.63E6, \
+                    tracking_type='large_radius', no_tracking_pts=200, save_data=True):
     """
 
     Tracks points corresponding to "pillars" over time.
 
     Arguments:
-        f_disp - filename for displacement data
+        input_file - filename for displacement data
         pillar_positions - dictionary describing pillar positions + radii 
         L - ??
         R - ??
@@ -183,14 +183,14 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E6, \
     E = 2.63E6   # TODO must be mistake in pillar tracking script??
 
     # displacement data and positions of pillars
-    mt_data = read_prev_layer(f_disp, "track_motion", track_motion, \
+    mt_data = read_prev_layer(input_file, "track_motion", track_motion, \
                     save_data=True)         # TODO figure out code flow for saving data
 
-    mps_data = mps.MPS(f_disp)
+    mps_data = mps.MPS(input_file)
     disp_data = mt_data["displacement vectors"]
     scaling_factor = mt_data["block size"]*mps_data.info["um_per_pixel"]
 
-    print("Tracking pillars for data set: ", f_disp)
+    print("Tracking pillars for data set: ", input_file)
     rel_values_px, abs_values_px = \
             _track_pillars_over_time(disp_data, \
             pillar_positions, mps_data.size_x, mps_data.size_y, \
@@ -217,7 +217,10 @@ def track_pillars(f_disp, pillar_positions, L=50E-6, R=10E-6, E=2.63E6, \
     d_all = {}
     d_all["all_values"] = values
 
-    print(f"Pillar tracking for {f_disp} finished")
+    print(f"Pillar tracking for {input_file} finished")
+    
+    if save_data:
+        save_dictionary(input_file, "track_pillars", d_all)
 
     return d_all
 

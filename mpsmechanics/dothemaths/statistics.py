@@ -118,7 +118,7 @@ def chip_statistics(data):
             calc_for_each_key(d_all["folded"], fun_std, time_filter)
 
     # general variables
-    max_diff_key = "displacement maximum difference"
+    max_diff_key = "displacement_maximum_difference"
 
     d_all["maxima"] = \
         calc_beat_maxima(d_all["over_time_avg"][max_diff_key])

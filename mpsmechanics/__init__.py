@@ -53,7 +53,10 @@ from .dothemaths.heartbeat import (
         calc_beat_intervals,
         calc_beatrate,
 )
-from .dothemaths.operations import calc_magnitude
+from .dothemaths.operations import (
+        calc_magnitude,
+        calc_norm_over_time,
+)
 from .dothemaths.mechanical_quantities import (
     calc_deformation_tensor,
     calc_gl_strain_tensor,

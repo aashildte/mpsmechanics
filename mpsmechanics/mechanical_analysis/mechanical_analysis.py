@@ -20,9 +20,10 @@ from ..motion_tracking.motion_tracking import track_motion
 from ..motion_tracking.ref_frame import convert_disp_data, \
         calculate_minmax
 from ..dothemaths.mechanical_quantities import \
-        calc_principal_strain
+        calc_principal_strain, calc_gl_strain_tensor
 from ..dothemaths.angular import calc_projection_fraction
 from ..dothemaths.heartbeat import calc_beatrate
+from ..dothemaths.operations import calc_norm_over_time
 from ..dothemaths.statistics import chip_statistics
 from ..utils.iofuns.save_values import save_dictionary
 from ..utils.iofuns.data_layer import read_prev_layer
@@ -73,14 +74,24 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
     )
 
     xmotion = calc_projection_fraction(displacement, angle)
+    ymotion = calc_projection_fraction(displacement, np.pi/2 + angle)
+
+    print("angles: ", angle, np.pi/2 + angle)
 
     ms_to_s = 1e3
+    threshold = 2      # um/s
 
     velocity = ms_to_s * np.divide(
         np.gradient(displacement, axis=0), \
         np.gradient(time)[:, None, None, None]
     )
 
+    velocity_norm = np.linalg.norm(velocity, axis=-1)
+    prevalence = np.where(velocity_norm > threshold*np.ones(velocity_norm.shape),
+                    np.ones(velocity_norm.shape), np.zeros(velocity_norm.shape))
+    prevalence = prevalence[:,:,:,None]
+
+    gl_strain_tensor = calc_gl_strain_tensor(displacement, scale)
     principal_strain = calc_principal_strain(displacement, scale)
 
     filter_time = calc_filter_time(displacement)
@@ -93,7 +104,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
             filter_all,
             (0, np.nan),
         ),
-        "displacement maximum difference": (
+        "displacement_maximum_difference": (
             displacement_minmax,
             r"$\mu m$",
             filter_all,
@@ -105,13 +116,31 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
             filter_time,
             (0, 1),
         ),
+        "ymotion": (
+            ymotion,
+            "-",
+            filter_time,
+            (0, 1),
+        ),
         "velocity": (
             velocity,
             r"$\mu m / s$",
             filter_all,
             (0, np.nan),
         ),
-        "principal strain": (
+        "prevalence": (
+            prevalence,
+            "-",
+            filter_all,
+            (0, np.nan),
+        ),
+        "gl_strain_tensor": (
+            gl_strain_tensor,
+            "-",
+            filter_all,
+            (0, np.nan),
+        ),
+        "principal_strain": (
             principal_strain,
             "-",
             filter_all,
@@ -170,6 +199,8 @@ def analyze_mechanics(input_file, save_data=True):
             _calc_mechanical_quantities(disp_data, scale,
                                         angle, time)
     d_all = chip_statistics(values_over_time)
+
+    # TODO include filter in metadata
 
     d_all["time"] = mt_data.time_stamps
 

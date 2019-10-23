@@ -46,15 +46,12 @@ def plot_intervals(axis, time, intervals):
 
     """
 
-    if len(intervals) > 0:
-
-        for i in intervals:
-            axis.axvline(x=time[i[0]], c='g', alpha=0.8)
-        axis.axvline(x=time[intervals[-1][1]], c='g', alpha=0.8)
+    for i in intervals:
+        axis.axvline(x=time[i[0]], c='g')
+        axis.axvline(x=time[intervals[-1][1]], c='g')
 
 
-def plot_over_time(axis, avg_values, std_values, time, \
-        label, value_range):
+def plot_over_time(axis, avg_values, std_values, time, value_range):
     """
 
     Args:
@@ -64,7 +61,6 @@ def plot_over_time(axis, avg_values, std_values, time, \
             distributed (same time step)
         std_values - same
         time - 1D numpy array for time steps
-        label - description
         value_range - minimum, maximum range
 
     """
@@ -76,20 +72,19 @@ def plot_over_time(axis, avg_values, std_values, time, \
     axis.fill_between(time, minvalues, \
             maxvalues, color='gray', alpha=0.5)
 
-    axis.set_ylabel(label)
-
 
 def _plot_beatrate(axis, data, time):
-    maxima = data["maxima"]
+    intervals = data["intervals"]
 
-    if len(maxima) > 3:
-        x_vals = [(time[maxima[i+1]] + time[maxima[i]])/2 \
-                        for i in range(len(maxima)-1)]
+    if len(intervals) > 3:
+        x_vals = [(time[i[0]] + time[i[1]])/2 \
+                        for i in intervals[:-1]]
         mean = data["beatrate_avg"]
         std = data["beatrate_std"]
 
-        for maximum in maxima:
-            axis.axvline(x=time[maximum], c='r', alpha=0.4)
+        for i in intervals:
+            axis.axvline(x=time[i[0]], c='r')
+            axis.axvline(x=time[i[1]], c='r')
 
         axis.errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
         axis.set_ylabel("Beatrate")
@@ -128,12 +123,14 @@ def stats_over_time(f_in, save_data):
     # then every other quantity
 
     for (axis, key) in zip(axes[1:], data["over_time_avg"].keys()):
-        label = (key.replace("_", " ")).capitalize() + " (" + \
-                data["units"][key] + ")"
         plot_over_time(axis, data["over_time_avg"][key], \
                 data["over_time_std"][key], data["time"], \
-                label, data["range"][key])
+                data["range"][key])
         plot_intervals(axis, data["time"], data["intervals"])
+
+        label = (key.replace("_", " ")).capitalize() + " (" + \
+                data["units"][key] + ")"
+        axis.set_ylabel(label)
 
     axes[-1].set_xlabel(r"Time ($ms$)")
     filename = os.path.join(output_folder, "analyze_mechanics.png")

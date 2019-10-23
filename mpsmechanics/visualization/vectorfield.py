@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib import animation
+from matplotlib.colors import SymLogNorm, Normalize
 
 import mps
 
@@ -18,33 +19,38 @@ from ..utils.iofuns.folder_structure import make_dir_structure, \
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
-def setup_frame(vectors, dpi, images, num_rows, num_cols):
+def setup_frame(values, dpi, images, num_rows, num_cols):
     Nx, Ny = images.shape[:2]
-    x = np.linspace(0, Nx, vectors.shape[1])
-    y = np.linspace(0, Ny, vectors.shape[2])
+    x = np.linspace(0, Nx, values.shape[1])
+    y = np.linspace(0, Ny, values.shape[2])
 
-    figsize = (14, 10)
+    figsize = (14, 12)
     fig, axes = plt.subplots(num_rows, num_cols, \
                              figsize=figsize, dpi=dpi)
+
     axes = axes.flatten()
+    fig.align_ylabels(axes)
+
+    #for axis in axes:
+    #    axis.set_anchor('NW')
 
     return x, y, axes, fig
 
 
-def plt_quiver(ax, i, vectors, x, y, num_arrows, scale, color):
+def plt_quiver(ax, i, values, x, y, num_arrows, color):
     ax.invert_yaxis()
+    
     return ax.quiver(
         y[::num_arrows],
         x[::num_arrows],
-        vectors[i, ::num_arrows, ::num_arrows, 1],
-        -vectors[i, ::num_arrows, ::num_arrows, 0],
+        values[i, ::num_arrows, ::num_arrows, 1],
+        -values[i, ::num_arrows, ::num_arrows, 0],
         color=color,
         units="xy",
-        scale=scale,
     )
 
 
-def plt_magnitude(axis, i, scalars, vmin, vmax, cmap):
+def plt_magnitude(axis, i, scalars, vmin, vmax, cmap, scale):
     """
 
     Gives a heatmap based on magnitude given in scalars.
@@ -58,70 +64,84 @@ def plt_magnitude(axis, i, scalars, vmin, vmax, cmap):
         cmap - type of colour map
 
     """
-    return axis.imshow(scalars[i, :, :], vmin=vmin, vmax=vmax, cmap=cmap)
+    if scale == "logscale":
+        norm=SymLogNorm(1E-4, vmin=vmin, vmax=vmax)
+    else:
+        norm=Normalize(vmin=vmin, vmax=vmax)
+
+    return axis.imshow(scalars[i, :, :], vmin=vmin, vmax=vmax, cmap=cmap, norm=norm)
+
+def _set_ax_units(axis, shape, scale):
+    
+    axis.set_aspect("equal")
+    num_yticks = 8
+    num_xticks = 4
+
+    yticks = [int(shape[0]*i/num_yticks) for i in range(num_yticks)]
+    ylabels = [int(scale*shape[0]*i/num_yticks) for i in range(num_yticks)]
+
+    xticks = [int(shape[1]*i/num_xticks) for i in range(num_xticks)]
+    xlabels = [int(scale*shape[1]*i/num_xticks) for i in range(num_xticks)]
+
+    axis.set_yticks(yticks)
+    axis.set_xticks(xticks)
+    axis.set_yticklabels(ylabels)
+    axis.set_xticklabels(xlabels)
+
+    axis.set_xlabel(r"$\mu m$")
+    axis.set_ylabel(r"$\mu m$")
 
 
-def _set_axes(axes, x, images, pixels2um):
-    scale_ax = [1] + (len(axes)-1)*[len(x)/images.shape[0]]
-
-    for (axis, scale) in zip(axes, scale_ax):
-        axis.set_aspect("equal")
-
-        axis.set_yticks(np.linspace(0, scale*images.shape[0]-1, 8))
-        axis.set_yticklabels(map(int, np.linspace(0, pixels2um*(images.shape[0]-1), 8)))
-        axis.set_xticks(np.linspace(0, scale*images.shape[1]-1, 5))
-        axis.set_xticklabels(map(int, np.linspace(0, pixels2um*(images.shape[1]-1), 5)))
-        axis.set_xlabel("$\mu m$")
-        axis.set_ylabel("$\mu m$")
-
-
-def plot_1Dvalues(scalars, time_step, label, num_arrows, dpi, pixels2um, scale, images):
-    x, y, axes, fig = setup_frame(scalars, dpi, images, 1, 2)
+def plot_1Dvalues(values, scale, time_step, label, dpi, pixels2um, images):
+    x, y, axes, fig = setup_frame(values, dpi, images, 1, 2)
     subplots = []
-
-    subplots.append(axes[0].imshow(images[:,:,time_step], cmap=cm.gray))
-    subplots.append(plt_magnitude(axes[1], time_step, scalars[:, :, :, 0], \
-                       0, np.max(scalars), "viridis"))
+    
+    subplots.append(axes[0].imshow(images[:, :, time_step], cmap=cm.gray))
+    subplots.append(plt_magnitude(axes[1], time_step, values[:, :, :, 0], \
+                       0, np.max(values), "viridis", scale))
     cb = fig.colorbar(subplots[1], ax=axes[1])
     cb.set_label(label)
 
     axes[0].set_title("Original images")
     axes[1].set_title("Magnitude")
-
-    _set_axes(axes, x, images, pixels2um)
+    
+    _set_ax_units(axes[0], images.shape[:2], pixels2um)
+    _set_ax_units(axes[1], values.shape[1:3], (images.shape[0]/values.shape[1])*pixels2um)
 
     def update(index):
         subplots[0].set_array(images[:, :, index])
-        subplots[1].set_data(scalars[index, :, :, 0])
+        subplots[1].set_data(values[index, :, :, 0])
 
     return fig, update
 
 
-def plot_2Dvalues(vectors, time_step, label, num_arrows, dpi, pixels2um, scale, images):
+def plot_2Dvalues(values, scale, time_step, label, num_arrows, dpi, pixels2um, images):
 
-    magnitude = calc_magnitude(vectors)
-    normalized = normalize_values(vectors)
+    magnitude = calc_magnitude(values)
+    normalized = normalize_values(values)
 
-    x, y, axes, fig = setup_frame(vectors, dpi, images, 2, 3)
+    x, y, axes, fig = setup_frame(values, dpi, images, 2, 3)
 
-    block_size = len(x) // vectors.shape[1]
-    scale_n = max(np.divide(vectors.shape[1:3], block_size))
+    block_size = len(x) // values.shape[1]
+    scale_n = max(np.divide(values.shape[1:3], block_size))
 
-    scale_xy = np.max(np.abs(vectors))
+    scale_xy = np.max(np.abs(values))
+    
+    subplots = []
 
-    Q0 = axes[0].imshow(images[:,:,time_step], cmap=cm.gray)
-    Q1 = plt_quiver(axes[1], time_step, vectors, x, y, num_arrows, scale*scale_n, 'red')
-    Q2 = plt_quiver(axes[2], time_step, normalized, x, y, num_arrows, 1/25, 'black')
-    Q3 = plt_magnitude(axes[3], time_step, magnitude[:,:,:,0], 0, np.max(magnitude), "viridis")
-    cb = fig.colorbar(Q3, ax=axes[3])
+    subplots.append(axes[0].imshow(images[:, :, time_step], cmap=cm.gray))
+    subplots.append(plt_quiver(axes[1], time_step, values, x, y, num_arrows, 'red'))
+    subplots.append(plt_quiver(axes[2], time_step, normalized, x, y, num_arrows, 'black'))
+    subplots.append(plt_magnitude(axes[3], time_step, magnitude[:, :, :, 0], 0, np.max(magnitude), "viridis", scale))
+    cb = fig.colorbar(subplots[3], ax=axes[3])
     cb.set_label(label)
 
-    Q4 = plt_magnitude(axes[4], time_step, vectors[:,:,:,0], -scale_xy, scale_xy, "bwr")
-    cb = fig.colorbar(Q4, ax=axes[4])
+    subplots.append(plt_magnitude(axes[4], time_step, values[:, :, :, 0], -scale_xy, scale_xy, "bwr", scale))
+    cb = fig.colorbar(subplots[4], ax=axes[4])
     cb.set_label(label)
 
-    Q5 = plt_magnitude(axes[5], time_step, vectors[:,:,:,1], -scale_xy, scale_xy, "bwr")
-    cb = fig.colorbar(Q5, ax=axes[5])
+    subplots.append(plt_magnitude(axes[5], time_step, values[:, :, :, 1], -scale_xy, scale_xy, "bwr", scale))
+    cb = fig.colorbar(subplots[5], ax=axes[5])
     cb.set_label(label)
 
     axes[0].set_title("Original images")
@@ -134,62 +154,68 @@ def plot_2Dvalues(vectors, time_step, label, num_arrows, dpi, pixels2um, scale, 
 
     plt.suptitle("Time step {}".format(time_step))
  
-    _set_axes(axes, x, images, pixels2um)
+    for axis in axes[:3]:
+        _set_ax_units(axis, images.shape[:2], pixels2um)
+
+    for axis in axes[3:]:
+        _set_ax_units(axis, values.shape[1:3], (images.shape[0]/values.shape[1])*pixels2um)
 
     def update(index):
-        Q0.set_array(images[:, :, index])
-        Q1.set_UVC(vectors[index, ::num_arrows, ::num_arrows, 1], \
-                   -vectors[index, ::num_arrows, ::num_arrows, 0])
-        Q2.set_UVC(normalized[index, ::num_arrows, ::num_arrows, 1], \
+        subplots[0].set_array(images[:, :, index])
+        subplots[1].set_UVC(values[index, ::num_arrows, ::num_arrows, 1], \
+                   -values[index, ::num_arrows, ::num_arrows, 0])
+        subplots[2].set_UVC(normalized[index, ::num_arrows, ::num_arrows, 1], \
                    -normalized[index, ::num_arrows, ::num_arrows, 0])
-        Q3.set_data(magnitude[index, :, :, 0])
-        Q4.set_data(vectors[index, :, :, 0])
-        Q5.set_data(vectors[index, :, :, 1])
+        subplots[3].set_data(magnitude[index, :, :, 0])
+        subplots[4].set_data(values[index, :, :, 0])
+        subplots[5].set_data(values[index, :, :, 1])
 
-        plt.suptitle("Time step {index}".format())
+        plt.suptitle("Time step {}".format(index))
 
 
     return fig, update
 
 
 
-def plot_4Dvalues(vectors, time_step, label, dpi, pixels2um, scale, images):
+def plot_4Dvalues(values, scale, time_step, label, dpi, pixels2um, images):
     """
 
     Plots original image, eigenvalues (max.) and four components of
     a tensor value.
 
     Args:
-        vectors - T x X x Y x 4 numpy value
+        values - T x X x Y x 4 numpy value
         time_step - for which time step
         label - description
         dpi - resolution
         pxiels2um - scaling factor for dimensions
-        scale - scaling factor for arrows
         images - original images
 
     """
-    x, y, axes, fig = setup_frame(vectors, dpi, images, 2, 3)
+    x, y, axes, fig = setup_frame(values, dpi, images, 2, 3)
 
-    block_size = len(x) // vectors.shape[1]
-    scale_n = max(np.divide(vectors.shape[1:3], block_size))
+    block_size = len(x) // values.shape[1]
+    scale_n = max(np.divide(values.shape[1:3], block_size))
 
-    scale_xy = np.max(np.abs(vectors))
+    scale_xy = np.max(np.abs(values))
 
-    sg_values = np.linalg.norm(vectors, axis=(3, 4))
+    sg_values = np.linalg.norm(values, axis=(3, 4))
 
-    subplots = [axes[0, 0].imshow(images[:, :, time_step], cmap=cm.gray)]
-    subplots.append(plt_magnitude(axes[1,0], time_step, sg_values, 0, scale_xy, "viridis"))
+    subplots = [axes[0].imshow(images[:, :, time_step], cmap=cm.gray),
+                plt_magnitude(axes[1], time_step, values[:,:,:,0,0], \
+                    -scale_xy, scale_xy, "bwr", scale),
+                plt_magnitude(axes[2], time_step, values[:,:,:,0,1], \
+                    -scale_xy, scale_xy, "bwr", scale),
+                plt_magnitude(axes[3], time_step, sg_values, \
+                        0, scale_xy, "viridis", scale),
+                plt_magnitude(axes[4], time_step, values[:,:,:,1,0], \
+                    -scale_xy, scale_xy, "bwr", scale),
+                plt_magnitude(axes[5], time_step, values[:,:,:,1,1], \
+                    -scale_xy, scale_xy, "bwr", scale)]
 
-    cb = fig.colorbar(subplots[1], ax=axes[1, 0])
-    cb.set_label(label)
-
-    for i in range(2):
-        for j in range(2):
-            subplots.append(plt_magnitude(axes[i, j+1], time_step, vectors[:,:,:,i,j], \
-                    -scale_xy, scale_xy, "bwr"))
-            cb = fig.colorbar(subplots[-1], ax=axes[i, j+1])
-            cb.set_label(label)
+    for i in [1, 2, 4, 5]:
+        cb = fig.colorbar(subplots[i], ax=axes[i])
+        cb.set_label(label)
 
     axes[0].set_title("Original image")
     axes[1].set_title(r"$u_x$")
@@ -198,38 +224,40 @@ def plot_4Dvalues(vectors, time_step, label, dpi, pixels2um, scale, images):
     axes[4].set_title(r"$v_x$")
     axes[5].set_title(r"$v_y$")
 
-    plt.suptitle("Time step {time_step}".format())
+    plt.suptitle("Time step {}".format(time_step))
 
-    _set_axes(axes, x, images, pixels2um)
+    _set_ax_units(axes[0], images.shape[:2], pixels2um)
+    for axis in axes[1:]:
+        _set_ax_units(axis, values.shape[1:3], (images.shape[0]/values.shape[1])*pixels2um)
 
     def update(index):
         subplots[0].set_array(images[:, :, index])
-        subplots[1].set_data(vectors[index, :, :, 0, 0])
-        subplots[2].set_data(vectors[index, :, :, 1, 0])
+        subplots[1].set_data(values[index, :, :, 0, 0])
+        subplots[2].set_data(values[index, :, :, 1, 0])
         subplots[3].set_data(sg_values[index, :, :])
-        subplots[4].set_data(vectors[index, :, :, 0, 1])
-        subplots[5].set_data(vectors[index, :, :, 1, 1])
+        subplots[4].set_data(values[index, :, :, 0, 1])
+        subplots[5].set_data(values[index, :, :, 1, 1])
     
-        plt.suptitle("Time step {index}".format())
+        plt.suptitle("Time step {}".format(index))
 
     return fig, update
 
 
-def animate_vectorfield(vectors, label, pixels2um, images, fname="animation", \
-        framerate=None, extension="mp4", dpi=300, dx=3, scale=1):
+def animate_vectorfield(values, scale, label, pixels2um, images, fname="animation", \
+        framerate=None, extension="mp4", dpi=300, dx=3):
 
     extensions = ["gif", "mp4"]
     msg = "Invalid extension {}. Expected one of {}".format(extension, extensions)
     assert extension in extensions, msg
 
-    num_dims = vectors.shape[3:]
+    num_dims = values.shape[3:]
 
     if num_dims == (1,):
-        fig, update = plot_1Dvalues(vectors, 0, label, dpi, pixels2um, scale, images)
+        fig, update = plot_1Dvalues(values, scale, 0, label, dpi, pixels2um, images)
     elif num_dims == (2,):
-        fig, update = plot_1Dvalues(vectors, 0, label, dx, dpi, pixels2um, scale, images)
+        fig, update = plot_2Dvalues(values, scale, 0, label, dx, dpi, pixels2um, images)
     elif num_dims == (2, 2):
-        fig, update = plot_4Dvalues(vectors, 0, label, dpi, pixels2um, scale, images)
+        fig, update = plot_4Dvalues(values, scale, 0, label, dpi, pixels2um, images)
     else:
         print("Error: shape of {} not recognized.".format(num_dims))
         return
@@ -241,30 +269,30 @@ def animate_vectorfield(vectors, label, pixels2um, images, fname="animation", \
         Writer = animation.writers["imagemagick"]
     writer = Writer(fps=framerate)
 
-    N = vectors.shape[0]
+    N = values.shape[0]
     anim = animation.FuncAnimation(fig, update, N)
 
     fname = os.path.splitext(fname)[0]
     anim.save("{}.{}".format(fname, extension), writer=writer)
 
 
-def plot_at_peak(vectors, label, pixels2um, images, fname="vector_fields", \
-        extension="png", dpi=600, num_arrows=3, scale=1):
+def plot_at_peak(values, scale, label, pixels2um, images, fname="vector_fields", \
+        extension="png", dpi=600, num_arrows=3):
 
-    num_dims = vectors.shape[3:]
+    num_dims = values.shape[3:]
 
     if num_dims == (1,):
-        peak = np.argmax(vectors)
-        plot_1Dvalues(vectors, peak, label, num_arrows, dpi, pixels2um, scale, images)
+        peak = np.argmax(calc_norm_over_time(values))
+        plot_1Dvalues(values, scale, peak, label, dpi, pixels2um, images)
 
     elif num_dims == (2,):
-        peak = np.argmax(calc_norm_over_time(vectors))
-        plot_2Dvalues(vectors, peak, label, num_arrows, dpi, pixels2um, scale, images)
+        peak = np.argmax(calc_norm_over_time(values))
+        plot_2Dvalues(values, scale, peak, label, num_arrows, dpi, pixels2um, images)
 
     elif num_dims == (2, 2):
-        peak = np.argmax(calc_norm_over_time(np.linalg.norm(vectors, \
+        peak = np.argmax(calc_norm_over_time(np.linalg.norm(values, \
                 axis=(3, 4))[:, :, :, None]))
-        plot_4Dvalues(vectors, peak, label, dpi, pixels2um, scale, images)
+        plot_4Dvalues(values, scale, peak, label, dpi, pixels2um, images)
 
     else:
         print("Error: shape of {} not recognized.".format(num_dims))
@@ -289,24 +317,16 @@ def visualize_vectorfield(f_in, framerate_scale=1, save_data=True):
     make_dir_structure(output_folder)
 
     data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)
+    print(data["all_values"].keys())
+    for key in data["all_values"].keys():
+        for scale in ["logscale", "linear"]:
+            print("Plots for " + key + " ...")
+            label = key.capitalize() + "({})".format(data["units"][key])
+            plot_at_peak(data["all_values"][key], scale, label, pixels2um, mt_data.data.frames, \
+                     fname=os.path.join(output_folder, "vectorfield_" + scale + "_" + key))
 
-    scales = {"displacement" : 6E-5, \
-                  "principal strain" : 6E-5, \
-                  "velocity" : 1E-6,
-                  "xmotion" : None,
-                  "prevalence" : None}
-
-    for key in ["displacement", "principal strain", "velocity"]:
-
-        print("Plots for " + key + " ...")
-        label = key.capitalize() + "({})".format(data["units"][key])
-        plot_at_peak(data["all_values"][key], label, pixels2um, mt_data.data.frames, \
-                     fname=os.path.join(output_folder, "vectorfield_" + key),
-                     scale=scales[key])
-
-        animate_vectorfield(data["all_values"][key], label, pixels2um, \
+            animate_vectorfield(data["all_values"][key], scale, label, pixels2um, \
                             mt_data.data.frames, framerate=framerate_scale*mt_data.framerate, \
-                            fname=os.path.join(output_folder, "vectorfield_" + key),\
-                            scale=scales[key])
+                            fname=os.path.join(output_folder, "vectorfield_" + scale + "_" + key))
 
     print("Visualization done, finishing ..")

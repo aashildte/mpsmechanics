@@ -76,8 +76,6 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
     xmotion = calc_projection_fraction(displacement, angle)
     ymotion = calc_projection_fraction(displacement, np.pi/2 + angle)
 
-    print("angles: ", angle, np.pi/2 + angle)
-
     ms_to_s = 1e3
     threshold = 2      # um/s
 
@@ -155,8 +153,8 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
 
     beatrate_spatial, beatrate_avg, beatrate_std = \
             calc_beatrate(disp_folded, maxima, intervals, time)
-
-    if len(beatrate_avg)==0:
+    
+    if len(intervals)==0:
         data["metrics_max_avg"] = data["metrics_avg_avg"] = \
                 data["metrics_max_std"] = data["metrics_avg_std"] = 0
     else:

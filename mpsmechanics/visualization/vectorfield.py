@@ -189,7 +189,7 @@ def plot_vectorfield(values, time_step, label, num_arrows, dpi, pixels2um, image
     def update(index):
         Q1.set_array(images[:, :, index])
         Q2.set_UVC(values[index, ::num_arrows, ::num_arrows, 1], \
-                   -values[index, ::num_arrows, ::num_arrows, 0])
+                   values[index, ::num_arrows, ::num_arrows, 0])
 
         plt.suptitle("Time step {}".format(index))
 

@@ -132,7 +132,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
             filter_all,
             (0, np.nan),
         ),
-        "gl_strain_tensor": (
+        "Green-Lagrange_strain_tensor": (
             gl_strain_tensor,
             "-",
             filter_all,

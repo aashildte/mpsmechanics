@@ -30,6 +30,7 @@ from .visualization.vectorfield import (
     plot_at_peak,
     animate_vectorfield,
     visualize_vectorfield,
+    images_vectorfield,
 )
 from .statistical_analysis.statistical_analysis import (
         calculate_stats_chips,

@@ -47,7 +47,7 @@ def plt_quiver(ax, i, values, x, y, num_arrows, color):
     )
 
 
-def plt_magnitude(axis, i, scalars, vmin, vmax, cmap, scale):
+def plt_magnitude(axis, i, scalars, vmin, vmax, cmap, scale, alpha=1):
     """
 
     Gives a heatmap based on magnitude given in scalars.
@@ -66,7 +66,7 @@ def plt_magnitude(axis, i, scalars, vmin, vmax, cmap, scale):
     else:
         norm=Normalize(vmin=vmin, vmax=vmax)
 
-    return axis.imshow(scalars[i, :, :], vmin=vmin, vmax=vmax, cmap=cmap, norm=norm)
+    return axis.imshow(scalars[i, :, :], vmin=vmin, vmax=vmax, cmap=cmap, norm=norm, alpha=alpha)
 
 def _set_ax_units(axis, shape, scale):
     
@@ -196,6 +196,27 @@ def plot_vectorfield(values, time_step, label, num_arrows, dpi, pixels2um, image
     return fig, update
 
 
+def plot_1Dvalues_overlap(values, scale, time_step, label, dpi, pixels2um, images):
+    x, y, axes, fig = setup_frame(values, dpi, images, 1, 1)
+    subplots = []
+    
+    subplots.append(axes[0].imshow(images[:, :, time_step], cmap=cm.gray))
+    subplots.append(plt_magnitude(axes[0], time_step, values[:, :, :, 0], \
+                       0, np.max(values), "viridis", scale, alpha=0.5))
+    cb = fig.colorbar(subplots[1], ax=axes[0])
+    cb.set_label(label)
+
+    axes[0].set_title("Original images")
+    axes[0].set_title("Magnitude")
+    
+    _set_ax_units(axes[0], images.shape[:2], pixels2um)
+
+    def update(index):
+        subplots[0].set_array(images[:, :, index])
+        subplots[1].set_data(values[index, :, :, 0])
+
+    return fig, update
+
 
 
 def plot_4Dvalues(values, scale, time_step, label, dpi, pixels2um, images):
@@ -298,31 +319,38 @@ def animate_vectorfield(values, scale, label, pixels2um, images, fname, \
     plt.close('all')
 
 
-def images_vectorfield(values, label, pixels2um, images, fname, \
-        framerate=None, extension="mp4", dpi=300, num_arrows=3):     
+def images_vectorfield(values, scale, label, pixels2um, images, fname, \
+                        framerate=None, extension="mp4", dpi=300, num_arrows=3):
     num_dims = values.shape[3:]
+
     if num_dims == (2,):
         fig, update = plot_vectorfield(values, 0, label, num_arrows, dpi, pixels2um, images)
+    else:
+        return
 
-        if extension == "mp4":
-            Writer = animation.writers["ffmpeg"]
-        else:
-            Writer = animation.writers["imagemagick"]
-        writer = Writer(fps=framerate)
+    if extension == "mp4":
+        Writer = animation.writers["ffmpeg"]
+    else:
+        Writer = animation.writers["imagemagick"]
+    writer = Writer(fps=framerate)
 
-        N = values.shape[0]
-        anim = animation.FuncAnimation(fig, update, N)
+    N = values.shape[0]
+    anim = animation.FuncAnimation(fig, update, N)
 
-        fname = os.path.splitext(fname)[0]
-        anim.save("{}.{}".format(fname, extension), writer=writer)
-        plt.close('all')
-        
-        peak = np.argmax(calc_norm_over_time(values))
-        plot_vectorfield(values, peak, label, num_arrows, dpi, pixels2um, images)
+    fname = os.path.splitext(fname)[0]
+    anim.save("{}.{}".format(fname, extension), writer=writer)
+    plt.close('all')
+    
+    peak = np.argmax(calc_norm_over_time(values))
+    
+    if num_dims == (1,):
+        fig, update = plot_1Dvalues_overlap(values, scale, peak, label, dpi, pixels2um, images)
+    elif num_dims == (2,):
+        fig, update = plot_vectorfield(values, peak, label, num_arrows, dpi, pixels2um, images)
 
-        filename = fname + ".png"
-        plt.savefig(filename)
-        plt.close('all')
+    filename = fname + ".png"
+    plt.savefig(filename)
+    plt.close('all')
 
 
 def plot_at_peak(values, scale, label, pixels2um, images, fname, \

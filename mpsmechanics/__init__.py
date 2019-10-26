@@ -19,6 +19,9 @@ from .motion_tracking.motion_tracking import (
         track_motion,
         MotionTracking,
 )
+
+from .motion_tracking.restore_resolution import refine
+
 from .pillar_tracking.pillar_tracking import (
         track_pillars,
         track_pillars_sgvalue,

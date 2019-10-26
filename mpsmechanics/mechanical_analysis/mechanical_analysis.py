@@ -19,6 +19,7 @@ except ImportError:
 from ..motion_tracking.motion_tracking import track_motion
 from ..motion_tracking.ref_frame import convert_disp_data, \
         calculate_minmax
+from ..motion_tracking.restore_resolution import refine
 from ..dothemaths.mechanical_quantities import \
         calc_principal_strain, calc_gl_strain_tensor
 from ..dothemaths.angular import calc_projection_fraction
@@ -27,7 +28,6 @@ from ..dothemaths.operations import calc_norm_over_time
 from ..dothemaths.statistics import chip_statistics
 from ..utils.iofuns.save_values import save_dictionary
 from ..utils.iofuns.data_layer import read_prev_layer
-
 
 def calc_filter_time(dist):
     """
@@ -185,8 +185,14 @@ def analyze_mechanics(input_file, save_data=True):
         save_data=save_data
     )
 
+
     mt_data = mps.MPS(input_file)
-    disp_data = data["displacement vectors"]
+    motion_vectors = data["displacement vectors"]
+
+    disp_data = motion_vectors
+    #disp_data = refine(motion_vectors, 3)
+    print(disp_data.shape)
+
     angle = data["angle"]
     time = mt_data.time_stamps
     scale = data["block size"] * mt_data.info["um_per_pixel"]

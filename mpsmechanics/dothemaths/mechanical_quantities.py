@@ -26,17 +26,19 @@ def calc_deformation_tensor(data, dx):
 
     """
 
-    dudx = np.gradient(data[:, :, :, 0], axis=0)
-    dudy = np.gradient(data[:, :, :, 0], axis=1)
-    dvdx = np.gradient(data[:, :, :, 1], axis=0)
-    dvdy = np.gradient(data[:, :, :, 1], axis=1)
+    dudx = np.gradient(data[:, :, :, 0], axis=1)
+    dudy = np.gradient(data[:, :, :, 0], axis=2)
+    dvdx = np.gradient(data[:, :, :, 1], axis=1)
+    dvdy = np.gradient(data[:, :, :, 1], axis=2)
+
+    print(dudx.shape, dudy.shape, dvdx.shape, dvdy.shape)
 
     F = 1/dx*(np.swapaxes(np.swapaxes(np.swapaxes(np.swapaxes(\
                 np.array(((dudx, dudy), \
                       (dvdx, dvdy))), \
                       0, -2), 1, -1), 0, 2), 1, 2)) \
                 + np.eye(2)[None, None, None, :, :]
-
+    
     return F
 
 

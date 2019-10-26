@@ -19,6 +19,7 @@ from ..utils.iofuns.folder_structure import make_dir_structure, \
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
+
 def setup_frame(values, dpi, images, num_rows, num_cols):
     Nx, Ny = images.shape[:2]
     x = np.linspace(0, Nx, values.shape[1])
@@ -34,9 +35,8 @@ def setup_frame(values, dpi, images, num_rows, num_cols):
     return x, y, axes, fig
 
 
-def plt_quiver(ax, i, values, x, y, num_arrows, color):
+def plt_quiver(ax, i, values, x, y, num_arrows, color, scale):
     ax.invert_yaxis()
-    
     return ax.quiver(
         y[::num_arrows],
         x[::num_arrows],
@@ -44,6 +44,8 @@ def plt_quiver(ax, i, values, x, y, num_arrows, color):
         -values[i, ::num_arrows, ::num_arrows, 0],
         color=color,
         units="xy",
+        headwidth=6,
+        scale=scale,
     )
 
 
@@ -169,7 +171,7 @@ def plot_2Dvalues(values, scale, time_step, label, num_arrows, dpi, pixels2um, i
     return fig, update
 
 
-def plot_vectorfield(values, time_step, label, num_arrows, dpi, pixels2um, images):
+def plot_vectorfield(values, time_step, label, num_arrows, dpi, pixels2um, images, scale):
 
     x, y, axes, fig = setup_frame(values, dpi, images, 1, 1)
 
@@ -177,14 +179,13 @@ def plot_vectorfield(values, time_step, label, num_arrows, dpi, pixels2um, image
     scale_n = max(np.divide(values.shape[1:3], block_size))
 
     scale_xy = np.max(np.abs(values))
-    
+    print("scale: ", scale) 
     Q1 = axes[0].imshow(images[:, :, time_step], cmap=cm.gray)
-    Q2 = plt_quiver(axes[0], time_step, values, x, y, num_arrows, 'red')
+    Q2 = plt_quiver(axes[0], time_step, values, x, y, num_arrows, 'red', scale)
 
     plt.suptitle("Time step {}".format(time_step))
  
     _set_ax_units(axes[0], images.shape[:2], pixels2um)
-
 
     def update(index):
         Q1.set_array(images[:, :, index])
@@ -319,14 +320,27 @@ def animate_vectorfield(values, scale, label, pixels2um, images, fname, \
     plt.close('all')
 
 
+def _find_scaling(peak, values):
+    return 0.1 #1/np.mean(np.abs(values[peak]))
+
 def images_vectorfield(values, scale, label, pixels2um, images, fname, \
                         framerate=None, extension="mp4", dpi=300, num_arrows=3):
-    num_dims = values.shape[3:]
-
-    if num_dims == (2,):
-        fig, update = plot_vectorfield(values, 0, label, num_arrows, dpi, pixels2um, images)
-    else:
+    
+    num_dims = values.shape[3:] 
+    
+    if num_dims != (2,):
         return
+        
+    peak = np.argmax(calc_norm_over_time(values))
+    vectorfield_scaling = _find_scaling(peak, values)
+    
+    plot_vectorfield(values, peak, label, num_arrows, dpi, pixels2um, images, vectorfield_scaling)
+
+    filename = fname + ".png"
+    plt.savefig(filename)
+    plt.close('all')
+    
+    fig, update = plot_vectorfield(values, 0, label, num_arrows, dpi, pixels2um, images, vectorfield_scaling)
 
     if extension == "mp4":
         Writer = animation.writers["ffmpeg"]
@@ -341,16 +355,6 @@ def images_vectorfield(values, scale, label, pixels2um, images, fname, \
     anim.save("{}.{}".format(fname, extension), writer=writer)
     plt.close('all')
     
-    peak = np.argmax(calc_norm_over_time(values))
-    
-    if num_dims == (1,):
-        fig, update = plot_1Dvalues_overlap(values, scale, peak, label, dpi, pixels2um, images)
-    elif num_dims == (2,):
-        fig, update = plot_vectorfield(values, peak, label, num_arrows, dpi, pixels2um, images)
-
-    filename = fname + ".png"
-    plt.savefig(filename)
-    plt.close('all')
 
 
 def plot_at_peak(values, scale, label, pixels2um, images, fname, \
@@ -398,10 +402,10 @@ def visualize_vectorfield(f_in, num_arrows=3, framerate_scale=1, save_data=True)
     
     for key in data["all_values"].keys():
         label = key.capitalize() + "({})".format(data["units"][key])
-        images_vectorfield(data["all_values"][key], label, pixels2um, \
+        images_vectorfield(data["all_values"][key], "", label, pixels2um, \
                         mt_data.data.frames, os.path.join(output_folder, "vectorfield_" + key), \
                         framerate=framerate_scale*mt_data.framerate)
-
+        
         for scale in ["logscale", "linear"]:
             print("Plots for " + key + " ...")
             plot_at_peak(data["all_values"][key], scale, label, pixels2um, mt_data.data.frames, \

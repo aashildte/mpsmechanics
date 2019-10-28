@@ -22,10 +22,10 @@ def calc_deformation_tensor(data, dx):
 
     """
 
-    dudx = np.gradient(data[:, :, :, 0], axis=1)
-    dudy = np.gradient(data[:, :, :, 0], axis=2)
-    dvdx = np.gradient(data[:, :, :, 1], axis=1)
-    dvdy = np.gradient(data[:, :, :, 1], axis=2)
+    dudx = 1/dx*np.gradient(data[:, :, :, 0], axis=1)
+    dudy = 1/dx*np.gradient(data[:, :, :, 0], axis=2)
+    dvdx = 1/dx*np.gradient(data[:, :, :, 1], axis=1)
+    dvdy = 1/dx*np.gradient(data[:, :, :, 1], axis=2)
 
     F = np.zeros(data.shape + (2,))
 

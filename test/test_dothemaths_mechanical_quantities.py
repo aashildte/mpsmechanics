@@ -25,11 +25,11 @@ def test_calc_deformation_tensor():
             data_org[0, x, y, 1] = 0.1*y
 
     data_exp = np.zeros(shape + (2,))
-    tile = np.array(((1.2, 0.1), (0, 1.1)))
+    tile_F = np.array(((1.2, 0.1), (0, 1.1)))
 
     for x in range(shape[1]):
         for y in range(shape[2]):
-            data_exp[0, x, y] = tile
+            data_exp[0, x, y] = tile_F
 
     assert np.allclose(data_exp, \
             mc.calc_deformation_tensor(data_org, 1))
@@ -51,11 +51,12 @@ def test_calc_gl_strain_tensor():
             data_org[0, x, y, 1] = 0.1*y
 
     data_exp = np.zeros(shape + (2,))
-    tile = np.array(((1.44, 0.55), (0.55, 1.21)))
+    tile_F = np.array(((1.2, 0.1), (0, 1.1)))
+    tile_C = 0.5*(np.matmul(tile_F, tile_F.T) - np.eye(2))
 
     for x in range(shape[1]):
         for y in range(shape[2]):
-            data_exp[0, x, y] = tile
+            data_exp[0, x, y] = tile_C
 
     assert np.allclose(data_exp, \
             mc.calc_gl_strain_tensor(data_org, 1))
@@ -77,9 +78,10 @@ def test_calc_principal_strain():
             data_org[0, x, y, 1] = 0.1*y
 
     data_exp = np.zeros(shape)
-
-    strain_tensor = np.array(((1.44, 0.55), (0.55, 1.21)))
-    [lambda1, _], [ev1, _] = np.linalg.eig(strain_tensor)
+    
+    tile_F = np.array(((1.2, 0.1), (0, 1.1)))
+    tile_C = 0.5*(np.matmul(tile_F, tile_F.T) - np.eye(2))
+    [lambda1, _], [ev1, _] = np.linalg.eig(tile_C)
 
     for x in range(shape[1]):
         for y in range(shape[2]):

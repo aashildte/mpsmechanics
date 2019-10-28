@@ -2,11 +2,6 @@
 
 """
 
-Module for analyzing mechanical properties from motion vector images:
-- Prevalence
-- Displacement
-- Principal strain
-
 Åshild Telle / Simula Research Labratory / 2019
 
 """
@@ -20,9 +15,10 @@ def calc_deformation_tensor(data, dx):
 
     Args:
         data - numpy array of dimensions T x X x Y x 2
+        dx - float; spatial difference between two points/blocks
 
     Returns:
-        F, deformation tensor, of dimensions T x X x Y x 4
+        numpy array of dimensions T x X x Y x 2 x 2
 
     """
 
@@ -46,11 +42,12 @@ def calc_deformation_tensor(data, dx):
 def calc_gl_strain_tensor(data, dx):
     """
     Computes the transpose along the third dimension of data; if data
-    represents the deformation gradient tensor F (over time and 2 spacial
+    represents the deformation gradient tensor F (over time and 2 spatial
     dimensions) this corresponds to the Green-Lagrange strain tensor E.
 
     Args:
         data - numpy array of dimensions T x X x Y x 2 x 2
+        dx - float; spatial difference between two points/blocks
 
     Returns
         numpy array of dimensions T x X x Y x 2 x 2
@@ -63,6 +60,7 @@ def calc_gl_strain_tensor(data, dx):
 
     return E
 
+
 def calc_principal_strain(data, dx):
     """
     Computes the principal strain defined to be the largest eigenvector
@@ -71,9 +69,10 @@ def calc_principal_strain(data, dx):
 
     Args:
         data - displacement data, numpy array of dimension T x X x Y x 2
+        dx - float; spatial difference between two points/blocks
 
     Returns:
-        principal strain - numpy array of dimension T x X x Y x 2
+        numpy array of dimension T x X x Y x 2
 
     """
 

@@ -33,10 +33,10 @@ def calc_deformation_tensor(data, dx):
 
     F = np.zeros(data.shape + (2,))
 
-    F[:,:,:,0,0] = dudx
-    F[:,:,:,0,1] = dudy
-    F[:,:,:,1,0] = dvdx
-    F[:,:,:,1,1] = dvdy
+    F[:, :, :, 0, 0] = dudx
+    F[:, :, :, 0, 1] = dudy
+    F[:, :, :, 1, 0] = dvdx
+    F[:, :, :, 1, 1] = dvdy
 
     F += np.eye(2)[None, None, None, :, :]
 
@@ -57,12 +57,11 @@ def calc_gl_strain_tensor(data, dx):
 
     """
 
-    def_tensor = calc_deformation_tensor(data, dx)
+    F = calc_deformation_tensor(data, dx)
+    C = np.matmul(F, F.transpose(0, 1, 2, 4, 3))
+    E = 0.5*(C - np.eye(2)[None, None, None, :, :])
 
-    return 0.5*(np.matmul(def_tensor,
-                          def_tensor.transpose(0, 1, 2, 4, 3)) - \
-            np.eye(2)[None, None, None, :, :])
-
+    return E
 
 def calc_principal_strain(data, dx):
     """

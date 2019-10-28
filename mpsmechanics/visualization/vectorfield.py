@@ -313,10 +313,6 @@ def animate_vectorfield(values, scale_magnitude, label, pixels2um, images, fname
     plt.close('all')
 
 
-def _find_scaling(values):
-    peak = np.argmax(calc_norm_over_time(values))
-    return 1/np.mean(np.abs(values[peak]))
-
 def images_vectorfield(values, label, pixels2um, images, fname, \
                         framerate=None, extension="mp4", dpi=300, num_arrows=3, scale_arrows=None):
     
@@ -379,7 +375,7 @@ def plot_at_peak(values, scale_magnitude, label, pixels2um, images, fname, \
     return scale
 
 
-def visualize_vectorfield(f_in, num_arrows=3, framerate_scale=1, save_data=True):
+def visualize_vectorfield(f_in, framerate_scale, save_data=True):
     """
 
     Visualize fields - "main function"
@@ -396,9 +392,7 @@ def visualize_vectorfield(f_in, num_arrows=3, framerate_scale=1, save_data=True)
     data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)
     
     for key in data["all_values"].keys():
-
-        if "strain" not in key:
-            continue
+        print("Plots for " + key + " ...")
 
         label = key.capitalize() + "({})".format(data["units"][key])
         images_vectorfield(data["all_values"][key], label, pixels2um, \
@@ -407,7 +401,6 @@ def visualize_vectorfield(f_in, num_arrows=3, framerate_scale=1, save_data=True)
     
         
         for scale_magnitude in ["logscale", "linear"]:
-            print("Plots for " + key + " ...")
             fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}")
             scale_arrows = plot_at_peak(data["all_values"][key], scale_magnitude, label, pixels2um, mt_data.data.frames, \
                             fname)

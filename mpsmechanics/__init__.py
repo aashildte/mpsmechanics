@@ -35,6 +35,11 @@ from .visualization.vectorfield import (
     visualize_vectorfield,
     images_vectorfield,
 )
+
+from .visualization.distributions import (
+    visualize_distributions,
+)
+
 from .statistical_analysis.statistical_analysis import (
         calculate_stats_chips,
 )

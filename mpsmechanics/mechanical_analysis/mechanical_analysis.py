@@ -189,9 +189,7 @@ def analyze_mechanics(input_file, save_data=True):
     mt_data = mps.MPS(input_file)
     motion_vectors = data["displacement vectors"]
 
-    disp_data = motion_vectors
-    #disp_data = refine(motion_vectors, 3)
-    print(disp_data.shape)
+    disp_data = refine(motion_vectors, 1, 1)
 
     angle = data["angle"]
     time = mt_data.time_stamps

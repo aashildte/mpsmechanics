@@ -100,8 +100,13 @@ def calc_norm_over_time(data):
         Sum array - numpy array of dimension T  
 
     """
- 
-    return np.sum(np.linalg.norm(data, axis=3), axis=(1, 2))
+
+    if len(data.shape[3:] == (2, 2)):
+        axis_norm = (3, 4)
+    else:
+        axis_norm = 3
+
+    return np.sum(np.linalg.norm(data, axis=axis_norm), axis=(1, 2))
 
 
 def calc_max_ind(data):

@@ -101,7 +101,7 @@ def calc_norm_over_time(data):
 
     """
 
-    if len(data.shape[3:] == (2, 2)):
+    if len(data.shape[3:]) == (2, 2):
         axis_norm = (3, 4)
     else:
         axis_norm = 3

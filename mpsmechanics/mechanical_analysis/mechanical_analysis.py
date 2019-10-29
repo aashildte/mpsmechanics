@@ -189,47 +189,47 @@ def analyze_mechanics(input_file, save_data=True):
     mt_data = mps.MPS(input_file)
     motion_vectors = data["displacement vectors"]
 
-    disp_data = refine(motion_vectors, 1, 10)
+    for size in [1, 2, 3, 4, 5, 10, 15]:
+        disp_data = refine(motion_vectors, 1, size)
 
-    angle = data["angle"]
-    time = mt_data.time_stamps
-    scale = data["block size"] * mt_data.info["um_per_pixel"]
+        angle = data["angle"]
+        time = mt_data.time_stamps
+        scale = data["block size"] * mt_data.info["um_per_pixel"]
 
-    print("Calculating mechanical quantities for " + input_file)
+        print("Calculating mechanical quantities for " + input_file)
 
-    values_over_time = \
-            _calc_mechanical_quantities(disp_data, scale,
-                                        angle, time)
-    d_all = chip_statistics(values_over_time)
+        values_over_time = \
+                _calc_mechanical_quantities(disp_data, scale,
+                                            angle, time)
+        d_all = chip_statistics(values_over_time)
 
-    # TODO include filter in metadata
+        # TODO include filter in metadata
 
-    d_all["time"] = mt_data.time_stamps
+        d_all["time"] = mt_data.time_stamps
 
-    br_spa, beatrate_avg, beatrate_std, data_beatrate = \
-            _calc_beatrate(
-                d_all["folded"]["displacement"],
-                d_all["maxima"],
-                d_all["intervals"],
-                d_all["time"],
-            )
+        br_spa, beatrate_avg, beatrate_std, data_beatrate = \
+                _calc_beatrate(
+                    d_all["folded"]["displacement"],
+                    d_all["maxima"],
+                    d_all["intervals"],
+                    d_all["time"],
+                )
 
-    d_all["beatrate_spatial"] = br_spa
-    d_all["beatrate_avg"] = beatrate_avg
-    d_all["beatrate_std"] = beatrate_std
-    d_all["range"]["beatrate"] = (0, np.nan)
-    d_all["units"]["beatrate"] = "beats/s"
+        d_all["beatrate_spatial"] = br_spa
+        d_all["beatrate_avg"] = beatrate_avg
+        d_all["beatrate_std"] = beatrate_std
+        d_all["range"]["beatrate"] = (0, np.nan)
+        d_all["units"]["beatrate"] = "beats/s"
 
-    for k in ["metrics_max_avg",
-              "metrics_avg_avg",
-              "metrics_max_std",
-              "metrics_avg_std"]:
-        d_all[k]["beatrate"] = data_beatrate[k]
+        for k in ["metrics_max_avg",
+                  "metrics_avg_avg",
+                  "metrics_max_std",
+                  "metrics_avg_std"]:
+            d_all[k]["beatrate"] = data_beatrate[k]
 
-    print("Done calculating mechanical quantities for " + \
-            input_file)
+        print(f"Done calculating mechanical quantities for {input_file}, size {size}.")
 
-    if save_data:
-        save_dictionary(input_file, "analyze_mechanics", d_all)
+        if save_data:
+            save_dictionary(input_file, f"analyze_mechanics_{size}", d_all)
 
-    return d_all
+    #return d_all

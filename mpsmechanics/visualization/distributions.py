@@ -179,8 +179,8 @@ def visualize_distributions(f_in, framerate_scale, save_data=True):
     output_folder = make_dir_layer_structure(f_in, \
             os.path.join("mpsmechanics", "distributions"))
     make_dir_structure(output_folder)
-
-    data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)
+    size = 1
+    data = read_prev_layer(f_in, f"analyze_mechanics_{size}", analyze_mechanics, save_data)
     
     for key in data["all_values"].keys():
         print("Plots for " + key + " ...")
@@ -188,7 +188,7 @@ def visualize_distributions(f_in, framerate_scale, save_data=True):
         label = key.capitalize() + "({})".format(data["units"][key])
     
         for yscale in ["linear", "log"]:    
-            fname = os.path.join(output_folder, f"distribution_{yscale}_{key}")
+            fname = os.path.join(output_folder, f"distribution_{yscale}_{key}_{size}")
             plot_at_peak(data["all_values"][key], data["filters"][key], \
                     yscale, label, fname)
 

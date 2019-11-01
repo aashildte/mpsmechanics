@@ -20,7 +20,7 @@ def cl_parser(args):
     parser = ArgumentParser()
 
     parser.add_argument("input_files", \
-            help="BF files to run the script for", \
+            help="Cyan files to run the script for", \
             nargs="+")
 
     parser.add_argument("-a", "--animate", \
@@ -42,7 +42,7 @@ def cl_parser(args):
 
     args = parser.parse_args()
 
-    input_files = mm.get_input_files(args.input_files, filetype="BF")
+    input_files = mm.get_input_files(args.input_files, filetype="Cyan")
     debug_mode = args.debug
     config_options = {"animate" : args.animate,
                       "overwrite" : args.overwrite,
@@ -57,11 +57,11 @@ if __name__ == "__main__":
 
     for input_file in input_files:
         if debug_mode:
-            mm.visualize_mechanics_spatial(input_file, **config_options)
+            mm.visualize_calcium_spatial(input_file, **config_options)
         else:
             try:
-                mm.visualize_mechanics_spatial(input_file, **config_options)
+                mm.visualize_calcium_spatial(input_file, **config_options)
             except Exception as e:
-                print(f"Could not visualize mechanics; error msg: {e}")
+                print(f"Could not calculate local averages; error msg: {e}")
                 if input_files is not input_files[-1]:
                     print("Launching script for next file ...")

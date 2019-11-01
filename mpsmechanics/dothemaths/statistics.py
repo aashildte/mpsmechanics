@@ -78,6 +78,13 @@ def calc_xmotion_metrics(avg, std, intervals):
     return metr
 
 
+def fun_folded(x, f):
+    if x.shape[3:] == (2, 2):
+        return np.linalg.norm(x, axis=(3, 4), ord=2)
+    return np.linalg.norm(x, axis=3)
+    
+
+
 def chip_statistics(data):
     """
 
@@ -96,7 +103,6 @@ def chip_statistics(data):
     d_all = {}
 
     # some transformations
-    fun_folded = lambda x, _: np.linalg.norm(x, axis=-1)
     fun_max = lambda x, _: max(x)
 
     d_all_keys = ["all_values", "units", "filters", "range"]

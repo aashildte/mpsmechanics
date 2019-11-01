@@ -202,7 +202,7 @@ def analyze_mechanics(input_file, save_data=True):
                 _calc_mechanical_quantities(disp_data, scale,
                                             angle, time)
         d_all = chip_statistics(values_over_time)
-
+        
         # TODO include filter in metadata
 
         d_all["time"] = mt_data.time_stamps

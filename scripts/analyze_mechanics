@@ -34,6 +34,10 @@ def cl_parser(args):
     parser.add_argument("input_files", \
             help="BF files to run the script for", \
             nargs="+")
+    
+    parser.add_argument("-o", "--overwrite", \
+            help="Recalculate and overwrite previous data/plots..",
+            action="store_true")
 
     parser.add_argument("-d", "--debug", \
                         help="Run script in debug mode",

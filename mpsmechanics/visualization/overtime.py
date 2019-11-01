@@ -75,7 +75,7 @@ def plot_over_time(axis, avg_values, std_values, time, value_range):
 
 def _plot_beatrate(axis, data, time):
     intervals = data["intervals"]
-
+    
     if len(intervals) > 3:
         x_vals = [(time[i[0]] + time[i[1]])/2 \
                         for i in intervals[:-1]]
@@ -105,37 +105,39 @@ def stats_over_time(f_in, save_data):
     path, filename, _ = get_input_properties(f_in)
     output_folder = os.path.join(path, filename, "mpsmechanics")
 
-    data = read_prev_layer(f_in, "analyze_mechanics", \
-            analyze_mechanics, save_data)
+    for size in [1, 2, 3, 4, 5, 10, 15]:
 
-    time = data["time"]
-    # average over time
+        data = read_prev_layer(f_in, f"analyze_mechanics_{size}", \
+                analyze_mechanics, save_data)
 
-    num_subplots = len(list(data["over_time_avg"].keys())) + 1
+        time = data["time"]
+        # average over time
 
-    _, axes = plt.subplots(num_subplots, 1, \
-            figsize=(14, 3*num_subplots), sharex=True)
+        num_subplots = len(list(data["over_time_avg"].keys())) + 1
 
-    # special one for beatrate
+        _, axes = plt.subplots(num_subplots, 1, \
+                figsize=(14, 3*num_subplots), sharex=True)
 
-    _plot_beatrate(axes[0], data, time)
+        # special one for beatrate
 
-    # then every other quantity
+        _plot_beatrate(axes[0], data, time)
 
-    for (axis, key) in zip(axes[1:], data["over_time_avg"].keys()):
-        plot_over_time(axis, data["over_time_avg"][key], \
-                data["over_time_std"][key], data["time"], \
-                data["range"][key])
-        plot_intervals(axis, data["time"], data["intervals"])
+        # then every other quantity
 
-        label = (key.replace("_", " ")).capitalize() + " (" + \
-                data["units"][key] + ")"
-        axis.set_ylabel(label)
+        for (axis, key) in zip(axes[1:], data["over_time_avg"].keys()):
+            plot_over_time(axis, data["over_time_avg"][key], \
+                    data["over_time_std"][key], data["time"], \
+                    data["range"][key])
+            plot_intervals(axis, data["time"], data["intervals"])
 
-    axes[-1].set_xlabel(r"Time ($ms$)")
-    filename = os.path.join(output_folder, "analyze_mechanics.png")
-    plt.savefig(filename, dpi=500)
-    plt.clf()
+            label = (key.replace("_", " ")).capitalize() + " (" + \
+                    data["units"][key] + ")"
+            axis.set_ylabel(label)
+
+        axes[-1].set_xlabel(r"Time ($ms$)")
+        filename = os.path.join(output_folder, f"analyze_mechanics_{size}.png")
+        plt.savefig(filename, dpi=500)
+        plt.clf()
 
 
 def visualize_over_time(f_in, save_data=True):

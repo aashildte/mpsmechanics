@@ -101,12 +101,11 @@ def calc_norm_over_time(data):
 
     """
 
-    if len(data.shape[3:]) == (2, 2):
-        axis_norm = (3, 4)
+    if data.shape[3:] == (2, 2):
+        return np.sum(np.linalg.norm(data, axis=(3, 4), ord=2), axis=(1, 2))
     else:
-        axis_norm = 3
+        return np.sum(np.linalg.norm(data, axis=3), axis=(1, 2))
 
-    return np.sum(np.linalg.norm(data, axis=axis_norm), axis=(1, 2))
 
 
 def calc_max_ind(data):

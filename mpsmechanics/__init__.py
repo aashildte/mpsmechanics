@@ -29,15 +29,20 @@ from .pillar_tracking.pillar_tracking import (
 from .visualization.overtime import (
         visualize_over_time,
 )
-from .visualization.vectorfield import (
-    plot_at_peak,
+from .visualization.mechanics_spatial import (
+    visualize_mechanics_spatial,
     animate_vectorfield,
-    visualize_vectorfield,
-    images_vectorfield,
+    plot_vectorfield_at_peak,
+    animate_decomposition,
+    plot_decomposition_at_peak,
 )
 
 from .visualization.distributions import (
     visualize_distributions,
+)
+
+from .visualization.calcium_spatial import (
+        visualize_calcium_spatial,
 )
 
 from .statistical_analysis.statistical_analysis import (

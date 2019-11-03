@@ -23,19 +23,6 @@ def cl_parser(args):
             help="BF files to run the script for", \
             nargs="+")
 
-    parser.add_argument("-a", "--animate", \
-            help="Make animations or just peak plots.",
-            action="store_true")
-
-    parser.add_argument("-o", "--overwrite", \
-            help="Recalculate and overwrite previous data/plots..",
-            action="store_true")
-
-    parser.add_argument("-s", "--scaling_factor", \
-            default=0.2,
-            help="Scaling factor for fps; 1 = real time, 0.5 half speed",
-            type=float)
-
     parser.add_argument("-d", "--debug", \
                         help="Run script in debug mode",
                         action="store_true")

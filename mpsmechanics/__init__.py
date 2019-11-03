@@ -54,7 +54,12 @@ from .statistical_analysis.metrics import (
 )
 
 from .utils.iofuns.data_layer import read_prev_layer
-from .utils.iofuns.command_line import get_input_files
+from .utils.iofuns.command_line import (
+        get_input_files,
+        add_default_parser_arguments,
+        add_animation_parser_arguments,
+)
+
 
 from .dothemaths.angular import (
     calc_projection_vectors,

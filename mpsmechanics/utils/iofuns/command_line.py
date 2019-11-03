@@ -63,3 +63,29 @@ def get_input_files(argument_list, filetype="BF"):
                         input_files.append(filename)
 
     return input_files
+
+
+def add_default_parser_arguments(parser, file_type):
+    parser.add_argument("input_files", \
+            help=f"{file_type} files to run the script for", \
+            nargs="+")
+    
+    parser.add_argument("-o", "--overwrite", \
+            help="Recalculate and overwrite previous data/plots..",
+            action="store_true")
+
+
+    parser.add_argument("-d", "--debug", \
+            help="Run script in debug mode",
+            action="store_true")
+
+
+def add_animation_parser_arguments(parser, default_scaling_factor):
+    parser.add_argument("-a", "--animate", \
+            help="Make animations or just peak plots.",
+            action="store_true")
+
+    parser.add_argument("-s", "--scaling_factor", \
+            default=default_scaling_factor,
+            help="Scaling factor for fps; 1 = real time, 0.5 half speed",
+            type=float)

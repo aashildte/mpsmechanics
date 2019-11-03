@@ -393,12 +393,12 @@ def plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, 
 
 
 def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate, size):
+        images, framerate, animate, sigma):
     num_dims = values.shape[3:] 
     if num_dims != (2,):
         return
      
-    fname = os.path.join(output_folder, f"vectorfield_{key}_{size}")
+    fname = os.path.join(output_folder, f"vectorfield_{key}_{sigma}_{sigma}_{sigma}")
     plot_vectorfield_at_peak(values, time, label, pixels2um, \
                     images, fname)
 
@@ -409,10 +409,10 @@ def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, 
     
     
 def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate, size):
+        images, framerate, animate, sigma):
 
     for scale_magnitude in ["logscale", "linear"]:
-        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}_{size}")
+        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}_{sigma}_{sigma}_{sigma}")
         plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, images, \
                         fname)
         
@@ -440,8 +440,9 @@ def visualize_mechanics_spatial(f_in, framerate_scale, animate=False, overwrite=
     make_dir_structure(output_folder)
     
 
-    for size in [1, 2, 3, 4, 5, 10, 15]:
-        mc_data = read_prev_layer(f_in, f"analyze_mechanics_{size}", analyze_mechanics, save_data)
+    for size in [0, 1, 2, 3, 4, 5, 10, 15]:
+        sigma = 0.1*size
+        mc_data = read_prev_layer(f_in, f"analyze_mechanics_{sigma}_{sigma}_{sigma}", analyze_mechanics, save_data)
         time = mc_data["time"]
 
         for key in mc_data["all_values"].keys():
@@ -452,10 +453,10 @@ def visualize_mechanics_spatial(f_in, framerate_scale, animate=False, overwrite=
             values = mc_data["all_values"][key]
 
             _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-                    images, framerate, animate, size)
+                    images, framerate, animate, sigma)
 
             _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-                    images, framerate_scale*framerate, animate, size)
+                    images, framerate_scale*framerate, animate, sigma)
 
     print("Visualization done, finishing ..")
 

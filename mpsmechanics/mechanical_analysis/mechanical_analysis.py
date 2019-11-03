@@ -57,7 +57,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
 
     Args:
         displacement - displacement data, T x X x Y x 2 numpy array
-        scale - scaling factor (pixels to um)
+        scale - scaling factor (pixels to um); dx
         angle - angle chamber is tilted with
         time - all time steps
 
@@ -66,6 +66,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
                      value: quantity; unit; filter; value range
 
     """
+    print("dx: ", scale)
 
     displacement = scale * displacement
 
@@ -189,17 +190,22 @@ def analyze_mechanics(input_file, save_data=True):
     mt_data = mps.MPS(input_file)
     motion_vectors = data["displacement vectors"]
 
-    for size in [1, 2, 3, 4, 5, 10, 15]:
-        disp_data = refine(motion_vectors, 1, size)
+    for size in [0, 1, 2, 3, 4, 5, 10, 15]:
+        sigma = 0.1*size
 
         angle = data["angle"]
         time = mt_data.time_stamps
-        scale = data["block size"] * mt_data.info["um_per_pixel"]
+        scale = 3 #data["block size"] * mt_data.info["um_per_pixel"]
+        print("scale: ", scale)
+
+        sigma_list = [sigma, sigma, sigma, 0]
+
+        disp_data = refine(motion_vectors, scale, sigma_list)
 
         print("Calculating mechanical quantities for " + input_file)
 
         values_over_time = \
-                _calc_mechanical_quantities(disp_data, scale,
+                _calc_mechanical_quantities(disp_data, mt_data.info["um_per_pixel"],
                                             angle, time)
         d_all = chip_statistics(values_over_time)
         
@@ -230,6 +236,6 @@ def analyze_mechanics(input_file, save_data=True):
         print(f"Done calculating mechanical quantities for {input_file}, size {size}.")
 
         if save_data:
-            save_dictionary(input_file, f"analyze_mechanics_{size}", d_all)
+            save_dictionary(input_file, f"analyze_mechanics_{sigma}_{sigma}_{sigma}", d_all)
 
     #return d_all

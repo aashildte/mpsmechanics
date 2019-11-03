@@ -862,7 +862,7 @@ class MotionTracking(object):
         )
 
 
-def track_motion(input_file, save_data=True):
+def track_motion(input_file, overwrite=False, save_data=True):
     """
 
     Args:
@@ -874,7 +874,14 @@ def track_motion(input_file, save_data=True):
             mps file
 
     """
-    
+    name = input_file[:-4]
+
+    filename = os.path.join(name, "mpsmechanics", "track_motion.npy")
+
+    if (not overwrite and os.path.isfile(filename)):
+        print("Previous data exist. Use flag --overwrite / -o to recalculate.")
+        return
+
     np.seterr(invalid='ignore')
     mt_data = mps.MPS(input_file)
  
@@ -884,8 +891,6 @@ def track_motion(input_file, save_data=True):
     scaling_factor = mt_data.info['um_per_pixel']
     block_size=3
     motion = MotionTracking(mt_data, block_size=block_size, reference_frame="median")
-    
-    name = input_file[:-4]
 
     # get right reference frame
 

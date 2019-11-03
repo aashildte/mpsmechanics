@@ -215,8 +215,9 @@ def visualize_distributions(f_in, framerate_scale, animate=False, overwrite=Fals
     
     mt_data = mps.MPS(f_in)
     print("Init distributions") 
-    for size in [1, 2, 3, 4, 5, 10, 15]:
-        data = read_prev_layer(f_in, f"analyze_mechanics_{size}", analyze_mechanics, save_data)
+    for size in [0, 1, 2, 3, 4, 5, 10, 15]:
+        sigma = 0.1*size
+        data = read_prev_layer(f_in, f"analyze_mechanics_{sigma}_{sigma}_{sigma}", analyze_mechanics, save_data)
         time = data["time"] 
         for key in data["all_values"].keys():
             print("Plots for " + key + " ...")
@@ -224,7 +225,7 @@ def visualize_distributions(f_in, framerate_scale, animate=False, overwrite=Fals
             label = key.capitalize() + "({})".format(data["units"][key])
         
             for yscale in ["linear", "log"]:    
-                fname = os.path.join(output_folder, f"distribution_{yscale}_{key}_{size}")
+                fname = os.path.join(output_folder, f"distribution_{yscale}_{key}_{sigma}_{sigma}_{sigma}")
                 ymax = plot_at_peak(data["all_values"][key], data["filters"][key], \
                         yscale, label, time, fname)
                 

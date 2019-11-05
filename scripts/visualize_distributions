@@ -9,58 +9,41 @@
 import numpy as np
 import matplotlib as plt
 import mps
-import mpsmechanics as mm
+import mpsmechanics as mc
 import glob
 import os
 import sys
 from argparse import ArgumentParser
 
+
 def cl_parser(args):
 
     parser = ArgumentParser()
+    channel = "BF"
 
-    parser.add_argument("input_files", \
-            help="BF files to run the script for", \
-            nargs="+")
+    mc.add_default_parser_arguments(parser, channel)
+    mc.add_animation_parser_arguments(parser, 1)
 
-    parser.add_argument("-a", "--animate", \
-            help="Make animations or just peak plots.",
-            action="store_true")
+    vargs = vars(parser.parse_args())
+    input_files = mc.get_input_files(vargs.pop("input_files", None), channel)
+    debug_mode = vargs.pop("debug_mode", None)
 
-    parser.add_argument("-o", "--overwrite", \
-            help="Recalculate and overwrite previous data/plots..",
-            action="store_true")
+    print(vargs)
 
-    parser.add_argument("-s", "--scaling_factor", \
-            default=1,
-            help="Scaling factor for fps; 1 = real time, 0.5 half speed",
-            type=float)
-
-    parser.add_argument("-d", "--debug", \
-                        help="Run script in debug mode",
-                        action="store_true")
-
-    args = parser.parse_args()
-
-    input_files = mm.get_input_files(args.input_files, filetype="BF")
-    debug_mode = args.debug
-    config_options = {"animate" : args.animate,
-                      "overwrite" : args.overwrite,
-                      "framerate_scale" : args.scaling_factor}
-
-    return input_files, debug_mode, config_options
+    return input_files, debug_mode, vargs
 
 
 if __name__ == "__main__":
 
-    input_files, debug_mode, config_options = cl_parser(sys.argv[1:])
+    input_files, debug_mode, vargs = cl_parser(sys.argv[1:])
 
-    for input_file in input_files:
+    for f in input_files:
         if debug_mode:
-            mm.visualize_distributions(input_file, **config_options)
+            mc.visualize_distributions(f, **vargs)
         else:
             try:
-                mm.visualize_distributions(input_file, **config_options)
+                mc.visualize_distributions(f, **vargs)
+
             except Exception as e:
                 print(f"Could not visualize distributions; error msg: {e}")
                 if input_files is not input_files[-1]:

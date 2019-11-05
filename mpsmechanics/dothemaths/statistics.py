@@ -8,6 +8,7 @@ import numpy as np
 
 from mpsmechanics.dothemaths.heartbeat import \
         calc_beat_maxima, calc_beat_intervals
+from mpsmechanics.dothemaths.operations import calc_magnitude
 
 
 def calc_for_each_key(init_data, fun, filter_map):
@@ -79,10 +80,7 @@ def calc_xmotion_metrics(avg, std, intervals):
 
 
 def fun_folded(x, f):
-    if x.shape[3:] == (2, 2):
-        return np.linalg.norm(x, axis=(3, 4), ord=2)
-    return np.linalg.norm(x, axis=3)
-    
+    return calc_magnitude(x) 
 
 
 def chip_statistics(data):

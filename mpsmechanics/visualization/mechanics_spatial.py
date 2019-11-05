@@ -15,8 +15,7 @@ import multiprocessing as mp
 import mps
 
 from ..utils.iofuns.data_layer import read_prev_layer
-from ..utils.iofuns.folder_structure import make_dir_structure, \
-        make_dir_layer_structure
+from ..utils.iofuns.folder_structure import make_dir_layer_structure
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
@@ -393,12 +392,12 @@ def plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, 
 
 
 def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate, sigma):
+        images, framerate, animate):
     num_dims = values.shape[3:] 
     if num_dims != (2,):
         return
      
-    fname = os.path.join(output_folder, f"vectorfield_{key}_{sigma}_{sigma}_{sigma}")
+    fname = os.path.join(output_folder, f"vectorfield_{key}")
     plot_vectorfield_at_peak(values, time, label, pixels2um, \
                     images, fname)
 
@@ -409,10 +408,10 @@ def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, 
     
     
 def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate, sigma):
+        images, framerate, animate):
 
     for scale_magnitude in ["logscale", "linear"]:
-        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}_{sigma}_{sigma}_{sigma}")
+        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}")
         plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, images, \
                         fname)
         
@@ -437,26 +436,23 @@ def visualize_mechanics_spatial(f_in, framerate_scale, animate=False, overwrite=
 
     output_folder = make_dir_layer_structure(f_in, \
             os.path.join("mpsmechanics", "visualize_vectorfield"))
-    make_dir_structure(output_folder)
-    
+    os.makedirs(output_folder, exist_ok=True)
 
-    for size in [0, 1, 2, 3, 4, 5, 10, 15]:
-        sigma = 0.1*size
-        mc_data = read_prev_layer(f_in, f"analyze_mechanics_{sigma}_{sigma}_{sigma}", analyze_mechanics, save_data)
-        time = mc_data["time"]
+    mc_data = read_prev_layer(f_in, f"analyze_mechanics", analyze_mechanics, save_data)
+    time = mc_data["time"]
 
-        for key in mc_data["all_values"].keys():
-            print("Plots for " + key + " ...")
-            label = key.capitalize() + "({})".format(mc_data["units"][key])
-            label.replace("_", " ")
+    for key in mc_data["all_values"].keys():
+        print("Plots for " + key + " ...")
+        label = key.capitalize() + "({})".format(mc_data["units"][key])
+        label.replace("_", " ")
 
-            values = mc_data["all_values"][key]
+        values = mc_data["all_values"][key]
 
-            _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-                    images, framerate, animate, sigma)
+        _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
+                images, framerate, animate)
 
-            _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-                    images, framerate_scale*framerate, animate, sigma)
+        _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
+                images, framerate_scale*framerate, animate)
 
     print("Visualization done, finishing ..")
 

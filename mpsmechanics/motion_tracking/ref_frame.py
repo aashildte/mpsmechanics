@@ -131,6 +131,7 @@ def calculate_minmax(frames):
     """
 
     norm = calc_norm_over_time(frames)
+     
     min_index = np.argmax(norm)
     min_norm = norm[min_index]
     mean_norm = np.mean(norm)

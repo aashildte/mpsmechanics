@@ -94,18 +94,14 @@ def calc_norm_over_time(data):
     for t = 0 ... T.
     
     Args:
-        Data - numpy array, of dimensions T x X x Y x 2
+        Data - numpy array, of dimensions T x X x Y x 2 *or* T x X x Y x 2 x 2
 
     Returns:
         Sum array - numpy array of dimension T  
 
     """
-
-    if data.shape[3:] == (2, 2):
-        return np.sum(np.linalg.norm(data, axis=(3, 4), ord=2), axis=(1, 2))
-    else:
-        return np.sum(np.linalg.norm(data, axis=3), axis=(1, 2))
-
+     
+    return np.sum(calc_magnitude(data), axis=(1, 2)) 
 
 
 def calc_max_ind(data):
@@ -134,12 +130,18 @@ def calc_magnitude(data):
         data - numpy array of dimension T x X x Y x D
 
     Returns:
-        norm of data - numpy array of dimension T x X x Y x 1
+        norm of data - numpy array of dimension T x X x Y
 
-    """
+    """ 
 
-
-    return np.linalg.norm(data, axis=-1)[:,:,:,None]
+    if data.shape[3:] == (2, 2):
+        magnitude = np.linalg.norm(data, axis=(3, 4), ord=2)
+    elif data.shape[3:] == ():
+        magnitude = np.abs(data)
+    else:  # then (2)
+        magnitude = np.linalg.norm(data, axis=3)
+    
+    return magnitude
 
 
 def normalize_values(data):

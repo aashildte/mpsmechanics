@@ -19,8 +19,7 @@ from ..dothemaths.interpolation import interpolate_values_2D
 from ..dothemaths.statistics import chip_statistics
 
 from ..utils.iofuns.folder_structure import get_input_properties 
-from ..utils.iofuns.save_values import save_dictionary
-from ..utils.iofuns.data_layer import read_prev_layer
+from ..utils.iofuns.data_layer import read_prev_layer, save_dictionary
 
 from .forcetransformation import displacement_to_force, \
         displacement_to_force_area

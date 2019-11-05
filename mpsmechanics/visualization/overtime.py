@@ -10,11 +10,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..utils.iofuns.data_layer import read_prev_layer
-from ..utils.iofuns.folder_structure import get_input_properties
-from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
-
-
 def get_minmax_values(avg_values, std_values, value_range):
     """
 
@@ -90,63 +85,46 @@ def _plot_beatrate(axis, data, time):
         axis.set_ylabel("Beatrate")
 
 
-def stats_over_time(f_in, save_data):
+def visualize_over_time(data, filename, extension=".png"):
     """
 
     Average over time. We can add std too? anything else??
 
     Args:
-        f_in - input file; nd2 or npy file
-        save_data - boolean value; to be passed to layer_fn (save
-            output_values in a 'cache' or not)
+        input_file - input file; nd2 or npy file
+        filename - save as this
 
     """
 
-    path, filename, _ = get_input_properties(f_in)
-    output_folder = os.path.join(path, filename, "mpsmechanics")
 
-    for size in [1, 2, 3, 4, 5, 10, 15]:
+    time = data["time"]
+    # average over time
 
-        data = read_prev_layer(f_in, f"analyze_mechanics_{size}", \
-                analyze_mechanics, save_data)
+    num_subplots = len(list(data["over_time_avg"].keys())) + 1
 
-        time = data["time"]
-        # average over time
+    _, axes = plt.subplots(num_subplots, 1, \
+            figsize=(14, 3*num_subplots), sharex=True)
 
-        num_subplots = len(list(data["over_time_avg"].keys())) + 1
+    # special one for beatrate
 
-        _, axes = plt.subplots(num_subplots, 1, \
-                figsize=(14, 3*num_subplots), sharex=True)
+    _plot_beatrate(axes[0], data, time)
 
-        # special one for beatrate
+    # then every other quantity
 
-        _plot_beatrate(axes[0], data, time)
+    for (axis, key) in zip(axes[1:], data["over_time_avg"].keys()):
+        plot_over_time(axis, data["over_time_avg"][key], \
+                data["over_time_std"][key], data["time"], \
+                data["range"][key])
+        plot_intervals(axis, data["time"], data["intervals"])
 
-        # then every other quantity
+        label = (key.replace("_", " ")).capitalize() + " (" + \
+                data["units"][key] + ")"
+        axis.set_ylabel(label)
 
-        for (axis, key) in zip(axes[1:], data["over_time_avg"].keys()):
-            plot_over_time(axis, data["over_time_avg"][key], \
-                    data["over_time_std"][key], data["time"], \
-                    data["range"][key])
-            plot_intervals(axis, data["time"], data["intervals"])
+    axes[-1].set_xlabel(r"Time ($ms$)")
+    
+    filename += extension
+    print("file: ", filename)
 
-            label = (key.replace("_", " ")).capitalize() + " (" + \
-                    data["units"][key] + ")"
-            axis.set_ylabel(label)
-
-        axes[-1].set_xlabel(r"Time ($ms$)")
-        filename = os.path.join(output_folder, f"analyze_mechanics_{size}.png")
-        plt.savefig(filename, dpi=500)
-        plt.clf()
-
-
-def visualize_over_time(f_in, save_data=True):
-    """
-
-    Visualize mechanics - "main function"
-
-    """
-
-    stats_over_time(f_in, save_data)
-
-    print("Plots finished")
+    plt.savefig(filename, dpi=500)
+    plt.clf()

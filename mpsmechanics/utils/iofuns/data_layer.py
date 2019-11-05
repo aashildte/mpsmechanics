@@ -47,3 +47,38 @@ def read_prev_layer(input_file, layer, layer_fn, save_data=True):
 
     print("Previous data found, loading ...")
     return np.load(data_path, allow_pickle=True).item()
+
+
+def get_full_filename(input_file, layer):
+    """
+
+    Gives filename in which the data will be stored when
+    save_dictionary is called, if applicable.
+
+    """
+    path, filename, _ = get_input_properties(input_file)
+    output_path = os.path.join(path, filename, "mpsmechanics")
+    return os.path.join(output_path, layer + ".npy")
+
+
+def save_dictionary(input_file, layer, dictionary):
+    """
+
+    Function to saving data for a specific given layer.
+
+    Args:
+        input_file - filename, including path, of original file
+        layer - implies subfolder
+        dictionary - values to save
+
+    """
+    
+    path, filename, _ = get_input_properties(input_file)
+    output_path = os.path.join(path, filename, "mpsmechanics")
+    os.makedirs(output_path, exist_ok=True)
+
+    output_file = os.path.join(output_path, layer + ".npy")
+
+    print(f"Values saved in {output_file}.")
+
+    np.save(output_file, dictionary)

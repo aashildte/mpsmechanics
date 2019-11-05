@@ -14,7 +14,7 @@ import numpy as np
 from .operations import calc_magnitude
 
 
-def calc_projection_vectors(data, alpha):
+def calc_projection(data, alpha):
     """
 
     Extracts the parallel part of each component in disp,
@@ -31,13 +31,12 @@ def calc_projection_vectors(data, alpha):
     e_alpha = np.dot(np.array(((np.cos(alpha), -np.sin(alpha)),\
                                (np.sin(alpha), np.cos(alpha)))),\
                      np.array((1, 0)))
- 
-
     f_dot = lambda x, _: np.dot(x, e_alpha)
-    f_proj = lambda x, axis: np.apply_over_axes(f_dot, x, axis)*e_alpha
+    f_proj = lambda x, axis: np.apply_over_axes(f_dot, x, axis)
 
-    return np.apply_over_axes(f_proj, data, -1)
-    
+    return np.apply_over_axes(f_proj, data, -1)[:,:,:,0]
+
+
 
 def calc_angle_diff(data, alpha):
     """
@@ -54,12 +53,13 @@ def calc_angle_diff(data, alpha):
     
     return np.nan_to_num(np.apply_over_axes(f_angle, data, -1))
 
+
 def calc_projection_fraction(data, alpha):
     """
 
     Calculates fraction
 
-        || projection(u, alpha)||
+        | projection(u, alpha)|
         --------------------------
                  || u ||
 
@@ -75,7 +75,7 @@ def calc_projection_fraction(data, alpha):
     """
 
     data_full = calc_magnitude(data)
-    data_proj = calc_magnitude(calc_projection_vectors(data, alpha))
+    data_proj = np.abs(calc_projection(data, alpha))
 
     return np.divide(data_proj, data_full, \
             out=np.zeros_like(data_full), where=(data_full != 0))

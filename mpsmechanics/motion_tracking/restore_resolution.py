@@ -2,12 +2,13 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+from mpsmechanics.dothemaths.operations import calc_norm_over_time
 
-def refine(motion_data, ref_factor, sigma):
+def refine(motion_data, factor, sigma):
 
-    if ref_factor > 1:
-        refined = (1/ref_factor)*(np.repeat(np.repeat(motion_data, ref_factor, axis=1), ref_factor, axis=2))
-    else:
-        refined = motion_data
+    for s in sigma:
+        assert s >= 0, f"Error: sigmas {sigma} not all >= 0."
 
-    return gaussian_filter(refined, sigma)
+    #refined = np.repeat(np.repeat(np.repeat(motion_data, N_t, axis=0), N_xy, axis=1), N_xy, axis=2)
+    
+    return gaussian_filter(motion_data, sigma)

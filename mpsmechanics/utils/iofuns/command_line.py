@@ -75,7 +75,7 @@ def add_default_parser_arguments(parser, file_type):
             action="store_true")
 
 
-    parser.add_argument("-d", "--debug", \
+    parser.add_argument("-d", "--debug_mode", \
             help="Run script in debug mode",
             action="store_true")
 

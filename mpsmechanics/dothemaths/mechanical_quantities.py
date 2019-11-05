@@ -9,6 +9,31 @@
 import numpy as np
 
 
+def du7(u, axis, h):
+    """ 
+        Gives spacial derivative in one dimension using 7 pt stencil
+        
+        # TODO assert bcs
+
+        Args:
+            u
+            axis - along which axis
+            h = spacial step
+
+        Returns:
+            Array u' of spacial points of first derivative approximation
+    """
+  
+    du = np.zeros_like(u)
+    coefficients = (1./60, -3./20, 3./4, 0, -3./4, 3./20, -1./60)
+
+    # use shift operator to calculate derivative
+    for i in range(7):
+        du += (1./h)*coefficients[i]*np.roll(u, i+3,axis=axis)
+
+    return du
+
+
 def calc_deformation_tensor(data, dx):
     """
     Computes the deformation tensor F from values in data
@@ -26,6 +51,11 @@ def calc_deformation_tensor(data, dx):
     dudy = 1/dx*np.gradient(data[:, :, :, 0], axis=2)
     dvdx = 1/dx*np.gradient(data[:, :, :, 1], axis=1)
     dvdy = 1/dx*np.gradient(data[:, :, :, 1], axis=2)
+    
+    #dudx = du7(data[:,:,:,0], 1, dx)
+    #dudy = du7(data[:,:,:,0], 2, dx)
+    #dvdx = du7(data[:,:,:,1], 1, dx)
+    #dvdy = du7(data[:,:,:,1], 2, dx)
 
     F = np.zeros(data.shape + (2,))
 

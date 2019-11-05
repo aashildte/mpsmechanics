@@ -7,8 +7,10 @@ Computes mechanical quantities over space and time.
 
 """
 
+import os
 from collections import defaultdict
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 try:
     import mps
@@ -26,8 +28,8 @@ from ..dothemaths.angular import calc_projection_fraction
 from ..dothemaths.heartbeat import calc_beatrate
 from ..dothemaths.operations import calc_norm_over_time
 from ..dothemaths.statistics import chip_statistics
-from ..utils.iofuns.save_values import save_dictionary
-from ..utils.iofuns.data_layer import read_prev_layer
+from ..utils.iofuns.data_layer import read_prev_layer, get_full_filename, save_dictionary
+from mpsmechanics.visualization.overtime import visualize_over_time
 
 def calc_filter_time(dist):
     """
@@ -44,10 +46,11 @@ def calc_filter_all(dist):
     Filter independent of time (same for all time steps).
 
     """
-    return np.broadcast_to(np.any((dist != 0),
+    f = np.broadcast_to(np.any((dist != 0),
                                   axis=(0, -1)),
                            dist.shape[:3])
 
+    return f
 
 def _calc_mechanical_quantities(displacement, scale, angle, time):
     """
@@ -66,8 +69,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
                      value: quantity; unit; filter; value range
 
     """
-    print("dx: ", scale)
-
+    
     displacement = scale * displacement
 
     displacement_minmax = convert_disp_data(
@@ -88,7 +90,6 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
     velocity_norm = np.linalg.norm(velocity, axis=-1)
     prevalence = np.where(velocity_norm > threshold*np.ones(velocity_norm.shape),
                     np.ones(velocity_norm.shape), np.zeros(velocity_norm.shape))
-    prevalence = prevalence[:,:,:,None]
 
     gl_strain_tensor = calc_gl_strain_tensor(displacement, scale)
     principal_strain = calc_principal_strain(displacement, scale)
@@ -167,7 +168,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     return beatrate_spatial, beatrate_avg, beatrate_std, data
 
 
-def analyze_mechanics(input_file, save_data=True):
+def analyze_mechanics(input_file, overwrite, save_data=True):
     """
 
     Args:
@@ -175,9 +176,16 @@ def analyze_mechanics(input_file, save_data=True):
         save_data - to store values or not; default value True
 
     Returns:
-        dictionary with relevant output values (TBA)
+        dictionary with relevant output values
 
     """
+    
+    result_file = f"analyze_mechanics"
+    filename = get_full_filename(input_file, result_file)
+
+    if (not overwrite and os.path.isfile(filename)):
+        print("Previous data exist. Use flag --overwrite / -o to recalculate.")
+        return
 
     data = read_prev_layer(
         input_file,
@@ -186,56 +194,47 @@ def analyze_mechanics(input_file, save_data=True):
         save_data=save_data
     )
 
-
     mt_data = mps.MPS(input_file)
-    motion_vectors = data["displacement vectors"]
+    angle = data["angle"]
+    time = mt_data.time_stamps
+ 
+    disp_data = data["displacement vectors"]
+ 
+    print("Calculating mechanical quantities for " + input_file)
+    scale = data["block size"] * mt_data.info["um_per_pixel"]
+   
+    values_over_time = \
+            _calc_mechanical_quantities(disp_data, scale, \
+                                        angle, time)
+    d_all = chip_statistics(values_over_time)
+    
+    d_all["time"] = mt_data.time_stamps
 
-    for size in [0, 1, 2, 3, 4, 5, 10, 15]:
-        sigma = 0.1*size
+    br_spa, beatrate_avg, beatrate_std, data_beatrate = \
+            _calc_beatrate(
+                d_all["folded"]["displacement"],
+                d_all["maxima"],
+                d_all["intervals"],
+                d_all["time"],
+            )
 
-        angle = data["angle"]
-        time = mt_data.time_stamps
-        scale = 3 #data["block size"] * mt_data.info["um_per_pixel"]
-        print("scale: ", scale)
+    d_all["beatrate_spatial"] = br_spa
+    d_all["beatrate_avg"] = beatrate_avg
+    d_all["beatrate_std"] = beatrate_std
+    d_all["range"]["beatrate"] = (0, np.nan)
+    d_all["units"]["beatrate"] = "beats/s"
 
-        sigma_list = [sigma, sigma, sigma, 0]
+    for k in ["metrics_max_avg",
+              "metrics_avg_avg",
+              "metrics_max_std",
+              "metrics_avg_std"]:
+        d_all[k]["beatrate"] = data_beatrate[k]
 
-        disp_data = refine(motion_vectors, scale, sigma_list)
+    print(f"Done calculating mechanical quantities for {input_file}, param_space {sigma_t}, {sigma_xy}.")
 
-        print("Calculating mechanical quantities for " + input_file)
+    if(save_data):
+        save_dictionary(input_file, result_file, d_all)
 
-        values_over_time = \
-                _calc_mechanical_quantities(disp_data, mt_data.info["um_per_pixel"],
-                                            angle, time)
-        d_all = chip_statistics(values_over_time)
-        
-        # TODO include filter in metadata
+    visualize_over_time(d_all, result_file)
 
-        d_all["time"] = mt_data.time_stamps
-
-        br_spa, beatrate_avg, beatrate_std, data_beatrate = \
-                _calc_beatrate(
-                    d_all["folded"]["displacement"],
-                    d_all["maxima"],
-                    d_all["intervals"],
-                    d_all["time"],
-                )
-
-        d_all["beatrate_spatial"] = br_spa
-        d_all["beatrate_avg"] = beatrate_avg
-        d_all["beatrate_std"] = beatrate_std
-        d_all["range"]["beatrate"] = (0, np.nan)
-        d_all["units"]["beatrate"] = "beats/s"
-
-        for k in ["metrics_max_avg",
-                  "metrics_avg_avg",
-                  "metrics_max_std",
-                  "metrics_avg_std"]:
-            d_all[k]["beatrate"] = data_beatrate[k]
-
-        print(f"Done calculating mechanical quantities for {input_file}, size {size}.")
-
-        if save_data:
-            save_dictionary(input_file, f"analyze_mechanics_{sigma}_{sigma}_{sigma}", d_all)
-
-    #return d_all
+    return d_all

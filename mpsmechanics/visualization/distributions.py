@@ -14,8 +14,7 @@ from matplotlib.colors import SymLogNorm, Normalize
 import mps
 
 from ..utils.iofuns.data_layer import read_prev_layer
-from ..utils.iofuns.folder_structure import make_dir_structure, \
-        make_dir_layer_structure
+from ..utils.iofuns.folder_structure import make_dir_layer_structure
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
@@ -49,7 +48,7 @@ def plot_distribution(ax, data, disp_filter, time, min_range, max_range):
             if disp_filter[x, y]:
                 values.append(data[x, y])
 
-    bins = list(np.linspace(np.min(data), np.max(data), 20))
+    bins = list(np.linspace(min_range, max_range, 30))
 
     ax.set_xlim(min_range, max_range)
     ax.hist(values, bins=bins, color='#28349C')
@@ -63,16 +62,16 @@ def plot_distribution(ax, data, disp_filter, time, min_range, max_range):
 def plot_1Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(1, 1, dpi, yscale, ymax)
     
-    min_range, max_range = np.min(values), np.max(values)
+    min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
 
-    plot_distribution(axes[0], values[time_step,:,:,0], \
+    plot_distribution(axes[0], values[time_step], \
                         disp_filter[time_step], time[time_step],
                         min_range, max_range)
 
     axes[0].set_title(f"Scalar value")
 
     def update(index):
-        plot_distribution(axes[0], values[index,:,:,0], \
+        plot_distribution(axes[0], values[index], \
                         disp_filter[index], time[index], \
                         min_range, max_range)
 
@@ -82,7 +81,7 @@ def plot_1Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None,
 def plot_2Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(1, 2, dpi, yscale, ymax)
     
-    min_range, max_range = np.min(values), np.max(values)
+    min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
     
     plot_distribution(axes[0], values[time_step,:,:,0], \
                         disp_filter[time_step], time[time_step],
@@ -108,7 +107,7 @@ def plot_2Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None,
 def plot_4Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(2, 2, dpi, yscale, ymax)
     
-    min_range, max_range = np.min(values), np.max(values)
+    min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
     
     plot_distribution(axes[0], values[time_step,:,:,0,0], \
                         disp_filter[time_step], time[time_step], \
@@ -174,7 +173,7 @@ def make_animations(values, disp_filter, yscale, label, fname, time, \
 def get_plot_fn(values):
     num_dims = values.shape[3:]
     
-    if num_dims == (1,):
+    if num_dims == ():
         return plot_1Dvalues
     
     if num_dims == (2,):
@@ -203,7 +202,7 @@ def plot_at_peak(values, disp_filter, yscale, label, time, fname, \
     return ymax
 
 
-def visualize_distributions(f_in, framerate_scale, animate=False, overwrite=False, save_data=True):
+def visualize_distributions(f_in, scaling_factor, animate=False, overwrite=False, save_data=True):
     """
 
     Make plots for distributions over different quantities - "main function"
@@ -211,26 +210,26 @@ def visualize_distributions(f_in, framerate_scale, animate=False, overwrite=Fals
     """
     output_folder = make_dir_layer_structure(f_in, \
             os.path.join("mpsmechanics", "distributions"))
-    make_dir_structure(output_folder)
+    os.makedirs(output_folder, exist_ok=True)
     
     mt_data = mps.MPS(f_in)
     print("Init distributions") 
-    for size in [0, 1, 2, 3, 4, 5, 10, 15]:
-        sigma = 0.1*size
-        data = read_prev_layer(f_in, f"analyze_mechanics_{sigma}_{sigma}_{sigma}", analyze_mechanics, save_data)
-        time = data["time"] 
-        for key in data["all_values"].keys():
-            print("Plots for " + key + " ...")
+     
+    data = read_prev_layer(f_in, f"analyze_mechanics", analyze_mechanics, save_data)
+    
+    time = data["time"] 
+    for key in ["displacement", "velocity", "principal_strain", "Green-Lagrange_strain_tensor"]:
+        print("Plots for " + key + " ...")
 
-            label = key.capitalize() + "({})".format(data["units"][key])
-        
-            for yscale in ["linear", "log"]:    
-                fname = os.path.join(output_folder, f"distribution_{yscale}_{key}_{sigma}_{sigma}_{sigma}")
-                ymax = plot_at_peak(data["all_values"][key], data["filters"][key], \
-                        yscale, label, time, fname)
-                
-                if animate:
-                    make_animations(data["all_values"][key], data["filters"][key], yscale, label, fname, \
-                            time, framerate=framerate_scale*mt_data.framerate, ymax=ymax)
+        label = key.capitalize() + "({})".format(data["units"][key])
+    
+        for yscale in ["log"]:    
+            fname = os.path.join(output_folder, f"distribution_{yscale}_{key}")
+            ymax = plot_at_peak(data["all_values"][key], data["filters"][key], \
+                    yscale, label, time, fname)
+            
+            if animate:
+                make_animations(data["all_values"][key], data["filters"][key], yscale, label, fname, \
+                        time, framerate=scaling_factor*mt_data.framerate, ymax=ymax)
 
-        print("Distributions plotted, finishing ..")
+    print("Distributions plotted, finishing ..")

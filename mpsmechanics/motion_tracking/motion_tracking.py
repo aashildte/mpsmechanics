@@ -51,8 +51,7 @@ from mps import utils
 from mps import plotter
 from mps import analysis
 
-from ..utils.iofuns.save_values import save_dictionary
-
+from ..utils.iofuns.data_layer import save_dictionary, get_full_filename
 
 logger = utils.get_logger(__name__)
 contraction_data_keys = [
@@ -875,8 +874,9 @@ def track_motion(input_file, overwrite=False, save_data=True):
 
     """
     name = input_file[:-4]
-
-    filename = os.path.join(name, "mpsmechanics", "track_motion.npy")
+    
+    result_file = "track_motion"
+    filename = get_full_filename(input_file, result_file)
 
     if (not overwrite and os.path.isfile(filename)):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
@@ -889,7 +889,7 @@ def track_motion(input_file, overwrite=False, save_data=True):
         "Error: Single frame used as input"
     
     scaling_factor = mt_data.info['um_per_pixel']
-    block_size=3
+    block_size=3     # um
     motion = MotionTracking(mt_data, block_size=block_size, reference_frame="median")
 
     # get right reference frame
@@ -905,13 +905,13 @@ def track_motion(input_file, overwrite=False, save_data=True):
     # save values
 
     d_all = {}
-    d_all["displacement vectors"] = data_disp
+    d_all["displacement_vectors"] = data_disp
     d_all["angle"] = angle
-    d_all["block size"] = int(block_size / mt_data.info["um_per_pixel"])
+    d_all["block_size"] = int(block_size / mt_data.info["um_per_pixel"])
 
     print("Motion tracking done.")
 
     if(save_data):
-        save_dictionary(input_file, "track_motion", d_all)
+        save_dictionary(input_file, result_file, d_all)
 
     return d_all

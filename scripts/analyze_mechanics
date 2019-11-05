@@ -30,41 +30,29 @@ import mpsmechanics as mc
 def cl_parser(args):
 
     parser = ArgumentParser()
+    channel = "BF"
 
-    parser.add_argument("input_files", \
-            help="BF files to run the script for", \
-            nargs="+")
-    
-    parser.add_argument("-o", "--overwrite", \
-            help="Recalculate and overwrite previous data/plots..",
-            action="store_true")
+    mc.add_default_parser_arguments(parser, channel)
 
-    parser.add_argument("-d", "--debug", \
-                        help="Run script in debug mode",
-                        action="store_true")
+    vargs = vars(parser.parse_args())
+    input_files = mc.get_input_files(vargs.pop("input_files", None), channel)
+    debug_mode = vargs.pop("debug_mode", None)
 
-    args = parser.parse_args()
+    print(vargs)
 
-    input_files = mc.get_input_files(args.input_files)
-    debug_mode = args.debug
-
-    return input_files, debug_mode
+    return input_files, debug_mode, vargs
 
 
 if __name__ == "__main__":
 
-    input_files, debug_mode = cl_parser(sys.argv[1:])
+    input_files, debug_mode, vargs = cl_parser(sys.argv[1:])
 
     for f in input_files:
         if debug_mode:
-            mc.analyze_mechanics(f)
-            mc.calculate_metrics(f)
-            mc.visualize_over_time(f)
+            mc.analyze_mechanics(f, **vargs)
         else:
             try:
-                mc.analyze_mechanics(f)
-                mc.calculate_metrics(f)
-                mc.visualize_over_time(f)
+                mc.analyze_mechanics(f, **vargs)
 
             except Exception as e:
                 print(f"Could not run analyze_mechanics; error msg: {e}")

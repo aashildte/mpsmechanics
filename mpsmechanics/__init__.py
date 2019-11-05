@@ -12,6 +12,29 @@ from . import pillar_tracking
 from . import visualization
 from . import statistical_analysis
 
+from .dothemaths.angular import (
+    calc_projection,
+    calc_projection_fraction,
+    calc_angle_diff,
+    flip_values,
+)
+
+from .dothemaths.heartbeat import (
+        calc_beat_maxima,
+        calc_beat_intervals,
+        calc_beatrate,
+)
+
+from .dothemaths.operations import (
+        calc_magnitude,
+        calc_norm_over_time,
+)
+
+from .dothemaths.mechanical_quantities import (
+    calc_deformation_tensor,
+    calc_gl_strain_tensor,
+    calc_principal_strain,
+)
 from .mechanical_analysis.mechanical_analysis import (
         analyze_mechanics,
 )
@@ -26,6 +49,15 @@ from .pillar_tracking.pillar_tracking import (
         track_pillars,
         track_pillars_sgvalue,
 )
+
+from .statistical_analysis.statistical_analysis import (
+        calculate_stats_chips,
+)
+from .statistical_analysis.metrics import (
+        calculate_metrics,
+        calculate_metrics_all,
+)
+
 from .visualization.overtime import (
         visualize_over_time,
 )
@@ -45,39 +77,15 @@ from .visualization.calcium_spatial import (
         visualize_calcium_spatial,
 )
 
-from .statistical_analysis.statistical_analysis import (
-        calculate_stats_chips,
-)
-from .statistical_analysis.metrics import (
-        calculate_metrics,
-        calculate_metrics_all,
-)
-
-from .utils.iofuns.data_layer import read_prev_layer
 from .utils.iofuns.command_line import (
         get_input_files,
         add_default_parser_arguments,
         add_animation_parser_arguments,
+        add_parameter_space_parser_arguments,
 )
 
-
-from .dothemaths.angular import (
-    calc_projection_vectors,
-    calc_projection_fraction,
-    calc_angle_diff,
-    flip_values,
-)
-from .dothemaths.heartbeat import (
-        calc_beat_maxima,
-        calc_beat_intervals,
-        calc_beatrate,
-)
-from .dothemaths.operations import (
-        calc_magnitude,
-        calc_norm_over_time,
-)
-from .dothemaths.mechanical_quantities import (
-    calc_deformation_tensor,
-    calc_gl_strain_tensor,
-    calc_principal_strain,
+from .utils.iofuns.data_layer import (
+        read_prev_layer,
+        get_full_filename,
+        save_dictionary,
 )

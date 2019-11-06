@@ -81,6 +81,7 @@ from .utils.iofuns.command_line import (
         get_input_files,
         add_default_parser_arguments,
         add_animation_parser_arguments,
+        add_parameters_parser_arguments,
 )
 
 from .utils.iofuns.data_layer import (

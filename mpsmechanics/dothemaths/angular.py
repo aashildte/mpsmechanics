@@ -35,8 +35,7 @@ def calc_projection(data, alpha):
     f_proj = lambda x, axis: np.apply_over_axes(f_dot, x, axis)
 
     return np.apply_over_axes(f_proj, data, -1)[:,:,:,0]
-
-
+    
 
 def calc_angle_diff(data, alpha):
     """

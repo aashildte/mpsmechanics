@@ -37,7 +37,7 @@ def setup_frame(num_rows, num_cols, dpi, yscale, ymax=None):
     return axes, fig
 
 
-def plot_distribution(ax, data, disp_filter, time, min_range, max_range):
+def plot_distribution(ax, data, time, min_range, max_range):
     assert len(data.shape)==2, "Error: 2D numpy array expected as input."
      
     values = []
@@ -45,8 +45,7 @@ def plot_distribution(ax, data, disp_filter, time, min_range, max_range):
     
     for x in range(X):
         for y in range(Y):
-            if disp_filter[x, y]:
-                values.append(data[x, y])
+            values.append(data[x, y])
 
     bins = list(np.linspace(min_range, max_range, 30))
 
@@ -54,40 +53,39 @@ def plot_distribution(ax, data, disp_filter, time, min_range, max_range):
     ax.hist(values, bins=bins, color='#28349C')
     #ax.text(1100, 10000, r"$\mu = {:.2f}$".format(np.mean(data)))
     #ax.text(1100, 8500, r"$\sigma = {:.2f}$".format(np.std(data)))
-    #ax.text(1100, 7000, r"$n = {}$".format(np.sum(disp_filter)))
     
     plt.suptitle("Time: {} ms".format(int(time)))
 
 
-def plot_1Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None, ymax=None):
+def plot_1Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(1, 1, dpi, yscale, ymax)
     
     min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
 
     plot_distribution(axes[0], values[time_step], \
-                        disp_filter[time_step], time[time_step],
+                        time[time_step],
                         min_range, max_range)
 
     axes[0].set_title(f"Scalar value")
 
     def update(index):
         plot_distribution(axes[0], values[index], \
-                        disp_filter[index], time[index], \
+                        time[index], \
                         min_range, max_range)
 
     return fig, update
 
 
-def plot_2Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None, ymax=None):
+def plot_2Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(1, 2, dpi, yscale, ymax)
     
     min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
     
     plot_distribution(axes[0], values[time_step,:,:,0], \
-                        disp_filter[time_step], time[time_step],
+                        time[time_step],
                         min_range, max_range)
     plot_distribution(axes[1], values[time_step,:,:,1], \
-                        disp_filter[time_step], time[time_step],
+                        time[time_step],
                         min_range, max_range)
 
     axes[0].set_title("x component")
@@ -95,31 +93,31 @@ def plot_2Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None,
 
     def update(index):
         plot_distribution(axes[0], values[index,:,:,0], \
-                    disp_filter[index], time[index], \
+                    time[index], \
                     min_range, max_range)
         plot_distribution(axes[1], values[index,:,:,1], \
-                    disp_filter[index], time[index], \
+                    time[index], \
                     min_range, max_range)
 
     return fig, update
 
 
-def plot_4Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None, ymax=None):
+def plot_4Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(2, 2, dpi, yscale, ymax)
     
     min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
     
     plot_distribution(axes[0], values[time_step,:,:,0,0], \
-                        disp_filter[time_step], time[time_step], \
+                        time[time_step], \
                         min_range, max_range)
     plot_distribution(axes[1], values[time_step,:,:,0,1], \
-                        disp_filter[time_step], time[time_step],
+                        time[time_step],
                         min_range, max_range)
     plot_distribution(axes[2], values[time_step,:,:,1,0], \
-                        disp_filter[time_step], time[time_step],
+                        time[time_step],
                         min_range, max_range)
     plot_distribution(axes[3], values[time_step,:,:,1,1], \
-                        disp_filter[time_step], time[time_step],
+                        time[time_step],
                         min_range, max_range)
 
     axes[0].set_title("xx component")
@@ -129,22 +127,22 @@ def plot_4Dvalues(values, time_step, disp_filter, yscale, label, time, dpi=None,
 
     def update(index):
         plot_distribution(axes[0], values[index,:,:,0,0], \
-                        disp_filter[time_step], time[index], \
+                        time[index], \
                         min_range, max_range)
         plot_distribution(axes[1], values[index,:,:,0,1], \
-                        disp_filter[time_step], time[index],
+                        time[index],
                         min_range, max_range)
         plot_distribution(axes[2], values[index,:,:,1,0], \
-                        disp_filter[time_step], time[index],
+                        time[index],
                         min_range, max_range)
         plot_distribution(axes[3], values[index,:,:,1,1], \
-                        disp_filter[time_step], time[index],
+                        time[index],
                         min_range, max_range)
 
     return fig, update
 
 
-def make_animations(values, disp_filter, yscale, label, fname, time, \
+def make_animations(values, yscale, label, fname, time, \
         framerate=None, extension="mp4", dpi=100, ymax=None):
     
     plot_fn = get_plot_fn(values)
@@ -153,7 +151,7 @@ def make_animations(values, disp_filter, yscale, label, fname, time, \
     msg = "Invalid extension {}. Expected one of {}".format(extension, extensions)
     assert extension in extensions, msg
 
-    fig, update = plot_fn(values, 0, disp_filter, yscale, label, time, dpi=dpi, ymax=ymax)
+    fig, update = plot_fn(values, 0, yscale, label, time, dpi=dpi, ymax=ymax)
 
     # Set up formatting for the movie files
     if extension == "mp4":
@@ -185,13 +183,13 @@ def get_plot_fn(values):
     print("Error: shape of {} not recognized.".format(num_dims))
 
 
-def plot_at_peak(values, disp_filter, yscale, label, time, fname, \
+def plot_at_peak(values, yscale, label, time, fname, \
         dpi=300, extension="png"):
 
     peak = np.argmax(calc_norm_over_time(values))
     plot_fn = get_plot_fn(values)
     
-    fig, update = plot_fn(values, peak, disp_filter, yscale, label, time, dpi=dpi)
+    fig, update = plot_fn(values, peak, yscale, label, time, dpi=dpi)
 
     ymax = plt.ylim()[1]
 
@@ -202,7 +200,7 @@ def plot_at_peak(values, disp_filter, yscale, label, time, fname, \
     return ymax
 
 
-def visualize_distributions(f_in, scaling_factor, animate=False, overwrite=False, save_data=True):
+def visualize_distributions(f_in, filter_strain, scaling_factor, animate=False, overwrite=False, save_data=True):
     """
 
     Make plots for distributions over different quantities - "main function"
@@ -214,22 +212,24 @@ def visualize_distributions(f_in, scaling_factor, animate=False, overwrite=False
     
     mt_data = mps.MPS(f_in)
     print("Init distributions") 
-     
-    data = read_prev_layer(f_in, f"analyze_mechanics", analyze_mechanics, save_data)
+
+    data = read_prev_layer(f_in, f"analyze_mechanics_filter{filter_strain}", analyze_mechanics, save_data)
     
     time = data["time"] 
     for key in ["displacement", "velocity", "principal_strain", "Green-Lagrange_strain_tensor"]:
         print("Plots for " + key + " ...")
 
         label = key.capitalize() + "({})".format(data["units"][key])
-    
+
+        values = data["all_values"][key]
+
         for yscale in ["log"]:    
-            fname = os.path.join(output_folder, f"distribution_{yscale}_{key}")
-            ymax = plot_at_peak(data["all_values"][key], data["filters"][key], \
-                    yscale, label, time, fname)
+            fname = os.path.join(output_folder, f"distribution_{yscale}_{key}_filter{filter_strain}")
+            
+            ymax = plot_at_peak(values, yscale, label, time, fname)
             
             if animate:
-                make_animations(data["all_values"][key], data["filters"][key], yscale, label, fname, \
+                make_animations(values, yscale, label, fname, \
                         time, framerate=scaling_factor*mt_data.framerate, ymax=ymax)
 
     print("Distributions plotted, finishing ..")

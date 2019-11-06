@@ -83,6 +83,19 @@ def fun_folded(x, f):
     return calc_magnitude(x) 
 
 
+def fun_filtered(x, f):
+    y = x.copy()
+
+    T, X, Y = f.shape
+
+    for t in range(T):
+        for _x in range(X):
+            for _y in range(Y):
+                if not f[t, _x, _y]:
+                    y[t, _x, _y] *= 0
+    return y
+
+
 def chip_statistics(data):
     """
 
@@ -112,7 +125,12 @@ def chip_statistics(data):
             d_all[all_key][d_key] = data[d_key][i]
 
     quantities = d_all["all_values"]
-    time_filter = d_all["filters"]
+    time_filter = d_all["filters"]      # TODO consider if we need to save filter for all time steps
+    
+    # TODO we don't need filter for other fns anymore
+    
+    d_all["all_values"] = \
+            calc_for_each_key(quantities, fun_filtered, time_filter)
     d_all["folded"] = \
             calc_for_each_key(quantities, fun_folded, time_filter)
 
@@ -120,6 +138,7 @@ def chip_statistics(data):
             calc_for_each_key(d_all["folded"], fun_mean, time_filter)
     d_all["over_time_std"] = \
             calc_for_each_key(d_all["folded"], fun_std, time_filter)
+
 
     # general variables
     max_diff_key = "displacement_maximum_difference"

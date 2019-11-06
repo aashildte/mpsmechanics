@@ -91,8 +91,9 @@ def add_animation_parser_arguments(parser, default_scaling_factor):
             type=float)
 
 
-def add_parameters_parser_arguments(parser, default_scaling_factor):
-    parser.add_argument("-n", "--new_filter", \
-            action="store_true")
+def add_parameters_parser_arguments(parser):
+    parser.add_argument("-f", "--filter_strain", \
+            default=0,
+            type=int)
 
 

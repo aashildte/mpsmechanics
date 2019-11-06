@@ -40,19 +40,48 @@ def calc_filter_time(dist):
     return np.any((dist != 0), axis=-1)
 
 
+def calc_strain_filter(dist, size):
+    """
+
+    Filter independent of time (same for all time steps);
+    more restrictive than the one used for displacement etc.
+
+    """
+    
+    f1 = np.any((dist != 0), axis=(0, -1))
+
+    f2 = np.copy(f1)
+    
+    X, Y = f1.shape
+
+    for x in range(X):
+        for y in range(Y):
+            if not f1[x, y]:
+                xm2 = x - size if x > size else 0
+                xp2 = x + size if (x+size) < X else X-1
+                
+                ym2 = y - size if y > size else 0
+                yp2 = y + size if (y+size) < Y else Y-1
+                f2[xm2:xp2+1, ym2:yp2+1] *= False
+
+    print("sum: ", np.sum(f1), np.sum(f2))
+
+    return np.broadcast_to(f2, dist.shape[:3])
+
+
 def calc_filter_all(dist):
     """
 
     Filter independent of time (same for all time steps).
 
     """
-    f = np.broadcast_to(np.any((dist != 0),
+
+    return np.broadcast_to(np.any((dist != 0),
                                   axis=(0, -1)),
                            dist.shape[:3])
 
-    return f
 
-def _calc_mechanical_quantities(displacement, scale, angle, time):
+def _calc_mechanical_quantities(displacement, scale, angle, time, str_filter_size):
     """
 
     Derived quantities - reshape to match expected data structure
@@ -97,6 +126,8 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
     filter_time = calc_filter_time(displacement)
     filter_all = calc_filter_all(displacement)
 
+    filter_strain = calc_strain_filter(displacement, str_filter_size)
+
     return {
         "displacement": (
             displacement,
@@ -137,13 +168,13 @@ def _calc_mechanical_quantities(displacement, scale, angle, time):
         "Green-Lagrange_strain_tensor": (
             gl_strain_tensor,
             "-",
-            filter_all,
+            filter_strain,
             (0, np.nan),
         ),
         "principal_strain": (
             principal_strain,
             "-",
-            filter_all,
+            filter_strain,
             (0, np.nan),
         ),
     }
@@ -168,7 +199,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     return beatrate_spatial, beatrate_avg, beatrate_std, data
 
 
-def analyze_mechanics(input_file, overwrite, save_data=True):
+def analyze_mechanics(input_file, overwrite, filter_strain, save_data=True):
     """
 
     Args:
@@ -180,9 +211,10 @@ def analyze_mechanics(input_file, overwrite, save_data=True):
 
     """
     
-    result_file = f"analyze_mechanics"
+    result_file = f"analyze_mechanics_filter{filter_strain}"
+    
     filename = get_full_filename(input_file, result_file)
-
+    
     if (not overwrite and os.path.isfile(filename)):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
         return
@@ -205,7 +237,7 @@ def analyze_mechanics(input_file, overwrite, save_data=True):
    
     values_over_time = \
             _calc_mechanical_quantities(disp_data, scale, \
-                                        angle, time)
+                                        angle, time, filter_strain)
     d_all = chip_statistics(values_over_time)
     
     d_all["time"] = mt_data.time_stamps
@@ -230,11 +262,13 @@ def analyze_mechanics(input_file, overwrite, save_data=True):
               "metrics_avg_std"]:
         d_all[k]["beatrate"] = data_beatrate[k]
 
-    print(f"Done calculating mechanical quantities for {input_file}, param_space {sigma_t}, {sigma_xy}.")
+    print(f"Done calculating mechanical quantities for {input_file}.")
 
     if(save_data):
         save_dictionary(input_file, result_file, d_all)
 
-    visualize_over_time(d_all, result_file)
+    visualize_over_time(d_all, filename[:-4])
+
+    #import IPython; IPython.embed()
 
     return d_all

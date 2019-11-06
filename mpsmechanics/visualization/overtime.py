@@ -96,7 +96,6 @@ def visualize_over_time(data, filename, extension=".png"):
 
     """
 
-
     time = data["time"]
     # average over time
 

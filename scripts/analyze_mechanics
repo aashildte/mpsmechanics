@@ -33,6 +33,7 @@ def cl_parser(args):
     channel = "BF"
 
     mc.add_default_parser_arguments(parser, channel)
+    mc.add_parameters_parser_arguments(parser)
 
     vargs = vars(parser.parse_args())
     input_files = mc.get_input_files(vargs.pop("input_files", None), channel)

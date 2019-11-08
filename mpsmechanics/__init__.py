@@ -4,7 +4,6 @@
 
 """
 
-from . import fibre_direction
 from . import mechanical_analysis
 from . import motion_tracking
 from . import pillar_tracking

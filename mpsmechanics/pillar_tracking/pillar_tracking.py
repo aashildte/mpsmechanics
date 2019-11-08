@@ -15,7 +15,7 @@ import mps
 
 from ..motion_tracking.motion_tracking import track_motion
 
-from ..dothemaths.interpolation import interpolate_values_2D
+from ..dothemaths.interpolation import interpolate_values_xy
 
 from ..utils.iofuns.folder_structure import get_input_properties 
 from ..utils.iofuns.data_layer import read_prev_layer, save_dictionary
@@ -98,7 +98,7 @@ def _calculate_current_timestep(x_coords, y_coords, disp_data, pillars):
 
     """
 
-    fn_rel = interpolate_values_2D(x_coords, y_coords, disp_data)
+    fn_rel = interpolate_values_xy(x_coords, y_coords, disp_data)
 
     no_pillars, no_tracking_pts, no_dims = pillars.shape
 

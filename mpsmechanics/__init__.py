@@ -4,7 +4,6 @@
 
 """
 
-from . import dothemaths
 from . import fibre_direction
 from . import mechanical_analysis
 from . import motion_tracking
@@ -12,29 +11,24 @@ from . import pillar_tracking
 from . import visualization
 from . import statistical_analysis
 
-from .dothemaths.angular import (
+
+from .dothemaths import (
+    calc_beat_intervals,
+    calc_beat_maxima,
+    calc_beatrate,
+    calc_deformation_tensor,
+    calc_gl_strain_tensor,
+    calc_magnitude,
+    calc_norm_over_time,
+    calc_principal_strain,
     calc_projection,
     calc_projection_fraction,
     flip_values,
+    interpolate_values_xy,
+    normalize_values,
 )
 
-from .dothemaths.heartbeat import (
-        calc_beat_maxima,
-        calc_beat_intervals,
-        calc_beatrate,
-)
 
-from .dothemaths.operations import (
-        calc_magnitude,
-        calc_norm_over_time,
-        normalize_values,
-)
-
-from .dothemaths.mechanical_quantities import (
-    calc_deformation_tensor,
-    calc_gl_strain_tensor,
-    calc_principal_strain,
-)
 from .mechanical_analysis.mechanical_analysis import (
         analyze_mechanics,
 )

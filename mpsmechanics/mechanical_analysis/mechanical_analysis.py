@@ -85,7 +85,7 @@ def calc_filter_all(dist):
                            dist.shape[:3])
 
 
-def _calc_mechanical_quantities(displacement, scale, angle, time, str_filter_size):
+def _calc_mechanical_quantities(displacement, scale, angle, time, strain_filter_size):
     """
 
     Derived quantities - reshape to match expected data structure
@@ -131,7 +131,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, time, str_filter_siz
     filter_time = calc_filter_time(displacement)
     filter_all = calc_filter_all(displacement)
 
-    filter_strain = calc_strain_filter(displacement, str_filter_size)
+    filter_strain = calc_strain_filter(displacement, strain_filter_size)
 
     return {
         "displacement": (
@@ -248,7 +248,7 @@ def analyze_mechanics(input_file, overwrite, save_data=True):
    
     values_over_time = \
             _calc_mechanical_quantities(disp_data, scale, \
-                                        angle, time, filter_strain=4)
+                                        angle, time, strain_filter_size=4)
     d_all = chip_statistics(values_over_time)
     
     d_all["time"] = mt_data.time_stamps

@@ -34,24 +34,6 @@ def calc_projection(data, alpha):
 
     return np.apply_over_axes(f_proj, data, -1)[:, :, :, 0]
 
-"""
-def calc_angle_diff(data, alpha):
-
-    Calculates the angle between a unit vector in direction based on
-    the angle alpha and each vector in data.
-
-
-    assert len(data.shape) == 4, \
-            "Error: Shape of input data not recognized."
-
-    e_alpha = np.dot(np.array(((np.cos(alpha), -np.sin(alpha)),\
-                               (np.sin(alpha), np.cos(alpha)))),\
-                     np.array((1, 0)))
-
-    f_angle = lambda x, a : np.arccos(0) - np.arccos(np.abs(np.dot(x, e_alpha))/np.linalg.norm(x, axis=a))
-
-    return np.nan_to_num(np.apply_over_axes(f_angle, data, -1))
-"""
 
 def calc_projection_fraction(data, alpha):
     """

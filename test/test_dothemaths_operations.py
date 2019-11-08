@@ -60,12 +60,12 @@ def test_normalize_values():
     shape = (5, 4, 3, 2)
 
     data_org = np.zeros(shape)
-    data_exp = np.ones(shape)
+    data_exp = 1/np.sqrt(2)*np.ones(shape)
     data_exp[0] *= 0
 
     for t in range(shape[0]):
         data_org[t] = (0.1*t)*np.ones(shape[1:])
-   
+  
     assert np.allclose(data_exp,
             mc.normalize_values(data_org))
 
@@ -73,3 +73,4 @@ def test_normalize_values():
 if __name__ == "__main__": 
     test_calc_magnitude()
     test_calc_norm_over_time()
+    test_normalize_values()

@@ -32,7 +32,7 @@ def test_calc_projection_fraction():
         -> calc_projection_fractions
 
     """
- 
+
     shape = (5, 4, 3, 1)
     alpha = np.pi/2
     data_org = np.tile(np.array((1, 1)), shape)
@@ -41,23 +41,6 @@ def test_calc_projection_fraction():
     assert np.allclose(data_exp,
                        mc.calc_projection_fraction(data_org, alpha))
 
-"""
-def test_calc_angle_diff():
-    
-
-    Unit test for mpsmechanics/dothemaths/angular
-        -> calc_angle_diff
-
-    
-
-    shape = (5, 4, 3, 1)
-    alpha = 0
-    data_org = np.tile(np.array((1, 1)), shape)
-    data_exp = (np.pi/4)*np.ones(shape)
- 
-    assert np.allclose(data_exp,
-                       mc.calc_angle_diff(data_org, alpha))
-"""
 
 def test_flip_values():
     """
@@ -79,5 +62,4 @@ if __name__ == "__main__":
 
     test_calc_projection()
     test_calc_projection_fraction()
-    #test_calc_angle_diff()
     test_flip_values()

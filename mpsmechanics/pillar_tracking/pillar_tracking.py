@@ -16,7 +16,6 @@ import mps
 from ..motion_tracking.motion_tracking import track_motion
 
 from ..dothemaths.interpolation import interpolate_values_2D
-from ..dothemaths.statistics import chip_statistics
 
 from ..utils.iofuns.folder_structure import get_input_properties 
 from ..utils.iofuns.data_layer import read_prev_layer, save_dictionary

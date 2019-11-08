@@ -15,7 +15,6 @@ from . import statistical_analysis
 from .dothemaths.angular import (
     calc_projection,
     calc_projection_fraction,
-    calc_angle_diff,
     flip_values,
 )
 
@@ -28,6 +27,7 @@ from .dothemaths.heartbeat import (
 from .dothemaths.operations import (
         calc_magnitude,
         calc_norm_over_time,
+        normalize_values,
 )
 
 from .dothemaths.mechanical_quantities import (

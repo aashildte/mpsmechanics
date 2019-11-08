@@ -39,8 +39,6 @@ def cl_parser(args):
     input_files = mc.get_input_files(vargs.pop("input_files", None), channel)
     debug_mode = vargs.pop("debug_mode", None)
 
-    print(vargs)
-
     return input_files, debug_mode, vargs
 
 

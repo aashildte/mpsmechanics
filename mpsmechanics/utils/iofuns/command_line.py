@@ -90,10 +90,5 @@ def add_animation_parser_arguments(parser, default_scaling_factor):
             help="Scaling factor for fps; 1 = real time, 0.5 half speed",
             type=float)
 
-
 def add_parameters_parser_arguments(parser):
-    parser.add_argument("-f", "--filter_strain", \
-            default=0,
-            type=int)
-
-
+    pass

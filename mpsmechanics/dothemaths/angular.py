@@ -2,8 +2,6 @@
 
 """
 
-Performs operations relatd to the angular properties of given data.
-
 Åshild Telle / Simula Research Laboratory / 2019
 
 """
@@ -34,24 +32,26 @@ def calc_projection(data, alpha):
     f_dot = lambda x, _: np.dot(x, e_alpha)
     f_proj = lambda x, axis: np.apply_over_axes(f_dot, x, axis)
 
-    return np.apply_over_axes(f_proj, data, -1)[:,:,:,0]
-    
+    return np.apply_over_axes(f_proj, data, -1)[:, :, :, 0]
 
+"""
 def calc_angle_diff(data, alpha):
-    """
 
     Calculates the angle between a unit vector in direction based on
     the angle alpha and each vector in data.
 
-    """
+
+    assert len(data.shape) == 4, \
+            "Error: Shape of input data not recognized."
+
     e_alpha = np.dot(np.array(((np.cos(alpha), -np.sin(alpha)),\
                                (np.sin(alpha), np.cos(alpha)))),\
                      np.array((1, 0)))
 
     f_angle = lambda x, a : np.arccos(0) - np.arccos(np.abs(np.dot(x, e_alpha))/np.linalg.norm(x, axis=a))
-    
-    return np.nan_to_num(np.apply_over_axes(f_angle, data, -1))
 
+    return np.nan_to_num(np.apply_over_axes(f_angle, data, -1))
+"""
 
 def calc_projection_fraction(data, alpha):
     """
@@ -73,6 +73,9 @@ def calc_projection_fraction(data, alpha):
 
     """
 
+    assert len(data.shape) == 4, \
+            "Error: Shape of input data not recognized."
+
     data_full = calc_magnitude(data)
     data_proj = np.abs(calc_projection(data, alpha))
 
@@ -92,6 +95,9 @@ def flip_values(data):
         T x X x Y x 2 numpy array, flipped values
 
     """
-    
-    return np.where((data[:, :, :, 1] > 0)[:,:,:,None],
+
+    assert len(data.shape) == 4, \
+            "Error: Shape of input data not recognized."
+
+    return np.where((data[:, :, :, 1] > 0)[:, :, :, None],
                     data, -data)

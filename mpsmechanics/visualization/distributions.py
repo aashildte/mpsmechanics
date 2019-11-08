@@ -205,7 +205,7 @@ def plot_at_peak(values, yscale, label, time, fname, \
     return ymax
 
 
-def visualize_distributions(f_in, filter_strain, scaling_factor, animate=False, overwrite=False, save_data=True):
+def visualize_distributions(f_in, scaling_factor, animate=False, overwrite=False, save_data=True):
     """
 
     Make plots for distributions over different quantities - "main function"
@@ -218,7 +218,7 @@ def visualize_distributions(f_in, filter_strain, scaling_factor, animate=False, 
     mt_data = mps.MPS(f_in)
     print("Init distributions") 
 
-    data = read_prev_layer(f_in, f"analyze_mechanics_filter{filter_strain}", analyze_mechanics, save_data)
+    data = read_prev_layer(f_in, f"analyze_mechanics", analyze_mechanics, save_data)
     
     time = data["time"] 
     for key in data["all_values"].keys():
@@ -229,7 +229,7 @@ def visualize_distributions(f_in, filter_strain, scaling_factor, animate=False, 
         values = data["all_values"][key]
 
         for yscale in ["log"]:    
-            fname = os.path.join(output_folder, f"distribution_{yscale}_{key}_filter{filter_strain}")
+            fname = os.path.join(output_folder, f"distribution_{yscale}_{key}")
             
             ymax = plot_at_peak(values, yscale, label, time, fname)
             

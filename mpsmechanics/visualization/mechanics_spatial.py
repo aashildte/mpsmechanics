@@ -391,12 +391,12 @@ def plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, 
 
 
 def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate, filter_strain):
+        images, framerate, animate):
     num_dims = values.shape[3:] 
     if num_dims != (2,):
         return
      
-    fname = os.path.join(output_folder, f"vectorfield_{key}_filter{filter_strain}")
+    fname = os.path.join(output_folder, f"vectorfield_{key}")
     plot_vectorfield_at_peak(values, time, label, pixels2um, \
                     images, fname)
 
@@ -407,10 +407,10 @@ def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, 
     
     
 def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate, filter_strain):
+        images, framerate, animate):
 
     for scale_magnitude in ["logscale", "linear"]:
-        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}_filter{filter_strain}")
+        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}")
         plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, images, \
                         fname)
         
@@ -421,7 +421,7 @@ def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um
                         images, fname, framerate=framerate) 
 
 
-def visualize_mechanics_spatial(f_in, scaling_factor, filter_strain, animate=False, overwrite=False, save_data=True):
+def visualize_mechanics_spatial(f_in, scaling_factor, animate=False, overwrite=False, save_data=True):
     """
 
     Visualize fields - "main function"
@@ -437,7 +437,7 @@ def visualize_mechanics_spatial(f_in, scaling_factor, filter_strain, animate=Fal
             os.path.join("mpsmechanics", "visualize_vectorfield"))
     os.makedirs(output_folder, exist_ok=True)
     
-    mc_data = read_prev_layer(f_in, f"analyze_mechanics_filter{filter_strain}", analyze_mechanics, save_data)
+    mc_data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)
 
     time = mc_data["time"]
 
@@ -449,10 +449,10 @@ def visualize_mechanics_spatial(f_in, scaling_factor, filter_strain, animate=Fal
         values = mc_data["all_values"][key]
 
         _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-                images, framerate, animate, filter_strain)
+                images, framerate, animate)
 
         _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-                images, scaling_factor*framerate, animate, filter_strain)
+                images, scaling_factor*framerate, animate)
 
     print("Visualization done, finishing ..")
 

@@ -18,16 +18,20 @@ except ImportError:
     print("Can't import mps; can't do mechanical analysis.")
     exit(-1)
 
+
+
 from ..motion_tracking.motion_tracking import track_motion
 from ..motion_tracking.ref_frame import convert_disp_data, \
         calculate_minmax
 from ..motion_tracking.restore_resolution import refine
+
 from ..dothemaths.mechanical_quantities import \
         calc_principal_strain, calc_gl_strain_tensor, calc_deformation_tensor
 from ..dothemaths.angular import calc_projection_fraction
 from ..dothemaths.heartbeat import calc_beatrate
 from ..dothemaths.operations import calc_norm_over_time
-from ..dothemaths.statistics import chip_statistics
+from .statistics import chip_statistics
+
 from ..utils.iofuns.data_layer import read_prev_layer, get_full_filename, save_dictionary
 from mpsmechanics.visualization.overtime import visualize_over_time
 
@@ -206,7 +210,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     return beatrate_spatial, beatrate_avg, beatrate_std, data
 
 
-def analyze_mechanics(input_file, overwrite, filter_strain, save_data=True):
+def analyze_mechanics(input_file, overwrite, save_data=True):
     """
 
     Args:
@@ -218,7 +222,7 @@ def analyze_mechanics(input_file, overwrite, filter_strain, save_data=True):
 
     """
     
-    result_file = f"analyze_mechanics_filter{filter_strain}"
+    result_file = "analyze_mechanics"
     
     filename = get_full_filename(input_file, result_file)
     
@@ -244,7 +248,7 @@ def analyze_mechanics(input_file, overwrite, filter_strain, save_data=True):
    
     values_over_time = \
             _calc_mechanical_quantities(disp_data, scale, \
-                                        angle, time, filter_strain)
+                                        angle, time, filter_strain=4)
     d_all = chip_statistics(values_over_time)
     
     d_all["time"] = mt_data.time_stamps
@@ -275,7 +279,5 @@ def analyze_mechanics(input_file, overwrite, filter_strain, save_data=True):
         save_dictionary(input_file, result_file, d_all)
 
     visualize_over_time(d_all, filename[:-4])
-
-    #import IPython; IPython.embed()
 
     return d_all

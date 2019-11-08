@@ -23,7 +23,7 @@ from ..motion_tracking.ref_frame import convert_disp_data, \
         calculate_minmax
 from ..motion_tracking.restore_resolution import refine
 from ..dothemaths.mechanical_quantities import \
-        calc_principal_strain, calc_gl_strain_tensor
+        calc_principal_strain, calc_gl_strain_tensor, calc_deformation_tensor
 from ..dothemaths.angular import calc_projection_fraction
 from ..dothemaths.heartbeat import calc_beatrate
 from ..dothemaths.operations import calc_norm_over_time
@@ -120,6 +120,7 @@ def _calc_mechanical_quantities(displacement, scale, angle, time, str_filter_siz
     prevalence = np.where(velocity_norm > threshold*np.ones(velocity_norm.shape),
                     np.ones(velocity_norm.shape), np.zeros(velocity_norm.shape))
 
+    deformation_tensor = calc_deformation_tensor(displacement, scale)
     gl_strain_tensor = calc_gl_strain_tensor(displacement, scale)
     principal_strain = calc_principal_strain(displacement, scale)
 
@@ -163,6 +164,12 @@ def _calc_mechanical_quantities(displacement, scale, angle, time, str_filter_siz
             prevalence,
             "-",
             filter_all,
+            (0, np.nan),
+        ),
+        "deformation_tensor": (
+            deformation_tensor,
+            "-",
+            filter_strain,
             (0, np.nan),
         ),
         "Green-Lagrange_strain_tensor": (

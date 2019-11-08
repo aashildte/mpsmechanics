@@ -101,7 +101,7 @@ def plot_1Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images)
     subplots = []
     
     subplots.append(axes[0].imshow(images[:, :, time_step], cmap=cm.gray))
-    subplots.append(plt_magnitude(axes[1], time_step, values[:, :, :, 0], \
+    subplots.append(plt_magnitude(axes[1], time_step, values, \
                        0, np.max(values), "viridis", scale))
     cb = fig.colorbar(subplots[1], ax=axes[1])
     cb.set_label(label)
@@ -116,7 +116,7 @@ def plot_1Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images)
 
     def update(index):
         subplots[0].set_array(images[:, :, index])
-        subplots[1].set_data(values[index, :, :, 0])
+        subplots[1].set_data(values[index])
         plt.suptitle("Time: {} ms".format(int(time[index])))
 
     return fig, update
@@ -141,7 +141,7 @@ def plot_2Dvalues(values, scale_magnitude, time, time_step, label, dpi, pixels2u
     subplots.append(axes[0].imshow(images[:, :, time_step], cmap=cm.gray))
     subplots.append(plt_quiver(axes[1], time_step, values, x, y, num_arrows, 'red', scale_arrows))
     subplots.append(plt_quiver(axes[2], time_step, normalized, x, y, num_arrows, 'black', None))
-    subplots.append(plt_magnitude(axes[3], time_step, magnitude[:, :, :, 0], 0, np.max(magnitude), "viridis", scale_magnitude))
+    subplots.append(plt_magnitude(axes[3], time_step, magnitude, 0, np.max(magnitude), "viridis", scale_magnitude))
     cb = fig.colorbar(subplots[3], ax=axes[3])
     cb.set_label(label)
 
@@ -171,7 +171,7 @@ def plot_2Dvalues(values, scale_magnitude, time, time_step, label, dpi, pixels2u
                    -values[index, ::num_arrows, ::num_arrows, 0])
         subplots[2].set_UVC(normalized[index, ::num_arrows, ::num_arrows, 1], \
                    -normalized[index, ::num_arrows, ::num_arrows, 0])
-        subplots[3].set_data(magnitude[index, :, :, 0])
+        subplots[3].set_data(magnitude[index])
         subplots[4].set_data(values[index, :, :, 0])
         subplots[5].set_data(values[index, :, :, 1])
         
@@ -269,7 +269,7 @@ def plot_4Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images)
                 plt_magnitude(axes[5], time_step, values[:,:,:,1,1], \
                     -scale_xy, scale_xy, "bwr", scale)]
 
-    for i in [1, 2, 4, 5]:
+    for i in [1, 2, 3, 4, 5]:
         cb = fig.colorbar(subplots[i], ax=axes[i])
         cb.set_label(label)
 
@@ -290,7 +290,7 @@ def plot_4Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images)
         subplots[0].set_array(images[:, :, index])
         subplots[1].set_data(values[index, :, :, 0, 0])
         subplots[2].set_data(values[index, :, :, 1, 0])
-        subplots[3].set_data(sg_values[index, :, :])
+        subplots[3].set_data(sg_values[index])
         subplots[4].set_data(values[index, :, :, 0, 1])
         subplots[5].set_data(values[index, :, :, 1, 1])
     
@@ -366,7 +366,7 @@ def animate_vectorfield(values, time, label, pixels2um, images, fname, \
 def get_plot_fn(values):
     num_dims = values.shape[3:]
     
-    if num_dims == (1,):
+    if num_dims == ():
         return plot_1Dvalues
     
     if num_dims == (2,):
@@ -383,8 +383,7 @@ def plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, 
 
     peak = np.argmax(calc_norm_over_time(values))
     plot_fn = get_plot_fn(values)
-    plot_fn(values, scale_magnitude, time, peak, label, dpi, \
-            pixels2um, images)
+    plot_fn(values, scale_magnitude, time, peak, label, dpi, pixels2um, images)
 
     filename = fname + "." + extension
     plt.savefig(filename)
@@ -392,12 +391,12 @@ def plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, 
 
 
 def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate):
+        images, framerate, animate, filter_strain):
     num_dims = values.shape[3:] 
     if num_dims != (2,):
         return
      
-    fname = os.path.join(output_folder, f"vectorfield_{key}")
+    fname = os.path.join(output_folder, f"vectorfield_{key}_filter{filter_strain}")
     plot_vectorfield_at_peak(values, time, label, pixels2um, \
                     images, fname)
 
@@ -408,10 +407,10 @@ def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, 
     
     
 def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate):
+        images, framerate, animate, filter_strain):
 
     for scale_magnitude in ["logscale", "linear"]:
-        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}")
+        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}_filter{filter_strain}")
         plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, images, \
                         fname)
         
@@ -422,7 +421,7 @@ def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um
                         images, fname, framerate=framerate) 
 
 
-def visualize_mechanics_spatial(f_in, framerate_scale, animate=False, overwrite=False, save_data=True):
+def visualize_mechanics_spatial(f_in, scaling_factor, filter_strain, animate=False, overwrite=False, save_data=True):
     """
 
     Visualize fields - "main function"
@@ -437,8 +436,9 @@ def visualize_mechanics_spatial(f_in, framerate_scale, animate=False, overwrite=
     output_folder = make_dir_layer_structure(f_in, \
             os.path.join("mpsmechanics", "visualize_vectorfield"))
     os.makedirs(output_folder, exist_ok=True)
+    
+    mc_data = read_prev_layer(f_in, f"analyze_mechanics_filter{filter_strain}", analyze_mechanics, save_data)
 
-    mc_data = read_prev_layer(f_in, f"analyze_mechanics", analyze_mechanics, save_data)
     time = mc_data["time"]
 
     for key in mc_data["all_values"].keys():
@@ -449,10 +449,10 @@ def visualize_mechanics_spatial(f_in, framerate_scale, animate=False, overwrite=
         values = mc_data["all_values"][key]
 
         _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-                images, framerate, animate)
+                images, framerate, animate, filter_strain)
 
         _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-                images, framerate_scale*framerate, animate)
+                images, scaling_factor*framerate, animate, filter_strain)
 
     print("Visualization done, finishing ..")
 

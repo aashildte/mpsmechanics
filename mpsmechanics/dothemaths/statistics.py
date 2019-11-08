@@ -83,8 +83,7 @@ def fun_folded(x, f):
     return calc_magnitude(x) 
 
 
-def fun_filtered(x, f):
-    y = x.copy()
+def filter_fun(x, f):
 
     T, X, Y = f.shape
 
@@ -92,8 +91,7 @@ def fun_filtered(x, f):
         for _x in range(X):
             for _y in range(Y):
                 if not f[t, _x, _y]:
-                    y[t, _x, _y] *= 0
-    return y
+                    x[t, _x, _y] *= 0
 
 
 def chip_statistics(data):
@@ -123,14 +121,21 @@ def chip_statistics(data):
         d_all[all_key] = {}
         for d_key in d_keys:
             d_all[all_key][d_key] = data[d_key][i]
-
-    quantities = d_all["all_values"]
+    
     time_filter = d_all["filters"]      # TODO consider if we need to save filter for all time steps
     
     # TODO we don't need filter for other fns anymore
     
-    d_all["all_values"] = \
-            calc_for_each_key(quantities, fun_filtered, time_filter)
+    print("s", np.sum(d_all["all_values"]["principal_strain"]))
+
+    for key in d_keys:
+        filter_fun(d_all["all_values"][key], d_all["filters"][key])
+    
+    print("t", np.sum(d_all["all_values"]["principal_strain"]))
+    
+    quantities = d_all["all_values"]
+    
+    
     d_all["folded"] = \
             calc_for_each_key(quantities, fun_folded, time_filter)
 

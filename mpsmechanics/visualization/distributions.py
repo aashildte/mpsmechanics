@@ -57,10 +57,15 @@ def plot_distribution(ax, data, time, min_range, max_range):
     plt.suptitle("Time: {} ms".format(int(time)))
 
 
+def _get_minmax_range(values, time_step):
+    min_range = -np.max(np.abs(values[time_step]))
+    max_range = np.max(np.abs(values[time_step]))
+    return min_range, max_range
+
 def plot_1Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(1, 1, dpi, yscale, ymax)
     
-    min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
+    min_range, max_range = _get_minmax_range(values, time_step)
 
     plot_distribution(axes[0], values[time_step], \
                         time[time_step],
@@ -79,7 +84,7 @@ def plot_1Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
 def plot_2Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(1, 2, dpi, yscale, ymax)
     
-    min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
+    min_range, max_range = _get_minmax_range(values, time_step)
     
     plot_distribution(axes[0], values[time_step,:,:,0], \
                         time[time_step],
@@ -105,7 +110,7 @@ def plot_2Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
 def plot_4Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
     axes, fig = setup_frame(2, 2, dpi, yscale, ymax)
     
-    min_range, max_range = -np.max(np.abs(values)), np.max(np.abs(values))
+    min_range, max_range = _get_minmax_range(values, time_step)
     
     plot_distribution(axes[0], values[time_step,:,:,0,0], \
                         time[time_step], \
@@ -216,7 +221,7 @@ def visualize_distributions(f_in, filter_strain, scaling_factor, animate=False, 
     data = read_prev_layer(f_in, f"analyze_mechanics_filter{filter_strain}", analyze_mechanics, save_data)
     
     time = data["time"] 
-    for key in ["displacement", "velocity", "principal_strain", "Green-Lagrange_strain_tensor"]:
+    for key in data["all_values"].keys():
         print("Plots for " + key + " ...")
 
         label = key.capitalize() + "({})".format(data["units"][key])

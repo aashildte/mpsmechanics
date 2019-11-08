@@ -79,8 +79,6 @@ def save_dictionary(input_file, layer, dictionary):
 
     output_file = os.path.join(output_path, layer + ".npy")
     
-    import IPython; IPython.embed()
-
     np.save(output_file, dictionary)
 
     print(f"Values saved in {output_file}.")

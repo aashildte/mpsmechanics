@@ -11,7 +11,7 @@ from mpsmechanics import add_default_parser_arguments
 def cl_parser(args):
 
     parser = ArgumentParser()
-    add_default_arguments(parser, "BF")
+    add_default_parser_arguments(parser, "BF")
     args = parser.parse_args()
 
     input_files = mc.get_input_files(args.input_files)

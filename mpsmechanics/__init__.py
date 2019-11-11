@@ -51,25 +51,6 @@ from .statistical_analysis.metrics import (
         calculate_metrics_all,
 )
 
-from .visualization.overtime import (
-        visualize_over_time,
-)
-from .visualization.mechanics_spatial import (
-    visualize_mechanics_spatial,
-    animate_vectorfield,
-    plot_vectorfield_at_peak,
-    animate_decomposition,
-    plot_decomposition_at_peak,
-)
-
-from .visualization.distributions import (
-    visualize_distributions,
-)
-
-from .visualization.calcium_spatial import (
-        visualize_calcium_spatial,
-)
-
 from .utils.iofuns.command_line import (
         get_input_files,
         add_default_parser_arguments,
@@ -81,4 +62,17 @@ from .utils.iofuns.data_layer import (
         read_prev_layer,
         get_full_filename,
         save_dictionary,
+)
+
+
+from .visualization import (
+    animate_decomposition,
+    animate_vectorfield,
+    plot_decomposition_at_peak,
+    plot_vectorfield_at_peak,
+    visualize_calcium_spatial,
+    visualize_distributions,
+    visualize_mechanics,
+    visualize_over_time,
+    visualize_vectorfield,
 )

@@ -43,7 +43,7 @@ def read_prev_layer(input_file, layer, layer_fn, save_data=True):
     
     if not os.path.isfile(data_path):
         print("Previous data not accessible. Recalculating ...")
-        return layer_fn(input_file, save_data=save_data)
+        return layer_fn(input_file, overwrite=False, save_data=save_data)
 
     print("Previous data found, loading ...")
     return np.load(data_path, allow_pickle=True).item()

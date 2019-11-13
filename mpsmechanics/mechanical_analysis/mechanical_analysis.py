@@ -240,11 +240,22 @@ def analyze_mechanics(input_file, overwrite, save_data=True):
     mt_data = mps.MPS(input_file)
     angle = data["angle"]
     time = mt_data.time_stamps
- 
-    disp_data = data["displacement vectors"]
- 
+
+    # FIXME until motion tracking is updated everywhere
+
+    if "displacement vectors" in data.keys():
+        disp_data = data["displacement vectors"]
+    else:
+        disp_data = data["displacement_vectors"]
+
     print("Calculating mechanical quantities for " + input_file)
-    scale = data["block size"] * mt_data.info["um_per_pixel"]
+    
+    # FIXME until motion tracking is updated everywhere
+    
+    if "block size" in data.keys():
+        scale = data["block size"] * mt_data.info["um_per_pixel"]
+    else:
+        scale = data["block_size"] * mt_data.info["um_per_pixel"]
    
     values_over_time = \
             _calc_mechanical_quantities(disp_data, scale, \

@@ -126,13 +126,9 @@ def chip_statistics(data):
     
     # TODO we don't need filter for other fns anymore
     
-    print("s", np.sum(d_all["all_values"]["principal_strain"]))
-
     for key in d_keys:
         filter_fun(d_all["all_values"][key], d_all["filters"][key])
-    
-    print("t", np.sum(d_all["all_values"]["principal_strain"]))
-    
+     
     quantities = d_all["all_values"]
     
     

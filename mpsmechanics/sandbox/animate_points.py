@@ -1,4 +1,5 @@
 
+import sys
 import os
 import mps
 import numpy as np
@@ -114,8 +115,8 @@ def get_mps_data(input_file):
 def get_mpsmechanics_data(input_file):
     file_pref = input_file[:-4]
     
-    mc_data = read_prev_layer(input_file, \
-                "analyze_mechanics", analyze_mechanics)
+    mc_data = mc.read_prev_layer(input_file, \
+                "analyze_mechanics", mc.analyze_mechanics)
 
     time = mc_data["time"]
     displacement = mc_data["all_values"]["displacement"]
@@ -192,12 +193,8 @@ def animate_uniform_pts(input_file):
         for im_y in range(25, 55, 4):
             animate_points(input_file, im_x=im_x, im_y=im_y, use_max_strain_pt=False)
 
-try:
-    input_file = sys.argv[1]
-
-    assert ".nd2" in f_in and "BF" in f_in, "Error: Wrong file formate."
-except:
-    print("Expected first argument: BF nd2 file")
+input_file = sys.argv[1]
+assert ".nd2" in input_file and "BF" in input_file, "Error: Wrong file formate."
 
 animate_max_strain(input_file)
 animate_uniform_pts(input_file)

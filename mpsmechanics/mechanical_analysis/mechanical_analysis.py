@@ -68,8 +68,6 @@ def calc_strain_filter(dist, size):
                 yp2 = y + size if (y+size) < Y else Y-1
                 f2[xm2:xp2+1, ym2:yp2+1] *= False
 
-    print("sum: ", np.sum(f1), np.sum(f2))
-
     return np.broadcast_to(f2, dist.shape[:3])
 
 

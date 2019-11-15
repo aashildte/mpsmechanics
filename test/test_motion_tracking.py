@@ -272,6 +272,166 @@ def plot_block_matching_double_circle():
         plt.show()
 
 
+def test_block_matching_single_circle(block_size, dx, dy, r):
+
+    x_start = 200
+    x_end = x_start + dx
+    y_start = 250
+    y_end = y_start + dy
+
+    Nx = 500
+    Ny = 500
+    N = 3
+
+    mps_data = sample_data(
+        x_start=x_start,
+        x_end=x_end,
+        y_start=y_start,
+        y_end=y_end,
+        r=r,
+        N=N,
+        Nx=Nx,
+        Ny=Ny,
+    )
+    A = mps_data.frames
+
+    p = max(abs(dx), abs(dy))
+
+    # If both images are the same then all should be zero
+    vectors = mc.motion_tracking.block_matching(
+        A[:, :, 0], A[:, :, 0], block_size=block_size, max_block_movement=p
+    )
+    assert np.all(vectors == 0.0)
+    vectors = mc.motion_tracking.block_matching(
+        A[:, :, 0], A[:, :, 1], block_size=block_size, max_block_movement=p
+    )
+    amp = np.linalg.norm(vectors, axis=2)
+    print(f"Max X: {vectors[:, :, 0].max()}, Min X: {vectors[:, :, 0].min()}")
+    print(f"Max Y: {vectors[:, :, 1].max()}, Min Y: {vectors[:, :, 1].min()}")
+    print(f"Max amp: {amp.max()}, Min amp: {amp.min()}")
+
+    if y_end >= y_start:
+        assert vectors[:, :, 0].max() == dy
+    else:
+        assert vectors[:, :, 0].min() == dy
+    if x_end >= x_start:
+        assert vectors[:, :, 1].max() == dx
+    else:
+        assert vectors[:, :, 1].min() == dx
+
+    assert amp.max() == np.linalg.norm([dx, dy])
+
+
+def plot_template_matching_double_circle():
+
+    block_size = 25
+    dx = 50
+    dy = 0
+    r = 30
+
+    x_start = 200
+    y_start = 250
+
+    line_x = [0, 1]
+    line_y = [0, 1]
+    Nx = 500
+    Ny = 500
+    A = create_circle_data(
+        x_start=x_start,
+        x_end=x_start + dx,
+        y_start=y_start,
+        y_end=y_start + dy,
+        r=r,
+        line_x=line_x,
+        line_y=line_y,
+        Nx=Nx,
+        Ny=Ny,
+    )
+
+    A += create_circle_data(
+        x_start=x_start + 5 * r,
+        x_end=x_start - dx + 5 * r,
+        y_start=y_start + 5 * r,
+        y_end=y_start - dy + 5 * r,
+        r=r,
+        line_x=line_x,
+        line_y=line_y,
+        Nx=Nx,
+        Ny=Ny,
+    )
+
+    p = max(abs(dx), abs(dy))
+
+    vectors = mc.motion_tracking.template_matching(
+        A[:, :, 0], A[:, :, 1], block_size=block_size, max_block_movement=p
+    )
+    amp = np.linalg.norm(vectors, axis=2)
+
+    print(f"Max X: {vectors[:, :, 0].max()}, Min X: {vectors[:, :, 0].min()}")
+    print(f"Max Y: {vectors[:, :, 1].max()}, Min Y: {vectors[:, :, 1].min()}")
+    print(f"Max amp: {amp.max()}, Min amp: {amp.min()}")
+    # if y_end >= y_start:
+    #     assert vectors[:, :, 0].min() == -dy
+    # else:
+    #     assert vectors[:, :, 0].max() == -dy
+    # if x_end >= x_start:
+    #     assert vectors[:, :, 1].min() == -dx
+    # else:
+    #     assert vectors[:, :, 1].max() == -dx
+
+    # assert amp.max() == np.linalg.norm([dx, dy])
+
+    if 1:
+        fig, ax = plt.subplots(1, 2)
+        ax[0].imshow(A[:, :, 0])
+        ax[0].set_title(f"First frame no noise")
+        ax[1].imshow(A[:, :, 1])
+        ax[1].set_title(f"Second frame no noise")
+        for axi in ax:
+            axi.grid(True)
+
+        fig, ax = plt.subplots(2, 2)
+
+        ax[0, 0].imshow(A[:, :, 0])
+        im = ax[0, 0].imshow(A[:, :, 1], alpha=0.5)
+        ax[0, 0].grid(True)
+        ax[0, 0].set_title("Data")
+        fig.colorbar(im, ax=ax[0, 0])
+
+        im = ax[0, 1].imshow(amp)
+        ax[0, 1].grid(True)
+        ax[0, 1].set_title("Amplitude")
+
+        fig.colorbar(im, ax=ax[0, 1])
+
+        im = ax[1, 0].imshow(vectors[:, :, 0])
+        ax[1, 0].grid(True)
+        ax[1, 0].set_title("X vector")
+        fig.colorbar(im, ax=ax[1, 0])
+
+        im = ax[1, 1].imshow(vectors[:, :, 1])
+        ax[1, 1].grid(True)
+        ax[1, 1].set_title("Y vector")
+        fig.colorbar(im, ax=ax[1, 1])
+        fig.tight_layout()
+
+        fig, ax = plt.subplots()
+        x = np.linspace(0, Nx, vectors.shape[0])
+        y = np.linspace(0, Ny, vectors.shape[1])
+        # X, Y = np.meshgrid(x, y)
+        ax.quiver(
+            y,
+            x,
+            -vectors[:, :, 1],
+            vectors[:, :, 0],
+            angles="xy",
+            scale_units="xy",
+            scale=1,
+        )
+        ax.set_aspect("equal")
+        plt.show()
+
+
 def plot_block_matching():
 
     plot = True
@@ -304,6 +464,119 @@ def plot_block_matching():
     p = 2 * max(abs(dx), abs(dy))
 
     vectors = mc.motion_tracking.block_matching(
+        A[:, :, 0], A[:, :, 1], block_size=block_size, max_block_movement=p
+    )
+    amp = np.linalg.norm(vectors, axis=2)
+
+    print(f"dx: {dx}, dy: {dy}, Max move: {p}")
+    print(f"Max X: {vectors[:, :, 0].max()}, Min X: {vectors[:, :, 0].min()}")
+    print(f"Max Y: {vectors[:, :, 1].max()}, Min Y: {vectors[:, :, 1].min()}")
+    print(f"Max amp: {amp.max()}, Min amp: {amp.min()}")
+
+    if plot:
+        fig, ax = plt.subplots(1, 2)
+        ax[0].imshow(A[:, :, 0])
+        ax[0].set_title(f"First frame no noise")
+        ax[1].imshow(A[:, :, 1])
+        ax[1].set_title(f"Second frame no noise")
+        for axi in ax:
+            axi.grid(True)
+
+        fig, ax = plt.subplots(2, 2)
+
+        ax[0, 0].imshow(A[:, :, 0])
+        im = ax[0, 0].imshow(A[:, :, 1], alpha=0.5)
+        ax[0, 0].grid(True)
+        ax[0, 0].set_title("Data")
+        fig.colorbar(im, ax=ax[0, 0])
+
+        im = ax[0, 1].imshow(amp)
+        ax[0, 1].grid(True)
+        ax[0, 1].set_title("Amplitude")
+
+        fig.colorbar(im, ax=ax[0, 1])
+
+        im = ax[1, 0].imshow(vectors[:, :, 0])
+        ax[1, 0].grid(True)
+        ax[1, 0].set_title("X vector")
+        fig.colorbar(im, ax=ax[1, 0])
+
+        im = ax[1, 1].imshow(vectors[:, :, 1])
+        ax[1, 1].grid(True)
+        ax[1, 1].set_title("Y vector")
+        fig.colorbar(im, ax=ax[1, 1])
+        fig.tight_layout()
+
+        fig, ax = plt.subplots()
+        x = np.linspace(0, Nx, vectors.shape[0])
+        y = np.linspace(0, Ny, vectors.shape[1])
+        # X, Y = np.meshgrid(x, y)
+        vy = vectors[:, :, 1]
+        vx = vectors[:, :, 0]
+
+        # import scipy.interpolate as interp
+        # import scipy.integrate as integrate
+        # dfunx = interp.interp2d(X[:], X[:], vx[:])
+        # dfuny = interp.interp2d(Y[:], Y[:], vy[:])
+        # dfun = lambda xy,t: [dfuny(xy[0], xy[1])[0],
+        #                      dfunx(xy[0], xy[1])[0]]
+
+        # p0 = np.array([0.5, 0.5])
+        # dt = 0.01
+        # t0 = 0
+        # t1 = 1
+        # t = np.arange(t0, t1 + dt, dt)
+
+        # streamline = integrate.odeint(dfun, p0, t)
+        # from scipy.interpolate import griddata
+
+        # grid_z0 = griddata(points, values, (grid_x, grid_y), method='nearest')
+        # grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')
+        # grid_z2 = griddata(points, values, (grid_x, grid_y), method='cubic')
+        # points =  np.array(list(zip(x.flatten(),y.flatten())))
+        # grid_x = griddata(points, vx.flatten(), (grid_x, grid_y), method='nearest')
+
+        # print(streamline)
+
+        # ax.plot(streamline[:, 0], streamline[:, 1])
+        ax.quiver(y, x, vy, vx, angles="xy", scale_units="xy", scale=1)
+        ax.set_aspect("equal")
+        plt.show()
+        exit()
+
+
+def plot_template_matching():
+
+    plot = True
+    block_size = 10
+    dx = 10
+    dy = 10
+    r = 50
+
+    x_start = 200
+    x_end = x_start + dx
+    y_start = 250
+    y_end = y_start + dy
+
+    line_x = [0, 1]
+    line_y = [0, 1]
+    Nx = 500
+    Ny = 500
+    A = create_circle_data(
+        x_start=x_start,
+        x_end=x_end,
+        y_start=y_start,
+        y_end=y_end,
+        r=r,
+        line_x=line_x,
+        line_y=line_y,
+        Nx=Nx,
+        Ny=Ny,
+    )
+    A = add_noise(A, 0.004)
+    p = max(abs(dx), abs(dy))
+
+    vectors = mc.motion_tracking.template_matching(
         A[:, :, 0], A[:, :, 1], block_size=block_size, max_block_movement=p
     )
     amp = np.linalg.norm(vectors, axis=2)
@@ -824,4 +1097,6 @@ if __name__ == "__main__":
     # plot_displacements()
     # test_mean_contraction(8, 0, 10, 50)
     # test_save_cache()
-    test_displacements()
+    # test_displacements()
+    # plot_template_matching_double_circle()
+    plot_template_matching()

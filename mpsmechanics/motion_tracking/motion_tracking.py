@@ -104,6 +104,15 @@ def block_matching_map(args):
     return vectors
 
 
+def template_matching_map(args):
+    vectors = template_matching(*args[:-1])
+
+    if args[-1] > 0:
+        vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], args[-1])
+        vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], args[-1])
+    return vectors
+
+
 @jit(nopython=True)
 def block_matching(reference_image, image, block_size, max_block_movement):
     """
@@ -233,30 +242,17 @@ def template_matching(reference_image, image, block_size, max_block_movement):
             x_ref_start = x_min - x_image + max_block_movement
             x_ref_end = N - (x_image + block_size + max_block_movement - x_max)
 
-            try:
-                search_block[
-                    y_ref_start:y_ref_end, x_ref_start:x_ref_end
-                ] = reference_image[y_min:y_max, x_min:x_max]
-            except Exception as ex:
-                from IPython import embed
+            search_block[
+                y_ref_start:y_ref_end, x_ref_start:x_ref_end
+            ] = reference_image[y_min:y_max, x_min:x_max]
 
-                embed()
-                exit()
             result = match_template(search_block, block)
             dy, dx = np.where(np.abs(result - np.nanmax(result)) < 1e-5)
             # Select the case that has the smallest displacement
-            try:
-                idx = np.argmin(
-                    np.linalg.norm(
-                        np.abs(max_block_movement - np.array([dx, dy])), axis=0
-                    )
-                )
-            except Exception as ex:
+            idx = np.argmin(
+                np.linalg.norm(np.abs(max_block_movement - np.array([dx, dy])), axis=0)
+            )
 
-                from IPython import embed
-
-                embed()
-                exit()
             vectors[y_block, x_block, 0] = max_block_movement - dy[idx]
             vectors[y_block, x_block, 1] = max_block_movement - dx[idx]
 
@@ -428,6 +424,9 @@ class MotionTracking(object):
     max_block_movement: float
         Maximum allowed movement of each block in micrometers
         Default 3 micrometers.
+    matching_method : str
+        Method used for block matching. Choices "block_matching" (deafult) or
+        "template_matching" 
     """
 
     _arrays = ["velocity_vectors", "displacement_vectors"]
@@ -442,6 +441,7 @@ class MotionTracking(object):
         outdir=None,
         serial=False,
         filter_kernel_size=8,
+        matching_method="block_matching",
         loglevel=logging.INFO,
     ):
 
@@ -455,6 +455,12 @@ class MotionTracking(object):
         self.serial = serial
         self.reference_frame = reference_frame
         self.filter_kernel_size = filter_kernel_size
+
+        self.matching_map = (
+            block_matching_map
+            if matching_method == "block_matching"
+            else template_matching_map
+        )
 
         logger.info(
             (
@@ -610,14 +616,14 @@ class MotionTracking(object):
         iterable = self._get_velocities_iter
         t0 = time.time()
         if self.serial:
-            for i, v in enumerate(map(block_matching_map, iterable)):
+            for i, v in enumerate(map(self.matching_map, iterable)):
                 if i % 50 == 0:
                     logger.info(f"Processing frame {i}/{self.N}")
                 self._velocity_vectors[:, :, :, i] = v
 
         else:
             with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, v in enumerate(executor.map(block_matching_map, iterable)):
+                for i, v in enumerate(executor.map(self.matching_map, iterable)):
 
                     if i % 50 == 0:
                         logger.info(f"Processing frame {i}/{self.N}")
@@ -637,13 +643,13 @@ class MotionTracking(object):
         iterable = self._get_displacements_iter()
         t0 = time.time()
         if self.serial:
-            for i, v in enumerate(map(block_matching_map, iterable)):
+            for i, v in enumerate(map(self.matching_map, iterable)):
                 if i % 50 == 0:
                     logger.info(f"Processing frame {i}/{self.data.num_frames - 1}")
                     self._displacement_vectors[:, :, :, i] = v
         else:
             with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, v in enumerate(executor.map(block_matching_map, iterable)):
+                for i, v in enumerate(executor.map(self.matching_map, iterable)):
                     if i % 50 == 0:
                         logger.info(f"Processing frame {i}/{self.data.num_frames - 1}")
                     self._displacement_vectors[:, :, :, i] = v

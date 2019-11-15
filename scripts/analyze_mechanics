@@ -23,15 +23,38 @@ where the input files are nd2/npy files containing displacement data.
 """
 
 import sys
+from argparse import ArgumentParser
 import mpsmechanics as mc
 
+
+def cl_parser(args):
+
+    parser = ArgumentParser()
+    channel = "BF"
+
+    mc.add_default_parser_arguments(parser, channel)
+    mc.add_parameters_parser_arguments(parser)
+
+    vargs = vars(parser.parse_args())
+    input_files = mc.get_input_files(vargs.pop("input_files", None), channel)
+    debug_mode = vargs.pop("debug_mode", None)
+
+    return input_files, debug_mode, vargs
+
+
 if __name__ == "__main__":
-    input_files = sys.argv[1:]
+
+    input_files, debug_mode, vargs = cl_parser(sys.argv[1:])
 
     for f in input_files:
-        try:
-            mc.analyze_mechanics(f)
-        except Exception as e:
-            print("Could not run mechanical analysis; error ", e)
-            print("Launching next data set ..")
+        if debug_mode:
+            mc.analyze_mechanics(f, **vargs)
+        else:
+            try:
+                mc.analyze_mechanics(f, **vargs)
+
+            except Exception as e:
+                print(f"Could not run analyze_mechanics; error msg: {e}")
+                if f is not input_files[-1]:
+                    print("Launching script for next file ...")
 

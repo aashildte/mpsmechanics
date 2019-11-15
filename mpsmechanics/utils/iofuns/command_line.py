@@ -8,73 +8,87 @@ Functions related to command line arguments
 
 """
 
-from argparse import ArgumentParser
+import os
+import glob
+
+def _valid_input_file(input_file, filetype):
+
+    if not filetype in input_file:
+        return False
+
+    if not "nd2" in input_file:
+        return False
+
+    return True
 
 
-def _string_to_ints(calc_str):
+def _walk_glob(argument_list):
+
+    input_files = []
+    for arg in argument_list:
+        input_files.extend(glob.glob(arg))
+
+    return input_files
+
+
+def get_input_files(argument_list, filetype="BF"):
     """
 
-    Converts a string on the form "2 4 6" to a list [2, 4, 6].
+    Reads in files and foldersfrom a list (like sys.argv), filters
+    out those that are likely to be valid files.
+
+    Assesses whether the script should be run in debug mode or not.
 
     Args:
-        calc_str: String with integers separated by spaces
+        s_files - list of files, folders, etc., e.g. from command line
+        t - type; default BF, can be Cyan (or ?)
 
     Returns:
-        Sorted list containing the same integers.
+        debug - boolean value; perform in debug mode or not
+        input_files - list, BF nd2 files from s_files
 
     """
-    if not calc_str:
-        return []
+    input_files = []
 
-    calc_str = list(map(int, calc_str.split(" ")))
-    calc_str.sort()
+    for a_file in _walk_glob(argument_list):
+        if os.path.isfile(a_file):
+            if _valid_input_file(a_file, filetype):
+                input_files.append(a_file)
+        elif os.path.isdir(a_file):
+            # if folders, replace with all files in subfolders
+            for root, _, files in os.walk(a_file):
+                for f_in in files:
+                    filename = os.path.join(root, f_in)
+                    if _valid_input_file(filename, filetype):
+                        input_files.append(filename)
 
-    return calc_str
+    return input_files
 
 
-def get_cl_input(arg_keys=()):
-    """
+def add_default_parser_arguments(parser, file_type):
+    parser.add_argument("input_files", \
+            help=f"{file_type} files to run the script for", \
+            nargs="+")
+    
+    parser.add_argument("-o", "--overwrite", \
+            help="Recalculate and overwrite previous data/plots..",
+            action="store_true")
 
-    Reads command line and transforms into useful variables.
 
-    Args:
-        arg_keys: Optional, key pairs for options for which
-            to add to argument parser
-    Returns:
-        argument parser structure
+    parser.add_argument("-d", "--debug_mode", \
+            help="Run script in debug mode",
+            action="store_true")
 
-    """
 
-    parser = ArgumentParser()
+def add_animation_parser_arguments(parser, default_scaling_factor):
+    parser.add_argument("-a", "--animate", \
+            help="Make animations or just peak plots.",
+            action="store_true")
 
-    # default arguments
+    parser.add_argument("-s", "--scaling_factor", \
+            default=default_scaling_factor,
+            help="Scaling factor for fps; 1 = real time, 0.5 half speed",
+            type=float)
 
-    parser.add_argument("vars", nargs="+")
-
-    # optional arguments
-    for option in arg_keys:
-        parser.add_argument(*option[0], **option[1])
-
-    args = parser.parse_args()
-
-    input_files = args.vars[:-1]
-    calc_properties = args.vars[-1]
-
-    # per default, "p" or "plot" is reserved for ids for all scripts
-    try:
-        args.plot = _string_to_ints(args.plot)
-    except:
-        pass
-
-    try:
-        assert input_files
-        calc_properties = _string_to_ints(calc_properties)
-
-    except:
-        print("Give files name and integers indicationg values of " +
-              "interests + possibly optional arguments on the " +
-              "command line (see README file and/or top of " +
-              "given script).")
-        exit(-1)
-
-    return input_files, calc_properties, args
+def add_parameters_parser_arguments(parser):
+    pass

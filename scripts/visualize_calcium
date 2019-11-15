@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+
+"""
+
+Åshild Telle / Simula Research Labratory / 2019
+
+"""
+
+import numpy as np
+import matplotlib as plt
+import mps
+import mpsmechanics as mm
+import glob
+import os
+import sys
+from argparse import ArgumentParser
+
+def cl_parser(args):
+
+    parser = ArgumentParser()
+
+    parser.add_argument("input_files", \
+            help="Cyan files to run the script for", \
+            nargs="+")
+
+    parser.add_argument("-a", "--animate", \
+            help="Make animations or just peak plots.",
+            action="store_true")
+
+    parser.add_argument("-o", "--overwrite", \
+            help="Recalculate and overwrite previous data/plots..",
+            action="store_true")
+
+    parser.add_argument("-s", "--scaling_factor", \
+            default=0.2,
+            help="Scaling factor for fps; 1 = real time, 0.5 half speed",
+            type=float)
+
+    parser.add_argument("-d", "--debug", \
+                        help="Run script in debug mode",
+                        action="store_true")
+
+    args = parser.parse_args()
+
+    input_files = mm.get_input_files(args.input_files, filetype="Cyan")
+    debug_mode = args.debug
+    config_options = {"animate" : args.animate,
+                      "overwrite" : args.overwrite,
+                      "framerate_scale" : args.scaling_factor}
+
+    return input_files, debug_mode, config_options
+
+
+if __name__ == "__main__":
+
+    input_files, debug_mode, config_options = cl_parser(sys.argv[1:])
+
+    for input_file in input_files:
+        if debug_mode:
+            mm.visualize_calcium_spatial(input_file, **config_options)
+        else:
+            try:
+                mm.visualize_calcium_spatial(input_file, **config_options)
+            except Exception as e:
+                print(f"Could not calculate local averages; error msg: {e}")
+                if input_files is not input_files[-1]:
+                    print("Launching script for next file ...")

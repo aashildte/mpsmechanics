@@ -1,191 +1,191 @@
+"""
+
+Åshild Telle / Simula Research Laboratory / 2019
+
+"""
 
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 from matplotlib import cm
 from matplotlib import animation
+from matplotlib.colors import SymLogNorm, Normalize
+import multiprocessing as mp
 
 import mps
 
 from ..utils.iofuns.data_layer import read_prev_layer
-from ..utils.iofuns.folder_structure import make_dir_structure, \
-        make_dir_layer_structure
+from ..utils.iofuns.folder_structure import make_dir_layer_structure
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
-from ..pillar_tracking.pillar_tracking import track_pillars
 
-def setup_frame(vectors, pixels2um, dpi, images):
 
+def setup_frame(values, dpi, images, num_rows, num_cols):
     Nx, Ny = images.shape[:2]
+    x = np.linspace(0, Nx, values.shape[1])
+    y = np.linspace(0, Ny, values.shape[2])
 
-    x = np.linspace(0, Nx, vectors.shape[1])
-    y = np.linspace(0, Ny, vectors.shape[2])
-
-    block_size = Nx // vectors.shape[1]
-
-    figsize = (14, 10)
+    figsize = (14, 12)
+    fig, axes = plt.subplots(num_rows, num_cols, \
+                             figsize=figsize, dpi=dpi, squeeze=False)
     
-    fig, axs = plt.subplots(2, 3, figsize=figsize, dpi=dpi)
-    return x, y, axs, fig
+    axes = axes.flatten()
+    fig.align_ylabels(axes)
+
+    return x, y, axes, fig
 
 
-def plt_quiver(ax, i, vectors, x, y, dx, scale, color):
+def plt_quiver(ax, i, values, x, y, num_arrows, color, scale):
     ax.invert_yaxis()
+    
     return ax.quiver(
-        y[::dx],
-        x[::dx],
-        vectors[i, ::dx, ::dx, 1],
-        -vectors[i, ::dx, ::dx, 0],
+        y[::num_arrows],
+        x[::num_arrows],
+        values[i, ::num_arrows, ::num_arrows, 1],
+        -values[i, ::num_arrows, ::num_arrows, 0],
         color=color,
         units="xy",
+        headwidth=6,
         scale=scale,
     )
 
 
-def plt_magnitude(ax, i, scalars, vmin, vmax, cmap, linscale):
-    return ax.imshow(scalars[i, :, :], norm=colors.SymLogNorm(linscale, vmin=vmin, vmax=vmax), cmap=cmap)
-
-
-def plot2Dvalues(vectors, time_step, label, unit, dx, dpi, pixels2um, scale, images, linscale):
-
-    magnitude = calc_magnitude(vectors)
-    normalized = normalize_values(vectors)
+def _set_ax_units(axis, shape, scale):
     
-    x, y, axs, fig = setup_frame(vectors, pixels2um, dpi, images)
+    axis.set_aspect("equal")
+    num_yticks = 8
+    num_xticks = 4
 
-    block_size = len(x) // vectors.shape[1]
-    scale_n = max(np.divide(vectors.shape[1:3], block_size))
+    yticks = [int(shape[0]*i/num_yticks) for i in range(num_yticks)]
+    ylabels = [int(scale*shape[0]*i/num_yticks) for i in range(num_yticks)]
 
-    scale_xy = np.max(np.abs(vectors))
+    xticks = [int(shape[1]*i/num_xticks) for i in range(num_xticks)]
+    xlabels = [int(scale*shape[1]*i/num_xticks) for i in range(num_xticks)]
 
-    Q0 = axs[0, 0].imshow(images[:,:,time_step], cmap=cm.gray)
-    Q1 = plt_quiver(axs[0, 1], time_step, vectors, x, y, dx, scale*scale_n, 'red')
-    Q2 = plt_quiver(axs[0, 2], time_step, normalized, x, y, dx, 1/25, 'black')
-    Q3 = plt_magnitude(axs[1, 0], time_step, magnitude[:,:,:,0], 0, np.max(magnitude), "viridis", linscale)
-    cb = fig.colorbar(Q3, ax=axs[1, 0])
-    cb.set_label(label.capitalize() + " (" + unit + ")")
-    
-    Q4 = plt_magnitude(axs[1, 1], time_step, vectors[:,:,:,0], -scale_xy, scale_xy, "bwr", linscale)
-    cb = fig.colorbar(Q4, ax=axs[1, 1])
-    cb.set_label(label.capitalize() + " (" + unit + ")")
-    
-    Q5 = plt_magnitude(axs[1, 2], time_step, vectors[:,:,:,1], -scale_xy, scale_xy, "bwr", linscale)
-    cb = fig.colorbar(Q5, ax=axs[1, 2])
-    cb.set_label(label.capitalize() + " (" + unit + ")")
-    
-    axs[0, 0].set_title("Original images")
-    axs[0, 1].set_title("Vector field")
-    axs[0, 2].set_title("Direction")
-    axs[1, 0].set_title("Magnitude")
-    axs[1, 1].set_title("Longitudinal (x)")
-    axs[1, 2].set_title("Transversal (y)")
-    plt.suptitle(f"Time step {time_step}")
-    
-    scale_ax = [1, len(x)/images.shape[0]]
+    axis.set_yticks(yticks)
+    axis.set_xticks(xticks)
+    axis.set_yticklabels(ylabels)
+    axis.set_xticklabels(xlabels)
 
-    for i in range(2):
-        for j in range(3):
-            axs[i,j].set_aspect("equal")
+    axis.set_xlabel(r"$\mu m$")
+    axis.set_ylabel(r"$\mu m$")
+
+
+def _find_arrow_scaling(values, num_arrows):
+    return 1.5/(num_arrows)*np.mean(np.abs(values))
+
+
+def plot_vectorfield(values, time, time_step, label, num_arrows, dpi, pixels2um, images):
+    x, y, axes, fig = setup_frame(values, dpi, images, 1, 1)
+
+    block_size = len(x) // values.shape[1]
+    scale_n = max(np.divide(values.shape[1:3], block_size))
+
+    scale_xy = np.max(np.abs(values))
+    scale_arrows = _find_arrow_scaling(values, num_arrows)
+    
+    Q1 = axes[0].imshow(images[:, :, time_step], cmap=cm.gray) 
+    Q2 = plt_quiver(axes[0], time_step, values, x, y, num_arrows, 'red', scale_arrows)
+
+    plt.suptitle("Time: {} ms".format(int(time[time_step])))
+ 
+    _set_ax_units(axes[0], images.shape[:2], pixels2um)
+
+    def update(index):
+        Q1.set_array(images[:, :, index])
+        Q2.set_UVC(values[index, ::num_arrows, ::num_arrows, 1], \
+                   values[index, ::num_arrows, ::num_arrows, 0])
+
+        plt.suptitle("Time: {} ms".format(int(time[index])))
+
+    return fig, update
+
+
+
+def plot_vectorfield_at_peak(values, time, label, pixels2um, images, fname, \
+                        extension="mp4", dpi=300, num_arrows=3):
+    
+    num_dims = values.shape[3:] 
+    assert num_dims == (2,), "Error: T x X x Y x 2 numpy array expected as first argument."
+    
+    peak = np.argmax(calc_norm_over_time(values))
          
-            axs[i,j].set_yticks(np.linspace(0, scale_ax[i]*images.shape[0]-1, 8))
-            axs[i,j].set_yticklabels(map(int, np.linspace(0, pixels2um*(images.shape[0]-1), 8)))
-            axs[i,j].set_xticks(np.linspace(0, scale_ax[i]*images.shape[1]-1, 5))
-            axs[i,j].set_xticklabels(map(int, np.linspace(0, pixels2um*(images.shape[1]-1), 8)))
-            axs[i,j].set_xlabel("$\mu m$")
-            axs[i,j].set_ylabel("$\mu m$")
+    plot_vectorfield(values, time, peak, label, num_arrows, dpi, pixels2um, images)
+
+    filename = fname + ".png"
+    plt.savefig(filename)
+    plt.close('all')
     
-    return magnitude, normalized, Q0, Q1, Q2, Q3, Q4, Q5, fig
 
-
-def animate_vectorfield(vectors, label, unit, pixels2um, images, fname="animation", \
-        framerate=None, extension="mp4", dpi=300, dx=3, scale=1, linscale=1):
-
-    extensions = ["gif", "mp4"]
-    msg = f"Invalid extension {extension}. Expected one of {extensions}"
-    assert extension in extensions, msg
-
-    magnitude, normalized, Q0, Q1, Q2, Q3, Q4, Q5, fig = \
-            plot2Dvalues(vectors, 0, label, unit, dx, dpi, pixels2um, scale, images, linscale)
+def animate_vectorfield(values, time, label, pixels2um, images, fname, \
+                        framerate=None, extension="mp4", dpi=300, num_arrows=3):
     
-    def update(idx):
-        Q0.set_array(images[:,:,idx])
-        Q1.set_UVC(vectors[idx, ::dx, ::dx, 1], \
-                -vectors[idx, ::dx, ::dx, 0])
-        Q2.set_UVC(normalized[idx, ::dx, ::dx, 1], \
-                -normalized[idx, ::dx, ::dx, 0])
-        Q3.set_data(magnitude[idx, :, :, 0])
-        Q4.set_data(vectors[idx, :, :, 0])
-        Q5.set_data(vectors[idx, :, :, 1])
+    num_dims = values.shape[3:] 
+    assert num_dims == (2,), "Error: T x X x Y x 2 numpy array expected as first argument."
+    
+    fig, update = plot_vectorfield(values, time, 0, label, num_arrows, dpi, pixels2um, images)
 
-        plt.suptitle(f"Time step {idx}")
-
-
-    # Set up formatting for the movie files
     if extension == "mp4":
         Writer = animation.writers["ffmpeg"]
     else:
         Writer = animation.writers["imagemagick"]
     writer = Writer(fps=framerate)
 
-    N = vectors.shape[0]
+    N = values.shape[0]
     anim = animation.FuncAnimation(fig, update, N)
 
     fname = os.path.splitext(fname)[0]
-    anim.save(f"{fname}.{extension}", writer=writer)
+    anim.save("{}.{}".format(fname, extension), writer=writer)
+    plt.close('all')
+    
 
 
-def plot_at_peak(vectors, label, unit, pixels2um, images, fname="vector_fields", \
-        extension="png", dpi=600, dx=3, scale=1, linscale=1):
+def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
+        images, framerate, animate):
+    num_dims = values.shape[3:] 
+    if num_dims != (2,):
+        return
+     
+    fname = os.path.join(output_folder, f"vectorfield_{key}")
+    plot_vectorfield_at_peak(values, time, label, pixels2um, \
+                    images, fname)
 
-    D = vectors.shape[-1]
-    peak = np.argmax(calc_norm_over_time(vectors))
+    if animate:
+        print("Making a movie ..")
+        animate_vectorfield(values, time, label, pixels2um, \
+                    images, fname, framerate=framerate)
+    
+    
 
-    if D==2:
-        plot2Dvalues(vectors, peak, label, unit, dx, dpi, pixels2um, scale, images, linscale)
-        filename = fname + "." + extension
-        plt.savefig(filename)
-
-def visualize_vectorfield(f_in, layers, framerate_scale=1, save_data=True):
+def visualize_vectorfield(f_in, scaling_factor, animate=False, overwrite=False, save_data=True):
     """
 
     Visualize fields - "main function"
 
     """
-    layers = layers.split(" ")
-
+    
     mt_data = mps.MPS(f_in)
     pixels2um = mt_data.info["um_per_pixel"]
+    images = mt_data.data.frames
+    framerate = mt_data.framerate
 
-    for layer in layers:
-        layer_fn = eval(layer)
+    output_folder = make_dir_layer_structure(f_in, \
+            os.path.join("mpsmechanics", "visualize_vectorfield"))
+    os.makedirs(output_folder, exist_ok=True)
     
-        output_folder = os.path.join(\
-                make_dir_layer_structure(f_in, \
-                "visualize_vectorfield"), layer)
-        make_dir_structure(output_folder)
+    mc_data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)
 
-        data = read_prev_layer(f_in, layer, layer_fn, save_data)
+    time = mc_data["time"]
 
-        linscales = {"displacement" : 0.5*np.max(data["all_values"]["displacement"]), \
-                      "principal strain" : 0.001*np.max(data["all_values"]["principal strain"]), \
-                      "velocity" : 0.25*np.max(data["all_values"]["velocity"])}
+    for key in mc_data["all_values"].keys():
+        print("Plots for " + key + " ...")
+        label = key.capitalize() + "({})".format(mc_data["units"][key])
+        label.replace("_", " ")
 
-        scales = {"displacement" : 6E-4, \
-                      "principal strain" : 2E-4, \
-                      "velocity" : 1E-5}
+        values = mc_data["all_values"][key]
 
-        for key in data["all_values"].keys():
-            if data["all_values"][key].shape[-1] != 2:
-                continue
+        _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
+                images, scaling_factor*framerate, animate)
 
-            unit = data["units"][key]
-            print("Plots for " + key + " ...")
-            plot_at_peak(data["all_values"][key], key, unit, pixels2um, mt_data.data.frames, \
-                    fname=os.path.join(output_folder, "vectorfield_" + key),
-                    scale=scales[key], linscale=linscales[key])
+    print("Visualization done, finishing ..")
 
-            animate_vectorfield(data["all_values"][key], key, unit, pixels2um, \
-                    mt_data.data.frames, framerate=framerate_scale*mt_data.framerate, \
-                    fname=os.path.join(output_folder, "vectorfield_" + key),\
-                    scale=scales[key], linscale=linscales[key])

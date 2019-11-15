@@ -21,7 +21,7 @@ def cl_parser(args):
     channel = "BF"
 
     mc.add_default_parser_arguments(parser, channel)
-    mc.add_animation_parser_arguments(parser, 1)
+    mc.add_animation_parser_arguments(parser, 0.2)
     mc.add_parameters_parser_arguments(parser)
 
     vargs = vars(parser.parse_args())
@@ -37,11 +37,11 @@ if __name__ == "__main__":
 
     for input_file in input_files:
         if debug_mode:
-            mc.visualize_vectorfield(input_file, **config_options)
+            mc.visualize_mechanics(input_file, **config_options)
         else:
             try:
-                mc.visualize_vectorfield(input_file, **config_options)
+                mc.visualize_mechanics(input_file, **config_options)
             except Exception as e:
-                print(f"Could not visualize vectorfield; error msg: {e}")
+                print(f"Could not visualize mechanics; error msg: {e}")
                 if input_files is not input_files[-1]:
                     print("Launching script for next file ...")

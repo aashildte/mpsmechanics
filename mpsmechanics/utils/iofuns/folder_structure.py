@@ -46,21 +46,6 @@ def make_dir_layer_structure(f_in, layer):
     path, filename, _ = get_input_properties(f_in)
     output_folder = os.path.join(path, \
             os.path.join(filename, layer))
-    make_dir_structure(output_folder)
+    os.makedirs(output_folder, exist_ok=True)
 
     return output_folder
-
-
-def make_dir_structure(path):
-    """
-
-    Makes a directory structure based on a given path; for every
-    directory specified it's created unless it already exists.
-
-    Arguments:
-        path
-
-    """
-
-    if not os.path.exists(path):
-        os.makedirs(path)

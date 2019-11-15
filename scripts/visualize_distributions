@@ -15,6 +15,7 @@ import os
 import sys
 from argparse import ArgumentParser
 
+
 def cl_parser(args):
 
     parser = ArgumentParser()
@@ -28,20 +29,23 @@ def cl_parser(args):
     input_files = mc.get_input_files(vargs.pop("input_files", None), channel)
     debug_mode = vargs.pop("debug_mode", None)
 
+    print(vargs)
+
     return input_files, debug_mode, vargs
 
 
 if __name__ == "__main__":
 
-    input_files, debug_mode, config_options = cl_parser(sys.argv[1:])
+    input_files, debug_mode, vargs = cl_parser(sys.argv[1:])
 
-    for input_file in input_files:
+    for f in input_files:
         if debug_mode:
-            mc.visualize_vectorfield(input_file, **config_options)
+            mc.visualize_distributions(f, **vargs)
         else:
             try:
-                mc.visualize_vectorfield(input_file, **config_options)
+                mc.visualize_distributions(f, **vargs)
+
             except Exception as e:
-                print(f"Could not visualize vectorfield; error msg: {e}")
+                print(f"Could not visualize distributions; error msg: {e}")
                 if input_files is not input_files[-1]:
                     print("Launching script for next file ...")

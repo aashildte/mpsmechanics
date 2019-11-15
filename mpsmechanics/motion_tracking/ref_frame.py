@@ -131,15 +131,13 @@ def calculate_minmax(frames):
     """
 
     norm = calc_norm_over_time(frames)
+     
     min_index = np.argmax(norm)
     min_norm = norm[min_index]
     mean_norm = np.mean(norm)
     if (min_norm - mean_norm) > mean_norm:
-        print("Mirror ...")
-        print("Reference: ", min_index)
         frames_shifted = convert_disp_data(frames, min_index)
         norm = calc_norm_over_time(frames_shifted)
         min_index = np.argmax(norm)
-        print("Reference: ", min_index)
     
     return min_index

@@ -3,12 +3,32 @@
 import sys
 import mpsmechanics as mc
 
+from argparse import ArgumentParser
+
+from mpsmechanics import add_default_parser_arguments
+
+
+def cl_parser(args):
+
+    parser = ArgumentParser()
+    add_default_parser_arguments(parser, "BF")
+    args = parser.parse_args()
+
+    input_files = mc.get_input_files(args.input_files)
+
+    return input_files, args.debug_mode, args.overwrite
+
 if __name__ == "__main__":
-    input_files = sys.argv[1:]
+    input_files, debug_mode, overwrite = cl_parser(sys.argv[1:])
 
     for f in input_files:
-        try:
-            motion = mc.track_motion(f)
-        except Exception as e:
-            print("Could not run motion tracking; error ", e)
-            print("Launching next data set ..")
+        if debug_mode:
+            mc.track_motion(f, overwrite=overwrite)
+        else:
+            try:
+                mc.track_motion(f, overwrite=overwrite)
+            
+            except Exception as e:
+                print(f"Could not run track_motion; error msg: {e}")
+                if f is not input_files[-1]:
+                    print("Launching script for next file ...")

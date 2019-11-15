@@ -272,6 +272,7 @@ def plot_block_matching_double_circle():
         plt.show()
 
 
+@pytest.mark.parametrize("block_size, dx, dy, r", block_matching_cases)
 def test_block_matching_single_circle(block_size, dx, dy, r):
 
     x_start = 200
@@ -658,7 +659,7 @@ def plot_template_matching():
         exit()
 
 
-@pytest.mark.parametrize("block_size, dx, dy, r", block_matching_cases)
+# @pytest.mark.parametrize("block_size, dx, dy, r", block_matching_cases)
 def _test_velocities(block_size, dx, dy, r):
 
     plot = True
@@ -922,62 +923,6 @@ def sample_data(
     )
 
 
-def test_save_cache():
-
-    block_size = 8
-    dx = 10
-    dy = 10
-    r = 10
-    x_start = 200
-    x_end = x_start + dx
-    y_start = 250
-    y_end = y_start + dy
-
-    Nx = 500
-    Ny = 500
-    N = 10
-    mps_data = sample_data(
-        x_start=x_start,
-        x_end=x_end,
-        y_start=y_start,
-        y_end=y_end,
-        r=r,
-        N=N,
-        Nx=Nx,
-        Ny=Ny,
-    )
-
-    max_block_movement = max(dx, dy)
-    delay = 1
-    motion = mc.MotionTracking(
-        mps_data,
-        delay=delay,
-        block_size=block_size,
-        max_block_movement=max_block_movement,
-        use_cache=True,
-        reset_cache=True,
-        filter_kernel_size=8,
-    )
-
-    for attr in motion._arrays:
-        getattr(motion, attr)
-
-    new_motion = mc.MotionTracking(
-        mps_data,
-        delay=delay,
-        block_size=block_size,
-        max_block_movement=max_block_movement,
-        use_cache=True,
-    )
-
-    for attr in motion._arrays:
-        print(attr)
-        assert (
-            np.max(np.abs(getattr(new_motion, f"_{attr}") - getattr(motion, attr)))
-            < 1e-13
-        )
-
-
 def test_integration():
 
     mps_data = sample_data()
@@ -986,7 +931,6 @@ def test_integration():
         delay=10,
         max_block_movement=50,
         block_size=8,
-        use_cache=False,
         serial=True,
         filter_kernel_size=0,
     )
@@ -998,7 +942,6 @@ def test_integration():
         delay=10,
         max_block_movement=50,
         block_size=8,
-        use_cache=False,
         serial=True,
         filter_kernel_size=0,
     )

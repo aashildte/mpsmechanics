@@ -1,2 +1,1 @@
-
-from .motion_tracking import block_matching, MotionTracking
+from .motion_tracking import block_matching, MotionTracking, template_matching

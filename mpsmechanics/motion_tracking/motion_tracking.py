@@ -44,11 +44,13 @@ import concurrent.futures
 from scipy import ndimage
 import scipy.stats as st
 import numpy as np
+from skimage.feature import match_template
 
 import mps
 
 from mps import utils
-from mps import plotter
+
+# from mps import plotter
 from mps import analysis
 
 from ..utils.iofuns.data_layer import save_dictionary, get_full_filename
@@ -95,6 +97,15 @@ except ImportError:
 
 def block_matching_map(args):
     vectors = block_matching(*args[:-1])
+
+    if args[-1] > 0:
+        vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], args[-1])
+        vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], args[-1])
+    return vectors
+
+
+def template_matching_map(args):
+    vectors = template_matching(*args[:-1])
 
     if args[-1] > 0:
         vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], args[-1])
@@ -189,6 +200,65 @@ def block_matching(reference_image, image, block_size, max_block_movement):
     return vectors
 
 
+def template_matching(reference_image, image, block_size, max_block_movement):
+    # Shape of the image that is returned
+    y_size, x_size = image.shape
+    shape = (y_size // block_size, x_size // block_size)
+    vectors = np.zeros((shape[0], shape[1], 2))
+    costs = np.ones((2 * max_block_movement + 1, 2 * max_block_movement + 1))
+
+    # Need to copy images to float array
+    # otherwise negative values will be converted to large 16-bit integers
+    N = 2 * max_block_movement + block_size
+    search_block = np.zeros((N, N))  # Block for reference image
+
+    block = np.zeros((block_size, block_size))  # Block for image
+
+    # Loop over each block
+    for y_block in range(shape[0]):
+        for x_block in range(shape[1]):
+
+            # Coordinates in the orignal image
+            y_image = y_block * block_size
+            x_image = x_block * block_size
+
+            block[:] = image[
+                y_image : y_image + block_size, x_image : x_image + block_size
+            ]
+
+            if np.all(block == 0):
+                # If no values in box set to no movement
+                vectors[y_block, x_block, :] = 0
+                continue
+
+            y_min = max(0, y_image - max_block_movement)
+            y_max = min(y_size, y_image + block_size + max_block_movement)
+            x_min = max(0, x_image - max_block_movement)
+            x_max = min(x_size, x_image + block_size + max_block_movement)
+
+            search_block[:] = np.nan
+            y_ref_start = y_min - y_image + max_block_movement
+            y_ref_end = N - (y_image + block_size + max_block_movement - y_max)
+            x_ref_start = x_min - x_image + max_block_movement
+            x_ref_end = N - (x_image + block_size + max_block_movement - x_max)
+
+            search_block[
+                y_ref_start:y_ref_end, x_ref_start:x_ref_end
+            ] = reference_image[y_min:y_max, x_min:x_max]
+
+            result = match_template(search_block, block)
+            dy, dx = np.where(np.abs(result - np.nanmax(result)) < 1e-5)
+            # Select the case that has the smallest displacement
+            idx = np.argmin(
+                np.linalg.norm(np.abs(max_block_movement - np.array([dx, dy])), axis=0)
+            )
+
+            vectors[y_block, x_block, 0] = max_block_movement - dy[idx]
+            vectors[y_block, x_block, 1] = max_block_movement - dx[idx]
+
+    return vectors
+
+
 def scale_to_macro_block(arr, block_size):
 
     logger.debug("Scale to macro blocks")
@@ -196,9 +266,7 @@ def scale_to_macro_block(arr, block_size):
     macro_shape = (shape[0] // block_size, shape[1] // block_size)
 
     new_arr = np.zeros(shape, dtype=np.uint16)
-    for k, l in itertools.product(
-        np.arange(macro_shape[0]), np.arange(macro_shape[1])
-    ):
+    for k, l in itertools.product(np.arange(macro_shape[0]), np.arange(macro_shape[1])):
         b = np.uint16(
             arr[
                 k * block_size : (k + 1) * block_size,
@@ -206,8 +274,7 @@ def scale_to_macro_block(arr, block_size):
             ]
         ).prod()
         new_arr[
-            k * block_size : (k + 1) * block_size,
-            l * block_size : (l + 1) * block_size,
+            k * block_size : (k + 1) * block_size, l * block_size : (l + 1) * block_size
         ] = b
     return new_arr
 
@@ -248,15 +315,11 @@ def edge_detection(im):
     logger.debug("Fill holes")
     seed = np.copy(local_edges_diamond)
     seed[1:-1, 1:-1] = 1.0
-    filled = morphology.reconstruction(
-        seed, local_edges_diamond, method="erosion"
-    )
+    filled = morphology.reconstruction(seed, local_edges_diamond, method="erosion")
     # Remove small objects that have fewer than 0.2 percent of the whole size
     min_size = int(img.shape[0] * img.shape[1] * 0.002)
     logger.debug(f"Remove objects smaller then {min_size} pixels")
-    cleaned = morphology.remove_small_objects(
-        filled.astype(bool), min_size=min_size
-    )
+    cleaned = morphology.remove_small_objects(filled.astype(bool), min_size=min_size)
 
     return cleaned
 
@@ -361,6 +424,9 @@ class MotionTracking(object):
     max_block_movement: float
         Maximum allowed movement of each block in micrometers
         Default 3 micrometers.
+    matching_method : str
+        Method used for block matching. Choices "block_matching" (deafult) or
+        "template_matching" 
     """
 
     _arrays = ["velocity_vectors", "displacement_vectors"]
@@ -375,6 +441,7 @@ class MotionTracking(object):
         outdir=None,
         serial=False,
         filter_kernel_size=8,
+        matching_method="block_matching",
         loglevel=logging.INFO,
     ):
 
@@ -384,12 +451,16 @@ class MotionTracking(object):
         self.block_size_microns = block_size
         self.block_size = int(block_size / data.info["um_per_pixel"])
         self.max_block_movement_microns = max_block_movement
-        self.max_block_movement = int(
-            max_block_movement / data.info["um_per_pixel"]
-        )
+        self.max_block_movement = int(max_block_movement / data.info["um_per_pixel"])
         self.serial = serial
         self.reference_frame = reference_frame
         self.filter_kernel_size = filter_kernel_size
+
+        self.matching_map = (
+            block_matching_map
+            if matching_method == "block_matching"
+            else template_matching_map
+        )
 
         logger.info(
             (
@@ -440,7 +511,6 @@ class MotionTracking(object):
             ).encode("utf-8")
         ).hexdigest()
 
-    
     def _init_arrays(self):
 
         self.computed = dict(
@@ -457,17 +527,13 @@ class MotionTracking(object):
             for i in range(self.N):
                 yield (
                     self.data.frames[: self.shape[0], : self.shape[1], i],
-                    self.data.frames[
-                        : self.shape[0], : self.shape[1], i + self.delay
-                    ],
+                    self.data.frames[: self.shape[0], : self.shape[1], i + self.delay],
                     self.block_size,
                     self.max_block_movement,
                     self.filter_kernel_size,
                 )
 
         return gen()
-
-
 
     def _get_displacements_iter(self):
         """
@@ -515,8 +581,7 @@ class MotionTracking(object):
         logger.info("Run edge detection")
 
         self._edges = np.zeros(
-            (self.shape[0], self.shape[1], self.data.num_frames),
-            dtype=np.uint16,
+            (self.shape[0], self.shape[1], self.data.num_frames), dtype=np.uint16
         )
 
         iterable = (
@@ -534,17 +599,11 @@ class MotionTracking(object):
             with concurrent.futures.ProcessPoolExecutor() as executor:
                 for i, e in enumerate(executor.map(edge_detection, iterable)):
                     if i % 50 == 0:
-                        logger.info(
-                            f"Processing frame {i}/{self.data.num_frames}"
-                        )
-                    self._edges[:, :, i] = scale_to_macro_block(
-                        e, self.block_size
-                    )
+                        logger.info(f"Processing frame {i}/{self.data.num_frames}")
+                    self._edges[:, :, i] = scale_to_macro_block(e, self.block_size)
 
         t1 = time.time()
-        logger.info(
-            f"Done with edge detection - Elapsed time = {t1-t0:.2f} seconds"
-        )
+        logger.info(f"Done with edge detection - Elapsed time = {t1-t0:.2f} seconds")
         self.computed["edges"] = True
 
     def _get_velocities(self):
@@ -557,25 +616,21 @@ class MotionTracking(object):
         iterable = self._get_velocities_iter
         t0 = time.time()
         if self.serial:
-            for i, v in enumerate(map(block_matching_map, iterable)):
+            for i, v in enumerate(map(self.matching_map, iterable)):
                 if i % 50 == 0:
                     logger.info(f"Processing frame {i}/{self.N}")
                 self._velocity_vectors[:, :, :, i] = v
 
         else:
             with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, v in enumerate(
-                    executor.map(block_matching_map, iterable)
-                ):
+                for i, v in enumerate(executor.map(self.matching_map, iterable)):
 
                     if i % 50 == 0:
                         logger.info(f"Processing frame {i}/{self.N}")
                     self._velocity_vectors[:, :, :, i] = v
 
         t1 = time.time()
-        logger.info(
-            f"Done getting velocities - Elapsed time = {t1-t0:.2f} seconds"
-        )
+        logger.info(f"Done getting velocities - Elapsed time = {t1-t0:.2f} seconds")
         self.computed["velocities"] = True
 
     def _get_displacements(self):
@@ -588,32 +643,23 @@ class MotionTracking(object):
         iterable = self._get_displacements_iter()
         t0 = time.time()
         if self.serial:
-            for i, v in enumerate(map(block_matching_map, iterable)):
+            for i, v in enumerate(map(self.matching_map, iterable)):
                 if i % 50 == 0:
-                    logger.info(
-                        f"Processing frame {i}/{self.data.num_frames - 1}"
-                    )
+                    logger.info(f"Processing frame {i}/{self.data.num_frames - 1}")
                     self._displacement_vectors[:, :, :, i] = v
         else:
             with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, v in enumerate(
-                    executor.map(block_matching_map, iterable)
-                ):
+                for i, v in enumerate(executor.map(self.matching_map, iterable)):
                     if i % 50 == 0:
-                        logger.info(
-                            f"Processing frame {i}/{self.data.num_frames - 1}"
-                        )
+                        logger.info(f"Processing frame {i}/{self.data.num_frames - 1}")
                     self._displacement_vectors[:, :, :, i] = v
 
         t1 = time.time()
         logger.info(
-            (
-                "Done getting displacements "
-                f" - Elapsed time = {t1-t0:.2f} seconds"
-            )
+            ("Done getting displacements " f" - Elapsed time = {t1-t0:.2f} seconds")
         )
         self.computed["displacements"] = True
-    
+
     def _get_angle(self):
         """
         
@@ -622,7 +668,7 @@ class MotionTracking(object):
         
         """
 
-        disp = self.displacement_vectors 
+        disp = self.displacement_vectors
         T = disp.shape[-1]
 
         xs, ys = [], []
@@ -637,13 +683,13 @@ class MotionTracking(object):
             slope = 0
         else:
             slope = st.linregress(xs, ys)[0]
-        
+
         self._angle = np.arctan(slope)
         self.computed["angle"] = True
 
     @property
     def angle(self):
-        if (True or not self.has_results("angle")):
+        if True or not self.has_results("angle"):
             self._get_angle()
         return np.copy(self._angle)
 
@@ -720,7 +766,6 @@ class MotionTracking(object):
                 factor=1.0,
             )
         return self._displacement_data
-
 
     def plot_displacement_data(self, fname=None):
         if fname is None:
@@ -874,22 +919,21 @@ def track_motion(input_file, overwrite=False, save_data=True):
 
     """
     name = input_file[:-4]
-    
+
     result_file = "track_motion"
     filename = get_full_filename(input_file, result_file)
 
-    if (not overwrite and os.path.isfile(filename)):
+    if not overwrite and os.path.isfile(filename):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
         return
 
-    np.seterr(invalid='ignore')
+    np.seterr(invalid="ignore")
     mt_data = mps.MPS(input_file)
- 
-    assert mt_data.num_frames != 1, \
-        "Error: Single frame used as input"
-    
-    scaling_factor = mt_data.info['um_per_pixel']
-    block_size=3     # um
+
+    assert mt_data.num_frames != 1, "Error: Single frame used as input"
+
+    scaling_factor = mt_data.info["um_per_pixel"]
+    block_size = 3  # um
     motion = MotionTracking(mt_data, block_size=block_size, reference_frame="median")
 
     # get right reference frame
@@ -899,8 +943,7 @@ def track_motion(input_file, overwrite=False, save_data=True):
 
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
 
-    data_disp = np.swapaxes(np.swapaxes(np.swapaxes(\
-            data_disp, 0, 1), 0, 2), 0, 3)
+    data_disp = np.swapaxes(np.swapaxes(np.swapaxes(data_disp, 0, 1), 0, 2), 0, 3)
 
     # save values
 
@@ -911,7 +954,7 @@ def track_motion(input_file, overwrite=False, save_data=True):
 
     print("Motion tracking done.")
 
-    if(save_data):
+    if save_data:
         save_dictionary(input_file, result_file, d_all)
 
     return d_all

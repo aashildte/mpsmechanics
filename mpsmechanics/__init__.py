@@ -17,6 +17,7 @@ from .dothemaths import (
     calc_beatrate,
     calc_deformation_tensor,
     calc_gl_strain_tensor,
+    calc_gradients,
     calc_magnitude,
     calc_norm_over_time,
     calc_principal_strain,
@@ -36,7 +37,7 @@ from .motion_tracking.motion_tracking import (
         MotionTracking,
 )
 
-from .motion_tracking.restore_resolution import refine
+from .motion_tracking.restore_resolution import apply_filter
 
 from .pillar_tracking.pillar_tracking import (
         track_pillars,

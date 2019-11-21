@@ -28,6 +28,7 @@ from .operations import (
 )
 
 from .mechanical_quantities import (
+    calc_gradients,
     calc_deformation_tensor,
     calc_gl_strain_tensor,
     calc_principal_strain,

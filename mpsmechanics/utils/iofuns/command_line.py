@@ -91,4 +91,10 @@ def add_animation_parser_arguments(parser, default_scaling_factor):
             type=float)
 
 def add_parameters_parser_arguments(parser):
-    pass
+    parser.add_argument("-si", "--sigma", \
+            default=0,
+            type=float)
+
+    parser.add_argument("-fi", "--type_filter", \
+            default=0,
+            type=str)

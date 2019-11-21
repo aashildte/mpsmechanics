@@ -47,7 +47,8 @@ def plot_distribution(ax, data, time, min_range, max_range):
         for y in range(Y):
             values.append(data[x, y])
 
-    bins = list(np.linspace(min_range, max_range, 30))
+    num_bins = 300
+    bins = list(np.linspace(min_range, max_range, num_bins))
 
     ax.set_xlim(min_range, max_range)
     ax.hist(values, bins=bins, color='#28349C')
@@ -205,7 +206,7 @@ def plot_at_peak(values, yscale, label, time, fname, \
     return ymax
 
 
-def visualize_distributions(f_in, scaling_factor, animate=False, overwrite=False, save_data=True):
+def visualize_distributions(f_in, scaling_factor, type_filter, sigma, animate=False, overwrite=False, save_data=True):
     """
 
     Make plots for distributions over different quantities - "main function"
@@ -218,23 +219,29 @@ def visualize_distributions(f_in, scaling_factor, animate=False, overwrite=False
     mt_data = mps.MPS(f_in)
     print("Init distributions") 
 
-    data = read_prev_layer(f_in, f"analyze_mechanics", analyze_mechanics, save_data)
+    source_file = f"analyze_mechanics_{type_filter}_{sigma}"
+    source_file = source_file.replace(".", "p")
     
+    data = read_prev_layer(f_in, source_file, analyze_mechanics, save_data)
+    yscale = "log"
     time = data["time"] 
-    for key in data["all_values"].keys():
+
+    for key in ["Green-Lagrange_strain_tensor"]:
         print("Plots for " + key + " ...")
 
         label = key.capitalize() + "({})".format(data["units"][key])
+        label = label.replace("_", " ")
 
         values = data["all_values"][key]
+ 
+        result_file = f"distribution_{key}_{type_filter}_{sigma}"
+        result_file = result_file.replace(".", "p")
+        fname = os.path.join(output_folder, result_file)
 
-        for yscale in ["log"]:    
-            fname = os.path.join(output_folder, f"distribution_{yscale}_{key}")
-            
-            ymax = plot_at_peak(values, yscale, label, time, fname)
-            
-            if animate:
-                make_animations(values, yscale, label, fname, \
-                        time, framerate=scaling_factor*mt_data.framerate, ymax=ymax)
+        ymax = plot_at_peak(values, yscale, label, time, fname)
+        
+        if animate:
+            make_animations(values, yscale, label, fname, \
+                    time, framerate=scaling_factor*mt_data.framerate, ymax=ymax)
 
     print("Distributions plotted, finishing ..")

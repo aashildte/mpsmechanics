@@ -69,7 +69,8 @@ def plt_magnitude(axis, i, scalars, vmin, vmax, cmap, scale, alpha=1):
     else:
         norm=Normalize(vmin=vmin, vmax=vmax)
 
-    return axis.imshow(scalars[i, :, :], vmin=vmin, vmax=vmax, cmap=cmap, norm=norm, alpha=alpha)
+    return axis.imshow(scalars[i, :, :], vmin=vmin, vmax=vmax, \
+            cmap=cmap, norm=norm, alpha=alpha)
 
 
 def _set_ax_units(axis, shape, scale):
@@ -96,7 +97,7 @@ def _find_arrow_scaling(values, num_arrows):
     return 1.5/(num_arrows)*np.mean(np.abs(values))
 
 
-def plot_1Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images): 
+def plot_1Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images, diag=None): 
     x, y, axes, fig = setup_frame(values, dpi, images, 1, 2)
     subplots = []
     
@@ -122,8 +123,8 @@ def plot_1Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images)
     return fig, update
 
 
-def plot_2Dvalues(values, scale_magnitude, time, time_step, label, dpi, pixels2um, images, num_arrows=3):
-    
+def plot_2Dvalues(values, scale_magnitude, time, time_step, label, dpi, pixels2um, images, diag=None, num_arrows=3):
+ 
     scale_arrows = _find_arrow_scaling(values, num_arrows)
 
     magnitude = calc_magnitude(values)
@@ -181,7 +182,7 @@ def plot_2Dvalues(values, scale_magnitude, time, time_step, label, dpi, pixels2u
     return fig, update
 
 
-def plot_4Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images):
+def plot_4Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images, diag):
     """
 
     Plots original image, eigenvalues (max.) and four components of
@@ -201,21 +202,29 @@ def plot_4Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images)
     block_size = len(x) // values.shape[1]
     scale_n = max(np.divide(values.shape[1:3], block_size))
 
-    scale_xy = np.max(np.abs(values))
-
     sg_values = np.linalg.norm(values, axis=(3, 4))
 
+    if diag:
+        scale_max_diag = max(np.max(values[:,:,:,0,0]), np.max(values[:,:,:,1,1]))
+        scale_min_diag = min(np.min(values[:,:,:,0,0]), np.min(values[:,:,:,1,1]))
+        scale_max_crossdiag = max(np.max(np.abs(values[:,:,:,0,1])), np.max(np.abs(values[:,:,:,1,0])))
+        scale_min_crossdiag = -scale_max_crossdiag
+    
+    else:
+        scale_max_diag = scale_max_crossdiag = np.max(np.abs(values))
+        scale_min_diag = scale_min_crossdiag = -scale_max_diag
+    
     subplots = [axes[0].imshow(images[:, :, time_step], cmap=cm.gray),
                 plt_magnitude(axes[1], time_step, values[:,:,:,0,0], \
-                    -scale_xy, scale_xy, "bwr", scale),
+                    scale_min_diag, scale_max_diag, "bwr", scale),
                 plt_magnitude(axes[2], time_step, values[:,:,:,0,1], \
-                    -scale_xy, scale_xy, "bwr", scale),
+                    scale_min_crossdiag, scale_max_crossdiag, "bwr", scale),
                 plt_magnitude(axes[3], time_step, sg_values, \
-                        0, scale_xy, "viridis", scale),
+                        np.min(sg_values), np.max(sg_values), "viridis", scale),
                 plt_magnitude(axes[4], time_step, values[:,:,:,1,0], \
-                    -scale_xy, scale_xy, "bwr", scale),
+                    scale_min_crossdiag, scale_max_crossdiag, "bwr", scale),
                 plt_magnitude(axes[5], time_step, values[:,:,:,1,1], \
-                    -scale_xy, scale_xy, "bwr", scale)]
+                    scale_min_diag, scale_max_diag, "bwr", scale)]
 
     for i in [1, 2, 3, 4, 5]:
         cb = fig.colorbar(subplots[i], ax=axes[i])
@@ -247,7 +256,7 @@ def plot_4Dvalues(values, scale, time, time_step, label, dpi, pixels2um, images)
     return fig, update
 
 
-def animate_decomposition(values, time, scale_magnitude, label, pixels2um, images, fname, \
+def animate_decomposition(values, time, scale_magnitude, label, pixels2um, images, fname, diag, \
         framerate=None, extension="mp4", dpi=300, num_arrows=3):
 
     plot_fn = get_plot_fn(values)
@@ -257,7 +266,7 @@ def animate_decomposition(values, time, scale_magnitude, label, pixels2um, image
     assert extension in extensions, msg
 
     fig, update = plot_fn(values, scale_magnitude, time, 0, label, dpi, \
-                        pixels2um, images)
+                        pixels2um, images, diag)
 
     # Set up formatting for the movie files
     if extension == "mp4":
@@ -290,12 +299,12 @@ def get_plot_fn(values):
     print("Error: shape of {} not recognized.".format(num_dims))
 
 
-def plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, images, fname, \
+def plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, images, fname, diag, \
         extension="png", dpi=600, num_arrows=3):
 
     peak = np.argmax(calc_norm_over_time(values))
     plot_fn = get_plot_fn(values)
-    plot_fn(values, scale_magnitude, time, peak, label, dpi, pixels2um, images)
+    plot_fn(values, scale_magnitude, time, peak, label, dpi, pixels2um, images, diag)
 
     filename = fname + "." + extension
     plt.savefig(filename)
@@ -304,21 +313,21 @@ def plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, 
 
     
 def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate):
+        images, framerate, animate, fname):
 
-    for scale_magnitude in ["logscale", "linear"]:
-        fname = os.path.join(output_folder, f"spatial_{scale_magnitude}_{key}")
+    for scale_magnitude in ["linear"]:
+        fname += f"_{scale_magnitude}"
         plot_decomposition_at_peak(values, time, scale_magnitude, label, pixels2um, images, \
-                        fname)
+                        fname, key=="deformation_tensor")
         
         if animate:
             print("Making a movie ..")
             
             animate_decomposition(values, time, scale_magnitude, label, pixels2um, \
-                        images, fname, framerate=framerate) 
+                        images, fname, key=="deformation_tensor", framerate=framerate)
 
 
-def visualize_mechanics(f_in, scaling_factor, animate=False, overwrite=False, save_data=True):
+def visualize_mechanics(f_in, scaling_factor, type_filter, sigma, animate=False, overwrite=False, save_data=True):
     """
 
     Visualize fields in separate quiver / heatmap plots - "main function"
@@ -334,19 +343,28 @@ def visualize_mechanics(f_in, scaling_factor, animate=False, overwrite=False, sa
             os.path.join("mpsmechanics", "visualize_vectorfield"))
     os.makedirs(output_folder, exist_ok=True)
     
-    mc_data = read_prev_layer(f_in, "analyze_mechanics", analyze_mechanics, save_data)
+    source_file = f"analyze_mechanics_{type_filter}_{sigma}"
+    source_file = source_file.replace(".", "p")
+    
+    mc_data = read_prev_layer(f_in, source_file, analyze_mechanics, save_data)
+    
 
     time = mc_data["time"]
-
-    for key in mc_data["all_values"].keys():
+ 
+    for key in ["Green-Lagrange_strain_tensor"]:
         print("Plots for " + key + " ...")
+    
+        result_file = f"spatial_{key}_{type_filter}_{sigma}"
+        result_file = result_file.replace(".", "p")
+        fname = os.path.join(output_folder, result_file)
+
         label = key.capitalize() + "({})".format(mc_data["units"][key])
-        label.replace("_", " ")
+        label = label.replace("_", " ")
 
         values = mc_data["all_values"][key]
 
         _make_decomposition_plots(values, time, key, label, output_folder, pixels2um, \
-                images, scaling_factor*framerate, animate)
+                images, scaling_factor*framerate, animate, fname)
 
     print("Visualization done, finishing ..")
 

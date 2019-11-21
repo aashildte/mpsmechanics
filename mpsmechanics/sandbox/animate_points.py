@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib import animation
+import matplotlib.colors as mcolors
 
 import mpsmechanics as mc
 
@@ -13,7 +14,7 @@ import mpsmechanics as mc
 def get_xy_coords(xy_list, index, x_range, y_range, displacement, offset_x, offset_y):
     x_coords = []
     y_coords = []
-
+     
     for (x, y) in xy_list:
         coord_indices = (index, x, y)
         x_ind = coord_indices + (0,)
@@ -31,31 +32,32 @@ def get_midpoint(use_max_strain_pt, pr_strain, im_x, im_y, offset):
     else:
         org_indices = (0, im_x, im_y)
 
-    x_i = org_indices[1] + im_x
-    y_i = org_indices[2] + im_y
-
-    return x_i, y_i
+    return org_indices[1:]
 
 
-def get_5pt_stensil(x_i, y_i, X, Y):
-    xy_list = [(x_i, y_i)]
+def get_diamond_stensil(x_i, y_i, X, Y):
+    xy_list = []
 
-    if y_i > 0:
-        xy_list.append((x_i, y_i-1))
-    if x_i > 0:
-        xy_list.append((x_i-1, y_i))
-    if y_i < Y - 1:
-        xy_list.append((x_i, y_i+1))
-    if x_i < X-1:
-        xy_list.append((x_i+1, y_i))
+    distance = 10
 
+    for g_x in range(-distance, distance+1, 2):
+        for g_y in range(-distance, distance+1, 2):
+            if abs(g_x) + abs(g_y) < distance:
+                x = x_i + g_x
+                y = y_i + g_y
+
+                if(x >= 0 and x < X and y >= 0 and y < Y):
+                    xy_list.append((x, y))
+    
     return xy_list
 
 
 def get_frame(x_range, y_range, x_i, y_i, offset=0):
 
+
     x_max = x_range[-1]
     y_max = y_range[-1]
+
 
     if offset != 0:
         x_from, y_from = x_range[x_i] - offset, y_range[y_i] - offset
@@ -64,22 +66,19 @@ def get_frame(x_range, y_range, x_i, y_i, offset=0):
         if x_from < 0:
             diff = -x_from
             x_from += diff
-            x_to += diff
-
-        if x_from < 0:
+        
+        if y_from < 0:
             diff = -y_from
             y_from += diff
-            y_to += diff
 
         if x_to > x_max:
             diff = x_from - x_max
             x_from -= diff
-            x_to -= diff
 
         if y_to > y_max:
             diff = y_from - y_max
             y_from -= diff
-            y_to -= diff
+
     else:
         offset = 0
         x_from, y_from = 0, 0
@@ -88,14 +87,14 @@ def get_frame(x_range, y_range, x_i, y_i, offset=0):
     return int(x_from), int(x_to), int(y_from), int(y_to)
 
 
-def get_filename(input_file, use_max_strain_pt, im_x, im_y):
+def get_filename(input_file, use_max_strain_pt, im_x, im_y, type_filter, sigma):
     folder = os.path.join(input_file[:-4], "mpsmechanics", "point_animation")
     os.makedirs(folder, exist_ok=True)
 
     if use_max_strain_pt:
-        fname = os.path.join(folder, "point_animation_max_strain.png")
+        fname = os.path.join(folder, f"point_animation_{type_filter}_{sigma}_max_strain.png")
     else:
-        fname = os.path.join(folder, f"point_animation_{im_x}_{im_y}")
+        fname = os.path.join(folder, f"point_animation_{type_filter}_{sigma}_{im_x}_{im_y}")
 
     return fname
 
@@ -112,11 +111,12 @@ def get_mps_data(input_file):
     return pixels2um, images, framerate, x_max, y_max
 
 
-def get_mpsmechanics_data(input_file):
-    file_pref = input_file[:-4]
-    
+def get_mpsmechanics_data(input_file, type_filter, sigma):
+    source_file = f"analyze_mechanics_{type_filter}_{sigma}"
+    source_file = source_file.replace(".", "p")
+
     mc_data = mc.read_prev_layer(input_file, \
-                "analyze_mechanics", mc.analyze_mechanics)
+                source_file, mc.analyze_mechanics)
 
     time = mc_data["time"]
     displacement = mc_data["all_values"]["displacement"]
@@ -126,13 +126,12 @@ def get_mpsmechanics_data(input_file):
 
 
 
-def animate_points(input_file, use_max_strain_pt=True, im_x=0, im_y=0, offset=100):
-
+def animate_points(input_file, type_filter, sigma, use_max_strain_pt=True, im_x=0, im_y=0, offset=100):
     # read from files
 
-    fname = get_filename(input_file, use_max_strain_pt, im_x, im_y)
+    fname = get_filename(input_file, use_max_strain_pt, im_x, im_y, type_filter, sigma)
     pixels2um, images, framerate, x_max, y_max = get_mps_data(input_file)
-    time, displacement, pr_strain = get_mpsmechanics_data(input_file)
+    time, displacement, pr_strain = get_mpsmechanics_data(input_file, type_filter, sigma)
 
     displacement /= pixels2um    # scale to be in pixel units
 
@@ -142,13 +141,12 @@ def animate_points(input_file, use_max_strain_pt=True, im_x=0, im_y=0, offset=10
 
     x_range = np.linspace(0, x_max, X)
     y_range = np.linspace(0, y_max, Y)
-
+    
     x_i, y_i = get_midpoint(use_max_strain_pt, pr_strain, im_x, im_y, offset)
     x_from, x_to, y_from, y_to = get_frame(x_range, y_range, x_i, y_i, offset)
 
-    xy_list = get_5pt_stensil(x_i, y_i, X, Y)
-    clm = cm.get_cmap('Wistia')
-    colors = [clm(0.2*x) for x in range(len(xy_list))]
+    xy_list = get_diamond_stensil(x_i, y_i, X, Y)
+
 
     x_coords, y_coords = get_xy_coords(xy_list, 0, x_range, y_range, \
             displacement, x_from, y_from)
@@ -156,19 +154,31 @@ def animate_points(input_file, use_max_strain_pt=True, im_x=0, im_y=0, offset=10
     # init animation
 
     fig, axis = plt.subplots(figsize=(5, 5), dpi=300)
-    axis.axis('off')
+    #axis.axis('off')
     
-    im_subplot = axis.imshow(images[x_from:x_to, y_from:y_to, 0], \
-            cmap=cm.get_cmap('gray'))
-    pts_subplot = axis.scatter(y_coords, x_coords, c=colors)
+    vmin = np.min(pr_strain)
+    vmax = np.max(pr_strain)
+     
+    clm = cm.get_cmap('Reds')
+    norm = mcolors.Normalize(0, 0.3)
+    colors = [clm(norm(pr_strain[0, x, y])) for (x, y) in (xy_list)]
+ 
+    im_subplot = axis.imshow(images[x_from:x_to, y_from:y_to, 0], cmap='gray')
+    pts_subplot = axis.scatter(y_coords, x_coords, c=colors, s=2)
+
+    cbar = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=clm), ticks=[0, 0.1, 0.2, 0.3])
+    cbar.ax.set_yticklabels(['0', '0.1', '0.2', '> 0.3'])
+    cbar.set_label("Principal strain (magnitude)")
 
     plt.suptitle("Time: {} ms".format(int(time[0])))
 
     def update(index):
+        colors = [clm(norm(pr_strain[index, x, y])) for (x, y) in (xy_list)]
         x_coords, y_coords = get_xy_coords(xy_list, index, x_range, y_range, \
-                displacement, x_from, y_from, pixels2um)
+                displacement, x_from, y_from)
         im_subplot.set_array(images[x_from:x_to, y_from:y_to, index])
         pts_subplot.set_offsets(np.c_[y_coords, x_coords])
+        pts_subplot.set_color(colors)
 
         plt.suptitle("Time: {} ms".format(int(time[index])))
 
@@ -177,24 +187,28 @@ def animate_points(input_file, use_max_strain_pt=True, im_x=0, im_y=0, offset=10
     writer = animation.writers["ffmpeg"](fps=framerate)
     anim = animation.FuncAnimation(fig, update, T)
 
+    fname = fname.replace(".", "p")
     fname = os.path.splitext(fname)[0]
+
     anim.save("{}.{}".format(fname, "mp4"), writer=writer)
 
     plt.close()
 
 
-def animate_max_strain(input_file):
-    animate_points(input_file)
+def animate_max_strain(input_file, type_filter, sigma):
+    animate_points(input_file, type_filter, sigma)
 
-def animate_uniform_pts(input_file):
-    # Vet ikke om dette er beste fordeling?
+def animate_given_pts(input_file, type_filter, sigma):
 
-    for im_x in range(35, 200, 40):
-        for im_y in range(25, 55, 4):
-            animate_points(input_file, im_x=im_x, im_y=im_y, use_max_strain_pt=False)
+    points = [(77, 27)] # MM 4
+    for (im_x, im_y) in points:
+        animate_points(input_file, type_filter, sigma, im_x=im_x, im_y=im_y, use_max_strain_pt=False)
+
 
 input_file = sys.argv[1]
+type_filter = sys.argv[2]
+sigma = float(sys.argv[3])
 assert ".nd2" in input_file and "BF" in input_file, "Error: Wrong file formate."
 
-animate_max_strain(input_file)
-animate_uniform_pts(input_file)
+#animate_max_strain(input_file, type_filter, sigma)
+animate_given_pts(input_file, type_filter, sigma)

@@ -215,7 +215,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     return beatrate_spatial, beatrate_avg, beatrate_std, data
 
 
-def analyze_mechanics(input_file, overwrite, type_filter, sigma, save_data=True):
+def analyze_mechanics(input_file, overwrite, matching_method, block_size, type_filter, sigma, save_data=True):
     """
 
     Args:
@@ -227,9 +227,7 @@ def analyze_mechanics(input_file, overwrite, type_filter, sigma, save_data=True)
 
     """
 
-    result_file = f"analyze_mechanics_{type_filter}_{sigma}"
-    result_file = result_file.replace(".", "p")
-
+    result_file = f"analyze_mechanics_{matching_method}_{block_size}_{type_filter}_{sigma}"
     filename = get_full_filename(input_file, result_file)
 
     if (not overwrite and os.path.isfile(filename)):
@@ -238,8 +236,9 @@ def analyze_mechanics(input_file, overwrite, type_filter, sigma, save_data=True)
 
     data = read_prev_layer(
         input_file,
-        "track_motion",
+        f"track_motion_{matching_method}_{block_size}",
         track_motion,
+        {"matching_method" : matching_method, "block_size" : block_size},
         save_data=save_data
     )
     mt_data = mps.MPS(input_file)

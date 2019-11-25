@@ -206,7 +206,7 @@ def plot_at_peak(values, yscale, label, time, fname, \
     return ymax
 
 
-def visualize_distributions(f_in, scaling_factor, type_filter, sigma, animate=False, overwrite=False, save_data=True):
+def visualize_distributions(f_in, scaling_factor, matching_method, block_size, type_filter, sigma, animate=False, overwrite=False, save_data=True):
     """
 
     Make plots for distributions over different quantities - "main function"
@@ -219,23 +219,24 @@ def visualize_distributions(f_in, scaling_factor, type_filter, sigma, animate=Fa
     mt_data = mps.MPS(f_in)
     print("Init distributions") 
 
-    source_file = f"analyze_mechanics_{type_filter}_{sigma}"
-    source_file = source_file.replace(".", "p")
-    
-    data = read_prev_layer(f_in, source_file, analyze_mechanics, save_data)
+    source_file = f"analyze_mechanics_{matching_method}_{block_size}_{type_filter}_{sigma}"
+    kwargs = {"matching_method" : matching_method,
+              "block_size" : block_size,
+              "type_filter" : type_filter,
+              "sigma" : sigma}
+    mc_data = read_prev_layer(f_in, source_file, analyze_mechanics, kwargs, save_data) 
     yscale = "log"
-    time = data["time"] 
+    time = mc_data["time"] 
 
     for key in ["Green-Lagrange_strain_tensor"]:
         print("Plots for " + key + " ...")
 
-        label = key.capitalize() + "({})".format(data["units"][key])
+        label = key.capitalize() + "({})".format(mc_data["units"][key])
         label = label.replace("_", " ")
 
-        values = data["all_values"][key]
+        values = mc_data["all_values"][key]
  
-        result_file = f"distribution_{key}_{type_filter}_{sigma}"
-        result_file = result_file.replace(".", "p")
+        result_file = f"distribution_{key}_{matching_method}_{block_size}_{type_filter}_{sigma}"
         fname = os.path.join(output_folder, result_file)
 
         ymax = plot_at_peak(values, yscale, label, time, fname)

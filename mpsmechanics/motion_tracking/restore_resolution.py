@@ -6,15 +6,18 @@ from mpsmechanics.dothemaths.operations import calc_norm_over_time
 
 def apply_filter(motion_data, type_filter, sigma):
 
+    assert type_filter in ("gaussian", "downsampling"), \
+            "Error_ Type filter not recognized."
+
     if type_filter=="gaussian":
-        return gaussian_filter(motion_data, [0, sigma, sigma, 0])
+        return gaussian_filter(motion_data, [0, sigma/10, sigma/10, 0])
     elif type_filter=="downsampling":
         sigma = int(sigma)
         T, X, Y, D = motion_data.shape
         X_d = X // sigma
         Y_d = Y // sigma
 
-        square = np.zeros((sigma, sigma))
+        new_data = np.zeros((T, X_d, Y_d, D))
         
         for t in range(T):
             for x in range(X_d):
@@ -23,8 +26,6 @@ def apply_filter(motion_data, type_filter, sigma):
                         avg = np.mean(motion_data[t, \
                                 (sigma*x):(sigma*(x+1)), (sigma*y):(sigma*(y+1)), d])
 
-                        for x2 in range(sigma*x, sigma*(x+1)):
-                            for y2 in range(sigma*y, sigma*(y+1)):
-                                motion_data[t, x2, y2, d] = avg
+                        new_data[t, x, y, d] = avg
 
-        return motion_data
+        return new_data

@@ -69,7 +69,7 @@ def plt_magnitude(axis, i, scalars, vmin, vmax, cmap, scale, alpha=1):
     else:
         norm=Normalize(vmin=vmin, vmax=vmax)
 
-    return axis.imshow(scalars[i, :, :], vmin=vmin, vmax=vmax, \
+    return axis.imshow(scalars[i, :, :], vmin=-0.1, vmax=0.1, \
             cmap=cmap, norm=norm, alpha=alpha)
 
 
@@ -327,7 +327,7 @@ def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um
                         images, fname, key=="deformation_tensor", framerate=framerate)
 
 
-def visualize_mechanics(f_in, scaling_factor, type_filter, sigma, animate=False, overwrite=False, save_data=True):
+def visualize_mechanics(f_in, scaling_factor, matching_method, block_size, type_filter, sigma, animate=False, overwrite=False, save_data=True):
     """
 
     Visualize fields in separate quiver / heatmap plots - "main function"
@@ -343,19 +343,19 @@ def visualize_mechanics(f_in, scaling_factor, type_filter, sigma, animate=False,
             os.path.join("mpsmechanics", "visualize_vectorfield"))
     os.makedirs(output_folder, exist_ok=True)
     
-    source_file = f"analyze_mechanics_{type_filter}_{sigma}"
-    source_file = source_file.replace(".", "p")
-    
-    mc_data = read_prev_layer(f_in, source_file, analyze_mechanics, save_data)
-    
+    source_file = f"analyze_mechanics_{matching_method}_{block_size}_{type_filter}_{sigma}"
+    kwargs = {"matching_method" : matching_method,
+              "block_size" : block_size,
+              "type_filter" : type_filter,
+              "sigma" : sigma}
+    mc_data = read_prev_layer(f_in, source_file, analyze_mechanics, kwargs, save_data) 
 
     time = mc_data["time"]
  
     for key in ["Green-Lagrange_strain_tensor"]:
         print("Plots for " + key + " ...")
     
-        result_file = f"spatial_{key}_{type_filter}_{sigma}"
-        result_file = result_file.replace(".", "p")
+        result_file = f"spatial_{key}_{matching_method}_{block_size}_{type_filter}_{sigma}"
         fname = os.path.join(output_folder, result_file)
 
         label = key.capitalize() + "({})".format(mc_data["units"][key])

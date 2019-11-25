@@ -425,7 +425,7 @@ class MotionTracking(object):
         Maximum allowed movement of each block in micrometers
         Default 3 micrometers.
     matching_method : str
-        Method used for block matching. Choices "block_matching" (deafult) or
+        Method used for block matching. Choices "block_matching" (default) or
         "template_matching" 
     """
 
@@ -906,7 +906,7 @@ class MotionTracking(object):
         )
 
 
-def track_motion(input_file, overwrite=False, save_data=True):
+def track_motion(input_file, matching_method, block_size, overwrite=False, save_data=True):
     """
 
     Args:
@@ -918,9 +918,13 @@ def track_motion(input_file, overwrite=False, save_data=True):
             mps file
 
     """
+
+    assert matching_method in ("block_matching", "template_matching"), \
+            "Error: matching method not recognized."
+
     name = input_file[:-4]
 
-    result_file = "track_motion"
+    result_file = f"track_motion_{matching_method}_{block_size}"
     filename = get_full_filename(input_file, result_file)
 
     if not overwrite and os.path.isfile(filename):
@@ -933,22 +937,21 @@ def track_motion(input_file, overwrite=False, save_data=True):
     assert mt_data.num_frames != 1, "Error: Single frame used as input"
 
     scaling_factor = mt_data.info["um_per_pixel"]
-    block_size = 3  # um
-    motion = MotionTracking(mt_data, block_size=block_size, reference_frame="median")
+    motion = MotionTracking(mt_data, block_size=block_size, \
+            matching_method=matching_method, reference_frame="median")
 
-    # get right reference frame
-
-    data_disp = motion.displacement_vectors
+    # restore original resolution, if possible??
+    ref_factor = int(block_size / mt_data.info["um_per_pixel"])
     angle = motion.angle
 
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
 
-    data_disp = np.swapaxes(np.swapaxes(np.swapaxes(data_disp, 0, 1), 0, 2), 0, 3)
+    disp_data = np.swapaxes(np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3)
 
     # save values
 
     d_all = {}
-    d_all["displacement_vectors"] = data_disp
+    d_all["displacement_vectors"] = disp_data
     d_all["angle"] = angle
     d_all["block_size"] = int(block_size / mt_data.info["um_per_pixel"])
 

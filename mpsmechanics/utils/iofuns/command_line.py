@@ -90,11 +90,22 @@ def add_animation_parser_arguments(parser, default_scaling_factor):
             help="Scaling factor for fps; 1 = real time, 0.5 half speed",
             type=float)
 
-def add_parameters_parser_arguments(parser):
-    parser.add_argument("-si", "--sigma", \
-            default=0,
-            type=float)
+def add_parameters_parser_arguments(parser, level):
 
-    parser.add_argument("-fi", "--type_filter", \
+    if level >= 0:
+        parser.add_argument("-b", "--block_size", \
+            default=3,
+            type=int)
+    
+        parser.add_argument("-m", "--matching_method", \
+            default="block_matching",
+            type=str)
+
+    if level >= 1:
+        parser.add_argument("-si", "--sigma", \
             default=0,
+            type=int)
+
+        parser.add_argument("-fi", "--type_filter", \
+            default="gaussian",
             type=str)

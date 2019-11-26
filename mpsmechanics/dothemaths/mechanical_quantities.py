@@ -7,7 +7,6 @@
 """
 
 from scipy.ndimage import gaussian_filter
-from medpy.filter.smoothing import anisotropic_diffusion
 import numpy as np
 
 

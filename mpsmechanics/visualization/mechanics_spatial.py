@@ -14,7 +14,7 @@ import multiprocessing as mp
 
 import mps
 
-from ..utils.iofuns.data_layer import read_prev_layer
+from ..utils.iofuns.data_layer import read_prev_layer, generate_filename
 from ..utils.iofuns.folder_structure import make_dir_layer_structure
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
@@ -69,7 +69,7 @@ def plt_magnitude(axis, i, scalars, vmin, vmax, cmap, scale, alpha=1):
     else:
         norm=Normalize(vmin=vmin, vmax=vmax)
 
-    return axis.imshow(scalars[i, :, :], vmin=-0.1, vmax=0.1, \
+    return axis.imshow(scalars[i, :, :], vmin=vmin, vmax=vmax, \
             cmap=cmap, norm=norm, alpha=alpha)
 
 
@@ -327,36 +327,43 @@ def _make_decomposition_plots(values, time, key, label, output_folder, pixels2um
                         images, fname, key=="deformation_tensor", framerate=framerate)
 
 
-def visualize_mechanics(f_in, scaling_factor, matching_method, block_size, type_filter, sigma, animate=False, overwrite=False, save_data=True):
+def visualize_mechanics(f_in, overwrite, param_list):
     """
 
     Visualize fields in separate quiver / heatmap plots - "main function"
 
     """
+    print("Parameters visualization of mechanical quantities:")
+    for key in param_list[2].keys():
+        print(" * {}: {}".format(key, param_list[2][key]))
     
+    mc_data = read_prev_layer(
+        f_in,
+        analyze_mechanics,
+        param_list[:-1],
+        overwrite
+    )
+
+    animate = param_list[2]["animate"]
+    scaling_factor = param_list[2]["scaling_factor"]
+
     mt_data = mps.MPS(f_in)
     pixels2um = mt_data.info["um_per_pixel"]
     images = mt_data.data.frames
     framerate = mt_data.framerate
-
-    output_folder = make_dir_layer_structure(f_in, \
-            os.path.join("mpsmechanics", "visualize_vectorfield"))
-    os.makedirs(output_folder, exist_ok=True)
     
-    source_file = f"analyze_mechanics_{matching_method}_{block_size}_{type_filter}_{sigma}"
-    kwargs = {"matching_method" : matching_method,
-              "block_size" : block_size,
-              "type_filter" : type_filter,
-              "sigma" : sigma}
-    mc_data = read_prev_layer(f_in, source_file, analyze_mechanics, kwargs, save_data) 
-
+    output_folder = make_dir_layer_structure(f_in, \
+            os.path.join("mpsmechanics", "visualize_mechanics"))
+    os.makedirs(output_folder, exist_ok=True)
+     
     time = mc_data["time"]
  
-    for key in ["Green-Lagrange_strain_tensor"]:
+    for key in mc_data["all_values"].keys():
         print("Plots for " + key + " ...")
-    
-        result_file = f"spatial_{key}_{matching_method}_{block_size}_{type_filter}_{sigma}"
-        fname = os.path.join(output_folder, result_file)
+     
+        fname = generate_filename(f_in, \
+                                  os.path.join("visualize_mechanics", f"spatial_{key}"), \
+                                  param_list[:2])
 
         label = key.capitalize() + "({})".format(mc_data["units"][key])
         label = label.replace("_", " ")

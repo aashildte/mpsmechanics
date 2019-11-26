@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+
+"""
+
+Åshild Telle / Simula Research Labratory / 2019
+
+"""
+
+from argparse import ArgumentParser
+import mpsmechanics as mc
+
+def _cl_parser():
+    parser = ArgumentParser()
+    channel = "BF"
+
+    mc.add_default_parser_arguments(parser, channel)
+    keys = mc.add_parameters_parser_arguments(parser, 2)
+    
+    animation_keys = mc.add_animation_parser_arguments(parser)
+    focus_keys = mc.add_focus_parser_arguments(parser)
+
+    # and this one is special for this kind of plots:
+
+    parser.add_argument("-st", "--step", \
+            default=1,
+            help="Plot every [step] line in mesh.",
+            type=int)
+
+    keys.append(animation_keys + focus_keys + ["step"])
+
+    return parser, channel, keys
+
+if __name__ == "__main__":
+    mc.run_script(mc.animate_mesh_over_movie, \
+            "movie / mesh animation", *_cl_parser())

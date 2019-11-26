@@ -1,7 +1,5 @@
 """
 
-
-
 Åshild Telle / Simula Research Laboratory / 2019
 
 """
@@ -11,7 +9,7 @@ import numpy as np
 
 from .folder_structure import get_input_properties
 
-def read_prev_layer(input_file, layer, layer_fn, kwargs, save_data=True):
+def read_prev_layer(input_file, layer_fn, param_list, overwrite):
     """
 
     Reads data from a layer "up" in the hierarchy. If already
@@ -21,10 +19,9 @@ def read_prev_layer(input_file, layer, layer_fn, kwargs, save_data=True):
 
     Args:
         filename - nd2 file
-        layer - string indicating which layer is needed – the program
-            will look for a npy file with this prefix
         layer_fn - function to be called if data not avaiable
-        save_data - default True; can be set to False
+        param_list
+        overwrite
 
     Returns:
         dictionary with calculated values
@@ -37,16 +34,12 @@ def read_prev_layer(input_file, layer, layer_fn, kwargs, save_data=True):
             "File must be an nd2 or zip file"
 
     folder = os.path.join(path, filename, "mpsmechanics")
-    data_path = os.path.join(folder, layer + ".npy")
-
+    filename = generate_filename(input_file, layer_fn.__name__, param_list) + ".npy"
+    data_path = os.path.join(folder, filename)
+    
     print('Looking for file: ', data_path)
     
-    if not os.path.isfile(data_path):
-        print("Previous data not accessible. Recalculating ...")
-        return layer_fn(input_file, **kwargs, overwrite=False, save_data=save_data)
-
-    print("Previous data found, loading ...")
-    return np.load(data_path, allow_pickle=True).item()
+    return layer_fn(input_file, overwrite=overwrite, param_list=param_list)
 
 
 def get_full_filename(input_file, layer):
@@ -58,10 +51,26 @@ def get_full_filename(input_file, layer):
     """
     path, filename, _ = get_input_properties(input_file)
     output_path = os.path.join(path, filename, "mpsmechanics")
-    return os.path.join(output_path, layer + ".npy")
+    return os.path.join(output_path, layer)
 
 
-def save_dictionary(input_file, layer, dictionary):
+def generate_filename(input_file, script_name, param_list):
+    param_name = script_name
+
+    for param_dict in param_list:
+        key_list = list(param_dict.keys())
+        key_list.sort()
+
+        for key in key_list:
+            value = param_dict[key]
+            param_name += f"_{key}:{value}"
+
+    param_name = param_name.replace(".", "p")
+
+    return get_full_filename(input_file, param_name)
+
+
+def save_dictionary(filename, dictionary):
     """
 
     Function to saving data for a specific given layer.
@@ -72,14 +81,11 @@ def save_dictionary(input_file, layer, dictionary):
         dictionary - values to save
 
     """
-    
-    path, filename, _ = get_input_properties(input_file)
-    output_path = os.path.join(path, filename, "mpsmechanics")
+
+    output_path = os.path.split(filename)[0]
     os.makedirs(output_path, exist_ok=True)
 
-    output_file = os.path.join(output_path, layer + ".npy")
-    
-    np.save(output_file, dictionary)
+    np.save(filename, dictionary)
 
-    print(f"Values saved in {output_file}.")
+    print(f"Values saved in {filename}.")
 

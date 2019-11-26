@@ -2,59 +2,21 @@
 
 """
 
-Given data on displacement, this script calculates derived quantities,
-including
-- velocity
-- strain
-- beat rate
-
-Run script as (with python 3)
-
-    python analyze_mechanics [input files]
-
-or install it using the setup file, running it as
-
-    analyze_mechanics [input files]
-
-where the input files are nd2/npy files containing displacement data.
-
 Åshild Telle / Simula Research Labratory / 2019
 
 """
 
-import sys
 from argparse import ArgumentParser
 import mpsmechanics as mc
 
-
-def cl_parser(args):
-
+def _cl_parser():
     parser = ArgumentParser()
     channel = "BF"
 
     mc.add_default_parser_arguments(parser, channel)
-    mc.add_parameters_parser_arguments(parser, 0)
+    keys = mc.add_parameters_parser_arguments(parser, 0)
 
-    vargs = vars(parser.parse_args())
-    input_files = mc.get_input_files(vargs.pop("input_files", None), channel)
-    debug_mode = vargs.pop("debug_mode", None)
-    print(vargs)
-    return input_files, debug_mode, vargs
-
+    return parser, channel, keys
 
 if __name__ == "__main__":
-
-    input_files, debug_mode, vargs = cl_parser(sys.argv[1:])
-
-    for f in input_files:
-        if debug_mode:
-            mc.track_motion(f, **vargs)
-        else:
-            try:
-                mc.track_motion(f, **vargs)
-
-            except Exception as e:
-                print(f"Could not run motion tracking; error msg: {e}")
-                if f is not input_files[-1]:
-                    print("Launching script for next file ...")
-
+    mc.run_script(mc.track_motion, "motion tracking", *_cl_parser())

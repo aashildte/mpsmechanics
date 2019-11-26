@@ -52,22 +52,30 @@ from .statistical_analysis.metrics import (
         calculate_metrics_all,
 )
 
+from .utils.iofuns.folder_structure import make_dir_layer_structure
+
 from .utils.iofuns.command_line import (
         get_input_files,
-        add_default_parser_arguments,
         add_animation_parser_arguments,
+        add_default_parser_arguments,
+        add_focus_parser_arguments,
         add_parameters_parser_arguments,
+        split_parameter_dictionary,
 )
+
+from .utils.iofuns.run_script import run_script
 
 from .utils.iofuns.data_layer import (
         read_prev_layer,
         get_full_filename,
         save_dictionary,
+        generate_filename,
 )
 
 
 from .visualization import (
     animate_decomposition,
+    animate_mesh_over_movie,
     animate_vectorfield,
     plot_decomposition_at_peak,
     plot_vectorfield_at_peak,

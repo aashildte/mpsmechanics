@@ -6,42 +6,19 @@
 
 """
 
-import numpy as np
-import matplotlib as plt
-import mps
-import mpsmechanics as mc
-import glob
-import os
-import sys
 from argparse import ArgumentParser
+import mpsmechanics as mc
 
-def cl_parser(args):
-
+def _cl_parser():
     parser = ArgumentParser()
     channel = "BF"
 
     mc.add_default_parser_arguments(parser, channel)
-    mc.add_animation_parser_arguments(parser, 1)
-    mc.add_parameters_parser_arguments(parser, 2)
+    keys = mc.add_parameters_parser_arguments(parser, 2)
+    keys.append(mc.add_animation_parser_parameters(parser))
 
-    vargs = vars(parser.parse_args())
-    input_files = mc.get_input_files(vargs.pop("input_files", None), channel)
-    debug_mode = vargs.pop("debug_mode", None)
-
-    return input_files, debug_mode, vargs
-
+    return parser, channel, keys
 
 if __name__ == "__main__":
-
-    input_files, debug_mode, config_options = cl_parser(sys.argv[1:])
-
-    for input_file in input_files:
-        if debug_mode:
-            mc.visualize_vectorfield(input_file, **config_options)
-        else:
-            try:
-                mc.visualize_vectorfield(input_file, **config_options)
-            except Exception as e:
-                print(f"Could not visualize vectorfield; error msg: {e}")
-                if input_files is not input_files[-1]:
-                    print("Launching script for next file ...")
+    mc.run_script(mc.visualize_vectorfield, \
+            "visualization of vectorfield", *_cl_parser())

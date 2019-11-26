@@ -53,7 +53,7 @@ from mps import utils
 # from mps import plotter
 from mps import analysis
 
-from ..utils.iofuns.data_layer import save_dictionary, get_full_filename
+from ..utils.iofuns.data_layer import save_dictionary, generate_filename
 
 logger = utils.get_logger(__name__)
 contraction_data_keys = [
@@ -436,7 +436,7 @@ class MotionTracking(object):
         data,
         block_size=3,
         max_block_movement=3,
-        reference_frame="mean",
+        reference_frame="median",
         delay=None,
         outdir=None,
         serial=False,
@@ -906,11 +906,14 @@ class MotionTracking(object):
         )
 
 
-def track_motion(input_file, matching_method, block_size, overwrite=False, save_data=True):
+def track_motion(f_in, overwrite, param_list, save_data=True):
     """
 
     Args:
-        input_file - nd2 or zip file
+        f_in - nd2 or zip file
+        overwrite - recalculate values, or not
+        param_list - give parameters to motion tracking algorithm, 
+            predefined set of values
         save_data - boolean value: save as npy file when finished, or not
 
     Returns:
@@ -919,30 +922,22 @@ def track_motion(input_file, matching_method, block_size, overwrite=False, save_
 
     """
 
-    assert matching_method in ("block_matching", "template_matching"), \
-            "Error: matching method not recognized."
+    filename = generate_filename(f_in, "track_motion", param_list) + ".npy"
 
-    name = input_file[:-4]
-
-    result_file = f"track_motion_{matching_method}_{block_size}"
-    filename = get_full_filename(input_file, result_file)
+    print("Parameters motion tracking:")
+    for key in param_list[0].keys():
+        print(" * {}: {}".format(key, param_list[0][key]))
 
     if not overwrite and os.path.isfile(filename):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
-        return
+        return np.load(filename, allow_pickle=True).item()
 
     np.seterr(invalid="ignore")
-    mt_data = mps.MPS(input_file)
+    mt_data = mps.MPS(f_in)
 
     assert mt_data.num_frames != 1, "Error: Single frame used as input"
 
-    scaling_factor = mt_data.info["um_per_pixel"]
-    motion = MotionTracking(mt_data, block_size=block_size, \
-            matching_method=matching_method, reference_frame="median")
-
-    # restore original resolution, if possible??
-    ref_factor = int(block_size / mt_data.info["um_per_pixel"])
-    angle = motion.angle
+    motion = MotionTracking(mt_data, **(param_list[0]))
 
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
 
@@ -952,12 +947,12 @@ def track_motion(input_file, matching_method, block_size, overwrite=False, save_
 
     d_all = {}
     d_all["displacement_vectors"] = disp_data
-    d_all["angle"] = angle
-    d_all["block_size"] = int(block_size / mt_data.info["um_per_pixel"])
+    d_all["angle"] = motion.angle
+    d_all["block_size"] = int(param_list[0]["block_size"] / mt_data.info["um_per_pixel"])
 
     print("Motion tracking done.")
 
     if save_data:
-        save_dictionary(input_file, result_file, d_all)
+        save_dictionary(filename, d_all)
 
     return d_all

@@ -30,7 +30,7 @@ from ..dothemaths.angular import calc_projection_fraction
 from ..dothemaths.heartbeat import calc_beatrate
 from .statistics import chip_statistics
 
-from ..utils.iofuns.data_layer import read_prev_layer, get_full_filename, save_dictionary
+from ..utils.iofuns.data_layer import read_prev_layer, generate_filename, save_dictionary
 from ..visualization.overtime import visualize_over_time
 
 def calc_filter_time(dist):
@@ -215,11 +215,11 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     return beatrate_spatial, beatrate_avg, beatrate_std, data
 
 
-def analyze_mechanics(input_file, overwrite, matching_method, block_size, type_filter, sigma, save_data=True):
+def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
     """
 
     Args:
-        input_file - file name; either nd2 or npy file
+        f_in - file name; either nd2 or npy file
         save_data - to store values or not; default value True
 
     Returns:
@@ -227,39 +227,31 @@ def analyze_mechanics(input_file, overwrite, matching_method, block_size, type_f
 
     """
 
-    result_file = f"analyze_mechanics_{matching_method}_{block_size}_{type_filter}_{sigma}"
-    filename = get_full_filename(input_file, result_file)
+    filename = generate_filename(f_in, "analyze_mechanics", param_list) + ".npy"
 
-    if (not overwrite and os.path.isfile(filename)):
+    print("Parameters mechanical analysis:")
+    for key in param_list[1].keys():
+        print(" * {}: {}".format(key, param_list[1][key]))
+
+    if not overwrite and os.path.isfile(filename):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
-        return
+        return np.load(filename, allow_pickle=True).item()
 
     data = read_prev_layer(
-        input_file,
-        f"track_motion_{matching_method}_{block_size}",
+        f_in,
         track_motion,
-        {"matching_method" : matching_method, "block_size" : block_size},
-        save_data=save_data
+        param_list[:-1],
+        overwrite
     )
-    mt_data = mps.MPS(input_file)
+
+    mt_data = mps.MPS(f_in)
     angle = data["angle"]
     time = mt_data.time_stamps
 
-    # FIXME until motion tracking is updated everywhere
+    disp_data = apply_filter(data["displacement_vectors"], **param_list[1])
+    block_size = data["block_size"]
 
-    if "displacement vectors" in data.keys():
-        disp_data = data["displacement vectors"]
-    else:
-        disp_data = data["displacement_vectors"]
-
-    disp_data = apply_filter(disp_data, type_filter, sigma)
-
-    if "block size" in data.keys():
-        block_size = data["block size"]
-    else:
-        block_size = data["block_size"]
-
-    print("Calculating mechanical quantities for " + input_file)
+    print("Calculating mechanical quantities for " + f_in)
 
     um_per_pixel = mt_data.info["um_per_pixel"]
 
@@ -291,10 +283,10 @@ def analyze_mechanics(input_file, overwrite, matching_method, block_size, type_f
               "metrics_avg_std"]:
         d_all[k]["beatrate"] = data_beatrate[k]
 
-    print(f"Done calculating mechanical quantities for {input_file}.")
+    print(f"Done calculating mechanical quantities for {f_in}.")
 
     if save_data:
-        save_dictionary(input_file, result_file, d_all)
+        save_dictionary(filename, d_all)
 
     visualize_over_time(d_all, filename[:-4])
 

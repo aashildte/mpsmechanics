@@ -14,7 +14,7 @@ import multiprocessing as mp
 
 import mps
 
-from ..utils.iofuns.data_layer import read_prev_layer
+from ..utils.iofuns.data_layer import read_prev_layer, generate_filename
 from ..utils.iofuns.folder_structure import make_dir_layer_structure
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
@@ -156,12 +156,26 @@ def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, 
     
     
 
-def visualize_vectorfield(f_in, scaling_factor, sigma, animate=False, overwrite=False, save_data=True):
+def visualize_vectorfield(f_in, overwrite, param_list):
     """
 
     Visualize fields - "main function"
 
     """
+    
+    print("Parameters visualization of vectorfield:")
+    for key in param_list[2].keys():
+        print(" * {}: {}".format(key, param_list[2][key]))
+    
+    mc_data = read_prev_layer(
+        f_in,
+        analyze_mechanics,
+        param_list[:-1],
+        overwrite
+    )
+    
+    animate = param_list[2]["animate"]
+    scaling_factor = param_list[2]["scaling_factor"]
     
     mt_data = mps.MPS(f_in)
     pixels2um = mt_data.info["um_per_pixel"]
@@ -172,18 +186,16 @@ def visualize_vectorfield(f_in, scaling_factor, sigma, animate=False, overwrite=
             os.path.join("mpsmechanics", "visualize_vectorfield"))
     os.makedirs(output_folder, exist_ok=True)
     
-    sigma_text = str(sigma)
-    sigma_text = sigma_text.replace(".", "p")
-
-    mc_data = read_prev_layer(f_in, f"analyze_mechanics_{sigma_text}", analyze_mechanics, save_data)
-
     time = mc_data["time"]
 
     for key in mc_data["all_values"].keys():
         print("Plots for " + key + " ...")
         label = key.capitalize() + "({})".format(mc_data["units"][key])
         label.replace("_", " ")
-        fname = os.path.join(output_folder, f"vectorfield_{key}_{sigma}")
+
+        fname = generate_filename(f_in, \
+                                  os.path.join("visualize_vectorfield", f"spatial_{key}"), \
+                                  param_list[:2])
 
         values = mc_data["all_values"][key]
 

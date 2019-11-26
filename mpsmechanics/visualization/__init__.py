@@ -27,3 +27,7 @@ from .vectorfield import (
     plot_vectorfield_at_peak,
     visualize_vectorfield,
 )
+
+from .animate_over_movie import (
+    animate_mesh_over_movie,
+)

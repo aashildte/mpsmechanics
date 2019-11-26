@@ -15,7 +15,7 @@ def _cl_parser():
 
     mc.add_default_parser_arguments(parser, channel)
     keys = mc.add_parameters_parser_arguments(parser, 2)
-    keys.append(mc.add_animation_parser_parameters(parser))
+    keys.append(mc.add_animation_parser_arguments(parser))
 
     return parser, channel, keys
 

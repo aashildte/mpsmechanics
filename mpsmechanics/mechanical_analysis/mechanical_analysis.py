@@ -30,7 +30,7 @@ from ..dothemaths.angular import calc_projection_fraction
 from ..dothemaths.heartbeat import calc_beatrate
 from .statistics import chip_statistics
 
-from ..utils.iofuns.data_layer import read_prev_layer, generate_filename, save_dictionary
+from ..utils.data_layer import read_prev_layer, generate_filename, save_dictionary
 from ..visualization.overtime import visualize_over_time
 
 def calc_filter_time(dist):

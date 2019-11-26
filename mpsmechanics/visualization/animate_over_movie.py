@@ -11,7 +11,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import mpsmechanics as mc
 
 
-def _set_ticks(axis, x_from, y_from, x_to, y_to):
+def _set_ticks(axis, x_from, x_to, y_from, y_to):
     axis.set_xlabel("Pixels")
     axis.set_ylabel("Pixels")
 
@@ -20,24 +20,24 @@ def _set_ticks(axis, x_from, y_from, x_to, y_to):
     y_coords = np.linspace(0, y_to-y_from-1, 5)
     y_ticks = np.linspace(y_from, y_to-1, 5)
 
-    axis.set_yticklabels([int(y) for y in y_ticks])
-    axis.set_xticklabels([int(x) for x in x_ticks])
-    axis.set_yticks([int(y) for y in y_coords])
-    axis.set_xticks([int(x) for x in x_coords])
+    axis.set_xticklabels([int(y) for y in y_ticks])
+    axis.set_yticklabels([int(x) for x in x_ticks])
+    axis.set_xticks([int(y) for y in y_coords])
+    axis.set_yticks([int(x) for x in x_coords])
 
 
 def _mesh_over_image(org_x_coords, org_y_coords, coord_range, step, displacement, images, time, time_step):
     x_coords = org_x_coords + displacement[time_step, :, :, 0]
     y_coords = org_y_coords + displacement[time_step, :, :, 1]
-
+    
     x_from, x_to, y_from, y_to = coord_range
 
     fig = plt.figure()
     axis = fig.add_subplot()
-
+    
     _set_ticks(axis, x_from, x_to, y_from, y_to)
-    axis.set_xlim(0, x_to-x_from-1)
-    axis.set_ylim(0, y_to-y_from-1)
+    axis.set_xlim(0, y_to-y_from-1)
+    axis.set_ylim(0, x_to-x_from-1)
 
     im_subplot = axis.imshow(images[x_from:x_to, y_from:y_to, 0], cmap='gray')
 
@@ -59,6 +59,24 @@ def _mesh_over_image(org_x_coords, org_y_coords, coord_range, step, displacement
     return fig, axis, im_subplot, all_lines
 
 
+def _calc_value_range(x_coord, y_coord, width, X_image, Y_image):
+    x_from = int(x_coord - width/2)
+    y_from = int(y_coord - width/2)
+    x_to = int(x_coord + width/2)
+    y_to = int(y_coord + width/2)
+
+    if x_from < 0:
+        x_from = 0
+    if x_to > X_image:
+        x_to = X_image - 1
+    if y_from < 0:
+        y_from = 0
+    if y_to > Y_image:
+        y_to = Y_image - 1
+
+    return x_from, x_to, y_from, y_to
+
+
 def _mesh_over_movie(mps_data, mc_data, animate, scaling_factor, width, x_coord, y_coord, step, fname):
 
     displacement = mc_data["all_values"]["displacement"]
@@ -69,13 +87,10 @@ def _mesh_over_movie(mps_data, mc_data, animate, scaling_factor, width, x_coord,
     images = mps_data.frames 
     framerate = mps_data.framerate
     
-    x_from = int(x_coord - width/2)
-    y_from = int(y_coord - width/2)
-    x_to = int(x_coord + width/2)
-    y_to = int(y_coord + width/2)
-
     X_image, Y_image = images.shape[:2]
     X_disp, Y_disp = displacement.shape[1:3]
+   
+    x_from, x_to, y_from, y_to = _calc_value_range(x_coord, y_coord, width, X_image, Y_image)
 
     x_range = np.linspace(0, X_disp * (X_image // X_disp), X_disp)
     y_range = np.linspace(0, Y_disp * (Y_image // Y_disp), Y_disp)

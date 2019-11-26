@@ -14,8 +14,8 @@ import multiprocessing as mp
 
 import mps
 
-from ..utils.iofuns.data_layer import read_prev_layer, generate_filename
-from ..utils.iofuns.folder_structure import make_dir_layer_structure
+from ..utils.data_layer import read_prev_layer, generate_filename
+from ..utils.folder_structure import make_dir_layer_structure
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 

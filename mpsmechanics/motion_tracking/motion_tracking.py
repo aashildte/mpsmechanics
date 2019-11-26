@@ -53,7 +53,7 @@ from mps import utils
 # from mps import plotter
 from mps import analysis
 
-from ..utils.iofuns.data_layer import save_dictionary, generate_filename
+from ..utils.data_layer import save_dictionary, generate_filename
 
 logger = utils.get_logger(__name__)
 contraction_data_keys = [

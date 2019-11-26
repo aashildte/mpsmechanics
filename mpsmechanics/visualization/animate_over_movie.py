@@ -148,8 +148,8 @@ def animate_mesh_over_movie(f_in, overwrite, param_list):
         overwrite
     )
 
-    xcoord = param_list[2]["xcoord"]
-    ycoord = param_list[2]["ycoord"]
+    x_coord = param_list[2]["x_coord"]
+    y_coord = param_list[2]["y_coord"]
     width = param_list[2]["width"]
 
     output_folder = mc.make_dir_layer_structure(f_in, \
@@ -157,7 +157,7 @@ def animate_mesh_over_movie(f_in, overwrite, param_list):
     os.makedirs(output_folder, exist_ok=True)
 
     fname = mc.generate_filename(f_in, \
-                                 os.path.join("animate_mesh_over_movie", f"animation_{xcoord}_{ycoord}_{width}"), \
+                                 os.path.join("animate_mesh_over_movie", f"animation_{x_coord}_{y_coord}_{width}"), \
                                  param_list[:2])
 
     _mesh_over_movie(mps_data, mc_data, fname=fname, **param_list[-1])

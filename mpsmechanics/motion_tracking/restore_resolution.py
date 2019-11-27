@@ -1,3 +1,8 @@
+"""
+
+Åshild Telle / Simula Research Laboratory / 2019
+
+"""
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -10,7 +15,7 @@ def apply_filter(motion_data, type_filter, sigma):
             "Error_ Type filter not recognized."
 
     if type_filter=="gaussian":
-        return gaussian_filter(motion_data, [0, sigma/10, sigma/10, 0])
+        return gaussian_filter(motion_data, [0, sigma, sigma, 0])
     elif type_filter=="downsampling":
         sigma = int(sigma)
         T, X, Y, D = motion_data.shape

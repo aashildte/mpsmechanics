@@ -1,3 +1,8 @@
+"""
+
+Åshild Telle / Simula Research Laboratory / 2019
+
+"""
 
 
 from .folder_structure import (

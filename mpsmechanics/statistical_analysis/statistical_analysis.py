@@ -9,7 +9,7 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 
-from ..utils.iofuns.data_layer import read_prev_layer
+from ..utils.data_layer import read_prev_layer
 from ..mechanical_analysis.mechanical_analysis import \
         analyze_mechanics
 

@@ -10,7 +10,6 @@ from . import pillar_tracking
 from . import visualization
 from . import statistical_analysis
 
-
 from .dothemaths import (
     calc_beat_intervals,
     calc_beat_maxima,
@@ -28,28 +27,29 @@ from .dothemaths import (
     normalize_values,
 )
 
-
 from .mechanical_analysis.mechanical_analysis import (
-        analyze_mechanics,
-)
-from .motion_tracking.motion_tracking import (
-        track_motion,
-        MotionTracking,
+    analyze_mechanics,
 )
 
-from .motion_tracking.restore_resolution import apply_filter
+from .motion_tracking import (
+    apply_filter,
+    block_matching,
+    calculate_minmax,
+    convert_disp_data,
+    template_matching,
+    track_motion,
+    MotionTracking,
+)
 
 from .pillar_tracking.pillar_tracking import (
-        track_pillars,
-        track_pillars_sgvalue,
+    track_pillars,
+    track_pillars_sgvalue,
 )
 
-from .statistical_analysis.statistical_analysis import (
-        calculate_stats_chips,
-)
-from .statistical_analysis.metrics import (
-        calculate_metrics,
-        calculate_metrics_all,
+from .statistical_analysis import (
+    calculate_metrics,
+    calculate_metrics_all,
+    calculate_stats_chips,
 )
 
 from .utils import (

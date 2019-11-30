@@ -9,7 +9,6 @@ can calculate the reference frame *after* the blocktracking algorithm
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from ..dothemaths.operations import calc_norm_over_time
 
@@ -70,51 +69,6 @@ def _find_longest_subinterval(diff_norm):
     return (start_ind, start_ind + max_count)
 
 
-def calculate_min_velocity_frame(frames):
-    """
-
-    Hypothesis: Resting state is where velocity is smallest, in a
-    longer time frame.
-
-    This function finds a frame which
-        1) is among the frames with lowest velocity recorded
-        2) is in the longest interval among those found for (1)
-        3) is the minimum in this interval
-
-    Derivative represented by smallest difference - assuming that
-    the time step is fixed, and that minimum velocity is where
-        (d[i] - d[i-1])/dt
-    is smallest; for fixed dt this equals where d[i] - d[i-1] is
-    smallest.
-
-    Args:
-        frames - numpy array of dimensions X x Y x 2 x T
-
-    Returns:
-        index for lowest velocity within the longest interval
-
-    """
-
-    diff_norm = np.sum(np.linalg.norm(np.diff(frames), axis=2), \
-            axis=(0, 1))
-    interval = _find_longest_subinterval(diff_norm)
-    
-    norm = np.sum(np.linalg.norm(frames, axis=2), \
-            axis=(0, 1))
-
-    return interval[0] + np.argmin(diff_norm[interval[0]:interval[1]])
-
-
-def calculate_firstframe(frames):
-    """
-    
-    Just the first one. For comparison - this SHOULD give the
-    same values as the original script!
-    
-    """
-    return 0
-
-
 def calculate_minmax(frames):
     """
 
@@ -131,7 +85,7 @@ def calculate_minmax(frames):
     """
 
     norm = calc_norm_over_time(frames)
-     
+
     min_index = np.argmax(norm)
     min_norm = norm[min_index]
     mean_norm = np.mean(norm)
@@ -139,5 +93,5 @@ def calculate_minmax(frames):
         frames_shifted = convert_disp_data(frames, min_index)
         norm = calc_norm_over_time(frames_shifted)
         min_index = np.argmax(norm)
-    
+
     return min_index

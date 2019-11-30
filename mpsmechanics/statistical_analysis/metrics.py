@@ -7,8 +7,8 @@
 import os
 import pandas as pd
 
-from ..utils.iofuns.folder_structure import get_input_properties
-from ..utils.iofuns.data_layer import read_prev_layer
+from ..utils.folder_structure import get_input_properties
+from ..utils.data_layer import read_prev_layer
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
 

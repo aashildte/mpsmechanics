@@ -201,7 +201,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     data = defaultdict(dict)
 
     beatrate_spatial, beatrate_avg, beatrate_std = \
-            calc_beatrate(disp_folded, maxima, intervals, time)
+            calc_beatrate(disp_folded, intervals, time)
 
     if len(intervals) == 0:
         data["metrics_max_avg"] = data["metrics_avg_avg"] = \
@@ -230,7 +230,8 @@ def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
     filename = generate_filename(f_in, "analyze_mechanics", param_list, ".npy")
 
     if not overwrite and os.path.isfile(filename):
-        print("Previous data exist. Use flag --overwrite / -o to recalculate.")
+        print("Previous data exist. Use flag --overwrite / -o to recalculate this layer.")
+        print("Use flag --overwrite_all / -oa to recalculate data for all layers.")
         return np.load(filename, allow_pickle=True).item()
     
     print("Parameters mechanical analysis:")
@@ -241,14 +242,18 @@ def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
         f_in,
         track_motion,
         param_list[:-1],
-        overwrite
+        param_list[1]["overwrite_all"]
     )
 
     mps_data = mps.MPS(f_in)
     angle = data["angle"]
     time = mps_data.time_stamps
 
-    disp_data = apply_filter(data["displacement_vectors"], **param_list[1])
+    params = param_list[1]
+    type_filter = params["type_filter"]
+    sigma = params["sigma"]
+
+    disp_data = apply_filter(data["displacement_vectors"], type_filter, sigma)
     block_size = data["block_size"]
 
     print("Calculating mechanical quantities for " + f_in)

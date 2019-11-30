@@ -192,7 +192,7 @@ def plot_distributions(f_in, overwrite, param_list):
         f_in,
         analyze_mechanics,
         param_list[:-1],
-        overwrite
+        param_list[1]["overwrite_all"]
     )
 
     _plot_for_each_key(f_in, mc_data, fname, param_list)

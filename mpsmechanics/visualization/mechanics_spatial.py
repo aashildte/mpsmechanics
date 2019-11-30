@@ -437,7 +437,7 @@ def visualize_mechanics(f_in, overwrite, param_list):
         f_in,
         analyze_mechanics,
         param_list[:-1],
-        overwrite
+        param_list[1]["overwrite_all"]
     )
 
     input_data = [f_in, mps_data, mc_data]

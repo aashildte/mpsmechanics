@@ -28,6 +28,7 @@ def test_calc_norm_over_time():
     assert np.allclose(data_exp,
             mc.calc_norm_over_time(data_org))
 
+
 def test_calc_magnitude():
     """
 

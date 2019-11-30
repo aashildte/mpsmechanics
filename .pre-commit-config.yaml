@@ -7,4 +7,4 @@
         - --ignore-imports=yes
         - -d duplicate-code
         format:
-        good-names=dx
+        - --good-names=dx

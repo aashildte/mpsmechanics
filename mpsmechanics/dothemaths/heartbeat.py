@@ -157,7 +157,7 @@ def calc_beatrate(disp_folded, intervals, time):
 
     """
 
-    if len(intervals) < 3:
+    if len(intervals) < 2:
         return [np.nan]*3
 
     beatrate_spatial = \

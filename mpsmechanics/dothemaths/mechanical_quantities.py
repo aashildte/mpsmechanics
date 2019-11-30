@@ -18,7 +18,7 @@ def calc_gradients(data, dx):
         dx - float; spatial difference between two points/blocks
 
     Returns:
-        numpy array of dimensions 4 x T x X x Y
+        numpy array of dimensions T x X x Y x 2 x 2
 
     """
 

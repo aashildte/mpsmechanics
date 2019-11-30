@@ -8,7 +8,8 @@ from matplotlib import animation
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-import mpsmechanics as mc
+from ..utils.data_layer import read_prev_layer, generate_filename
+from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 
 
 def _set_ticks(axis, x_from, x_to, y_from, y_to):
@@ -77,7 +78,7 @@ def _calc_value_range(x_coord, y_coord, width, X_image, Y_image):
     return x_from, x_to, y_from, y_to
 
 
-def _mesh_over_movie(mps_data, mc_data, animate, scaling_factor, width, x_coord, y_coord, step, fname):
+def _mesh_over_movie(mps_data, mc_data, fname, animate, scaling_factor, width, x_coord, y_coord, step):
 
     displacement = mc_data["all_values"]["displacement"]
     T, X, Y, _ = displacement.shape
@@ -156,9 +157,9 @@ def animate_mesh_over_movie(f_in, overwrite, param_list):
         print(" * {}: {}".format(key, param_list[2][key]))
     
     mps_data = mps.MPS(f_in)
-    mc_data = mc.read_prev_layer(
+    mc_data = read_prev_layer(
         f_in,
-        mc.analyze_mechanics,
+        analyze_mechanics,
         param_list[:-1],
         overwrite
     )
@@ -167,14 +168,12 @@ def animate_mesh_over_movie(f_in, overwrite, param_list):
     y_coord = param_list[2]["y_coord"]
     width = param_list[2]["width"]
 
-    output_folder = mc.make_dir_layer_structure(f_in, \
-            os.path.join("mpsmechanics", "animate_mesh_over_movie"))
-    os.makedirs(output_folder, exist_ok=True)
+    fname = generate_filename(f_in, \
+                              f"animation_{x_coord}_{y_coord}_{width}",
+                              param_list[:2],
+                              "",        # mp3 or png
+                              subfolder="animate_mesh_over_movie")
 
-    fname = mc.generate_filename(f_in, \
-                                 os.path.join("animate_mesh_over_movie", f"animation_{x_coord}_{y_coord}_{width}"), \
-                                 param_list[:2])
-
-    _mesh_over_movie(mps_data, mc_data, fname=fname, **param_list[-1])
+    _mesh_over_movie(mps_data, mc_data, fname, **param_list[-1])
 
     print("Visualization done, finishing ..")

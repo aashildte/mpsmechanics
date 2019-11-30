@@ -34,7 +34,8 @@ def read_prev_layer(input_file, layer_fn, param_list, overwrite):
             "File must be an nd2 or zip file"
 
     folder = os.path.join(path, filename, "mpsmechanics")
-    filename = generate_filename(input_file, layer_fn.__name__, param_list) + ".npy"
+    filename = generate_filename(input_file, layer_fn.__name__, \
+            param_list, ".npy")
     data_path = os.path.join(folder, filename)
 
     print('Looking for file: ', data_path)
@@ -42,19 +43,30 @@ def read_prev_layer(input_file, layer_fn, param_list, overwrite):
     return layer_fn(input_file, overwrite=overwrite, param_list=param_list)
 
 
-def get_full_filename(input_file, layer):
+def get_full_filename(input_file, filename, subfolder=""):
     """
 
-    Gives filename in which the data will be stored when
-    save_dictionary is called, if applicable.
+    Gives filename in which the data will be stored; generates
+    default structure for saving data.
+
+    Args:
+        input_file - BF/Cyan/Red file; original data
+        filename - filename in which the new data will be saved
+        subfolder - if it is to be saved in a subfolder (applicable
+            for plots and animations)
+
+    Returns:
+        path from where input file is saved and onwards 
 
     """
-    path, filename, _ = get_input_properties(input_file)
-    output_path = os.path.join(path, filename, "mpsmechanics")
-    return os.path.join(output_path, layer)
+    path, infix, _ = get_input_properties(input_file)
+    output_path = os.path.join(path, infix, "mpsmechanics", subfolder)
+    os.makedirs(output_path, exist_ok=True)
+    
+    return os.path.join(output_path, filename)
 
 
-def generate_filename(input_file, script_name, param_list):
+def generate_filename(input_file, script_name, param_list, extention, subfolder=""):
     """
 
     Generates filename based on given input parameters.
@@ -64,6 +76,10 @@ def generate_filename(input_file, script_name, param_list):
         script - which script it's called from
         param_list - list of parameters which the script (directly
             or through dependencies) depends on
+        extention - what kind of file (e.g. "npy", "png")
+        subfolder - if it is to be saved in a subfolder (applicable
+            for plots and animations)
+
 
     Returns:
         filename - input file/mpsmechanics/[script_name]_[parameters]
@@ -79,10 +95,10 @@ def generate_filename(input_file, script_name, param_list):
         for key in key_list:
             value = param_dict[key]
             param_name += f"_{key}:{value}"
+    
+    param_name = param_name.replace(".", "p") + extention
 
-    param_name = param_name.replace(".", "p")
-
-    return get_full_filename(input_file, param_name)
+    return get_full_filename(input_file, param_name, subfolder=subfolder)
 
 
 def save_dictionary(filename, dictionary):
@@ -96,6 +112,8 @@ def save_dictionary(filename, dictionary):
         dictionary - values to save
 
     """
+
+    #TODO do we need to make dirs here?
 
     output_path = os.path.split(filename)[0]
     os.makedirs(output_path, exist_ok=True)

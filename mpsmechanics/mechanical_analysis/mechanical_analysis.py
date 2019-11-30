@@ -227,15 +227,15 @@ def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
 
     """
 
-    filename = generate_filename(f_in, "analyze_mechanics", param_list) + ".npy"
-
-    print("Parameters mechanical analysis:")
-    for key in param_list[1].keys():
-        print(" * {}: {}".format(key, param_list[1][key]))
+    filename = generate_filename(f_in, "analyze_mechanics", param_list, ".npy")
 
     if not overwrite and os.path.isfile(filename):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
         return np.load(filename, allow_pickle=True).item()
+    
+    print("Parameters mechanical analysis:")
+    for key in param_list[1].keys():
+        print(" * {}: {}".format(key, param_list[1][key]))
 
     data = read_prev_layer(
         f_in,
@@ -244,16 +244,16 @@ def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
         overwrite
     )
 
-    mt_data = mps.MPS(f_in)
+    mps_data = mps.MPS(f_in)
     angle = data["angle"]
-    time = mt_data.time_stamps
+    time = mps_data.time_stamps
 
     disp_data = apply_filter(data["displacement_vectors"], **param_list[1])
     block_size = data["block_size"]
 
     print("Calculating mechanical quantities for " + f_in)
 
-    um_per_pixel = mt_data.info["um_per_pixel"]
+    um_per_pixel = mps_data.info["um_per_pixel"]
 
     values_over_time = \
             _calc_mechanical_quantities(disp_data, um_per_pixel, block_size, \
@@ -261,7 +261,7 @@ def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
 
     d_all = chip_statistics(values_over_time)
 
-    d_all["time"] = mt_data.time_stamps
+    d_all["time"] = mps_data.time_stamps
 
     br_spa, beatrate_avg, beatrate_std, data_beatrate = \
             _calc_beatrate(

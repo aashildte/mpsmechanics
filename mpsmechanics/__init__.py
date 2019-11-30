@@ -68,13 +68,9 @@ from .utils import (
 )
 
 from .visualization import (
-    animate_decomposition,
     animate_mesh_over_movie,
-    animate_vectorfield,
-    plot_decomposition_at_peak,
-    plot_vectorfield_at_peak,
+    plot_distributions,
     visualize_calcium_spatial,
-    visualize_distributions,
     visualize_mechanics,
     visualize_over_time,
     visualize_vectorfield,

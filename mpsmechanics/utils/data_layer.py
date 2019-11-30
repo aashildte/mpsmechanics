@@ -40,7 +40,8 @@ def read_prev_layer(input_file, layer_fn, param_list, overwrite):
 
     print('Looking for file: ', data_path)
 
-    return layer_fn(input_file, overwrite=overwrite, param_list=param_list)
+    return layer_fn(input_file, overwrite=overwrite, \
+                    overwrite_all=overwrite, param_list=param_list)
 
 
 def get_full_filename(input_file, filename, subfolder=""):

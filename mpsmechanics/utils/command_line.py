@@ -84,6 +84,10 @@ def add_default_parser_arguments(parser, file_type):
                         help="Recalculate and overwrite previous data/plots, for specific script.",
                         action="store_true")
 
+    parser.add_argument("-oa", "--overwrite_all", \
+                        help="Recalculate and overwrite previous data/plots, for all layers/dependencies.",
+                        action="store_true")
+
     parser.add_argument("-d", "--debug_mode", \
                         help="Run script in debug mode",
                         action="store_true")
@@ -121,10 +125,6 @@ def add_parameters_parser_arguments(parser, level):
         all_keys.append(l0_keys)
 
     if level >= 1:
-        parser.add_argument("-oa", "--overwrite_all", \
-                            help="Recalculate and overwrite previous data/plots, for all layers/dependencies.",
-                            action="store_true")
-
         parser.add_argument("-si", "--sigma", \
                             default=0,
                             help="Filter parameter",
@@ -135,7 +135,7 @@ def add_parameters_parser_arguments(parser, level):
                             help="Type filter ('gaussian' or 'downsampling')",
                             type=str)
 
-        l1_keys = ["overwrite_all", "sigma", "type_filter"]
+        l1_keys = ["sigma", "type_filter"]
         all_keys.append(l1_keys)
 
     return all_keys

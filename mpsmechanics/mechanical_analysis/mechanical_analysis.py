@@ -54,16 +54,16 @@ def calc_strain_filter(dist, size):
 
     filter_new = np.copy(filter_org)
 
-    X, Y = filter_org.shape
+    dim_x, dim_y = filter_org.shape
 
-    for x in range(X):
-        for y in range(Y):
-            if not filter_org[x, y]:
-                xm2 = x - size if x > size else 0
-                xp2 = x + size if (x+size) < X else X-1
+    for _x in range(dim_x):
+        for _y in range(dim_y):
+            if not filter_org[_x, _y]:
+                xm2 = _x - size if _x > size else 0
+                xp2 = _x + size if (_x+size) < dim_x else dim_x-1
 
-                ym2 = y - size if y > size else 0
-                yp2 = y + size if (y+size) < Y else Y-1
+                ym2 = _y - size if _y > size else 0
+                yp2 = _y + size if (_y+size) < dim_y else dim_y-1
                 filter_new[xm2:xp2+1, ym2:yp2+1] *= False
 
     return np.broadcast_to(filter_new, dist.shape[:3])
@@ -99,7 +99,7 @@ def _calc_mechanical_quantities(displacement, um_per_pixel, block_size, \
                      value: quantity; unit; filter; value range
 
     """
-    
+
     displacement = um_per_pixel * displacement
 
     displacement_minmax = convert_disp_data(
@@ -119,7 +119,7 @@ def _calc_mechanical_quantities(displacement, um_per_pixel, block_size, \
 
     velocity_norm = np.linalg.norm(velocity, axis=-1)
     prevalence = np.where(velocity_norm > threshold*np.ones(velocity_norm.shape),
-                    np.ones(velocity_norm.shape), np.zeros(velocity_norm.shape))
+                          np.ones(velocity_norm.shape), np.zeros(velocity_norm.shape))
 
     dx = um_per_pixel*block_size
 
@@ -201,7 +201,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     data = defaultdict(dict)
 
     beatrate_spatial, beatrate_avg, beatrate_std = \
-            calc_beatrate(disp_folded, intervals, time)
+            calc_beatrate(disp_folded, maxima, intervals, time)
 
     if len(intervals) == 0:
         data["metrics_max_avg"] = data["metrics_avg_avg"] = \
@@ -215,7 +215,7 @@ def _calc_beatrate(disp_folded, maxima, intervals, time):
     return beatrate_spatial, beatrate_avg, beatrate_std, data
 
 
-def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
+def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, save_data=True):
     """
 
     Args:
@@ -233,7 +233,7 @@ def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
         print("Previous data exist. Use flag --overwrite / -o to recalculate this layer.")
         print("Use flag --overwrite_all / -oa to recalculate data for all layers.")
         return np.load(filename, allow_pickle=True).item()
-    
+
     print("Parameters mechanical analysis:")
     for key in param_list[1].keys():
         print(" * {}: {}".format(key, param_list[1][key]))
@@ -242,7 +242,7 @@ def analyze_mechanics(f_in, overwrite, param_list, save_data=True):
         f_in,
         track_motion,
         param_list[:-1],
-        param_list[1]["overwrite_all"]
+        overwrite_all
     )
 
     mps_data = mps.MPS(f_in)

@@ -4,6 +4,7 @@
 
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -379,15 +380,13 @@ def _make_animation(spatial_data, time, metadata, fname, framerate):
     make_animation(fig, _update, num_frames, framerate, fname, extension)
 
 
-def _plot_for_each_key(input_data, param_list, animate, scaling_factor):
+def _plot_for_each_key(input_data, param_list, overwrite, animate, scaling_factor):
 
     f_in, mps_data, mc_data = input_data
     images = np.moveaxis(mps_data.frames, 2, 0)
     time = mc_data["time"]
 
-    keys = mc_data["all_values"].keys()
-
-    for key in keys:
+    for key in mc_data["all_values"].keys():
         print("Plots for " + key + " ...")
 
         fname = generate_filename(f_in, \
@@ -405,15 +404,16 @@ def _plot_for_each_key(input_data, param_list, animate, scaling_factor):
         spatial_data = {"images" : images,
                         "derived_quantity" : values}
 
-        _plot_at_peak(spatial_data, time, metadata, fname)
+        if not overwrite and not os.path.isfile(fname + ".png"):
+            _plot_at_peak(spatial_data, time, metadata, fname)
 
-        if animate:
+        if animate and not overwrite and not os.path.isfile(fname + ".mp4"):
             print("Making a movie ..")
             _make_animation(spatial_data, time, metadata, fname, \
                     scaling_factor*mps_data.framerate)
 
 
-def visualize_mechanics(f_in, overwrite, param_list):
+def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
     """
 
     "main function"
@@ -437,10 +437,10 @@ def visualize_mechanics(f_in, overwrite, param_list):
         f_in,
         analyze_mechanics,
         param_list[:-1],
-        param_list[1]["overwrite_all"]
+        overwrite_all
     )
 
     input_data = [f_in, mps_data, mc_data]
-    _plot_for_each_key(input_data, param_list, **param_list[-1])
+    _plot_for_each_key(input_data, param_list, overwrite, **param_list[-1])
 
     print("Visualization done, finishing ...")

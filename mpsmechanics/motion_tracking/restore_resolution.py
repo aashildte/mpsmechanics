@@ -34,19 +34,20 @@ def apply_filter(motion_data, type_filter, sigma):
 
     # else: downsamling
     sigma = int(sigma)
-    T, X, Y, D = motion_data.shape
-    X_d = X // sigma
-    Y_d = Y // sigma
+    t_dim, x_dim, y_dim, val_dim = motion_data.shape
+    x_dim_d = x_dim // sigma
+    y_dim_d = y_dim // sigma
 
-    new_data = np.zeros((T, X_d, Y_d, D))
+    new_data = np.zeros((t_dim, x_dim_d, y_dim_d, val_dim))
 
-    for t in range(T):
-        for x in range(X_d):
-            for y in range(Y_d):
-                for d in range(D):
-                    avg = np.mean(motion_data[t, \
-                            (sigma*x):(sigma*(x+1)), (sigma*y):(sigma*(y+1)), d])
+    for _t in range(t_dim):
+        for _x in range(x_dim_d):
+            for _y in range(y_dim_d):
+                for _d in range(val_dim):
+                    avg = np.mean(motion_data[_t, \
+                            (sigma*_x):(sigma*(_x+1)), \
+                            (sigma*_y):(sigma*(_y+1)), _d])
 
-                    new_data[t, x, y, d] = avg
+                    new_data[_t, _x, _y, _d] = avg
 
     return new_data

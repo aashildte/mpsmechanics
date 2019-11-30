@@ -25,7 +25,11 @@ def convert_disp_data(frames, ref_index):
         numpy array of dimensions T x X x Y x D
 
     """
-    assert ref_index >= 0 and ref_index <= frames.shape[0], \
+
+    assert ref_index >= 0, \
+            "Invalid reference index."
+
+    assert ref_index <= frames.shape[0], \
             "Invalid reference index."
 
     return frames - frames[ref_index]

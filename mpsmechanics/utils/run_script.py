@@ -20,14 +20,16 @@ def run_script(function, description, parser, channel, keys):
     input_files = get_input_files(vargs.pop("input_files"), channel)
     debug_mode = vargs.pop("debug_mode")
     overwrite = vargs.pop("overwrite")
+    overwrite_all = vargs.pop("overwrite_all")
+
     param_list = split_parameter_dictionary(vargs, keys)
 
     for f_in in input_files:
         if debug_mode:
-            function(f_in, overwrite, param_list)
+            function(f_in, overwrite, overwrite_all, param_list)
         else:
             try:
-                function(f_in, overwrite, param_list)
+                function(f_in, overwrite, overwrite_all, param_list)
             except Exception as exp:
                 print(f"Could not run {description}; error msg: {exp}")
                 if f_in is not input_files[-1]:

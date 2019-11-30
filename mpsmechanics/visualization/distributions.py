@@ -4,6 +4,7 @@
 
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -53,7 +54,7 @@ def plot_1d_values(values, time, time_step, label):
 
     """
 
-    axes, _ = setup_frame(1, 1)
+    axes, _ = setup_frame(1, 1, True, True)
 
     plot_distribution(axes[0], values[time_step], \
                       time[time_step], label)
@@ -75,7 +76,7 @@ def plot_2d_values(values, time, time_step, label):
 
     """
 
-    axes, _ = setup_frame(1, 2)
+    axes, _ = setup_frame(1, 2, True, True)
 
     x_values = values[:, :, :, 0]
     y_values = values[:, :, :, 1]
@@ -88,7 +89,7 @@ def plot_2d_values(values, time, time_step, label):
     axes[1].set_title("y component")
 
 
-def plot_4d_values(values, time, time_step, label):
+def plot_2x2d_values(values, time, time_step, label):
     """
 
     Plots histogram for 2D data.
@@ -101,7 +102,7 @@ def plot_4d_values(values, time, time_step, label):
 
     """
 
-    axes, _ = setup_frame(2, 2)
+    axes, _ = setup_frame(2, 2, True, True)
 
     ux_values = values[:, :, :, 0, 0]
     uy_values = values[:, :, :, 0, 1]
@@ -134,7 +135,7 @@ def plot_at_peak(values, time, label, fname):
 
     peak = np.argmax(calc_norm_over_time(values))
     plot_fn = get_plot_fun(values, \
-            [plot_1d_values, plot_2d_values, plot_4d_values])
+            [plot_1d_values, plot_2d_values, plot_2x2d_values])
 
     plot_fn(values, time, peak, label)
 
@@ -146,7 +147,7 @@ def plot_at_peak(values, time, label, fname):
     return ymax
 
 
-def _plot_for_each_key(f_in, mc_data, fname, param_list):
+def _plot_for_each_key(f_in, mc_data, param_list, overwrite):
     """
 
     Make histogram plots for distributions over different quantities
@@ -157,20 +158,21 @@ def _plot_for_each_key(f_in, mc_data, fname, param_list):
 
     for key in keys:
         fname = generate_filename(f_in, \
-                              f"distribution_{key}", \
-                              param_list[:2],
-                              "",        # mp3 or png
-                              subfolder="distributions")
+                                  f"distribution_{key}", \
+                                  param_list[:2],
+                                  "png",
+                                  subfolder="distributions")
 
-        print("Plots for " + key + " ...")
+        if not overwrite and not os.path.isfile(fname):
+            print("Plots for " + key + " ...")
 
-        label = make_pretty_label(key, mc_data["units"][key])
+            label = make_pretty_label(key, mc_data["units"][key])
 
-        values = mc_data["all_values"][key]
-        plot_at_peak(values, time, label, fname + ".png")
+            values = mc_data["all_values"][key]
+            plot_at_peak(values, time, label, fname)
 
 
-def plot_distributions(f_in, overwrite, param_list):
+def plot_distributions(f_in, overwrite, overwrite_all, param_list):
     """
 
     "main function"
@@ -192,9 +194,9 @@ def plot_distributions(f_in, overwrite, param_list):
         f_in,
         analyze_mechanics,
         param_list[:-1],
-        param_list[1]["overwrite_all"]
+        overwrite_all
     )
 
-    _plot_for_each_key(f_in, mc_data, fname, param_list)
+    _plot_for_each_key(f_in, mc_data, param_list, overwrite)
 
     print("Distributions plotted, finishing ..")

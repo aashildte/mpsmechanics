@@ -906,12 +906,13 @@ class MotionTracking(object):
         )
 
 
-def track_motion(f_in, overwrite, param_list, save_data=True):
+def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
     """
 
     Args:
         f_in - nd2 or zip file
         overwrite - recalculate values, or not
+        overwrite_all - in this script, same as overwrite
         param_list - give parameters to motion tracking algorithm, 
             predefined set of values
         save_data - boolean value: save as npy file when finished, or not
@@ -924,7 +925,7 @@ def track_motion(f_in, overwrite, param_list, save_data=True):
 
     filename = generate_filename(f_in, "track_motion", param_list, ".npy")
 
-    if not overwrite and os.path.isfile(filename):
+    if not (overwrite or overwrite_all) and os.path.isfile(filename):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
         return np.load(filename, allow_pickle=True).item()
     

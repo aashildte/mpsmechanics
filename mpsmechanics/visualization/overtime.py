@@ -6,7 +6,6 @@
 """
 
 
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -71,16 +70,17 @@ def plot_over_time(axis, avg_values, std_values, time, value_range):
 
 def _plot_beatrate(axis, data, time):
     intervals = data["intervals"]
-    
-    if len(intervals) > 3:
-        x_vals = [(time[i[0]] + time[i[1]])/2 \
-                        for i in intervals[:-1]]
+    maxima = data["maxima"]
+
+    for maximum in maxima:
+        axis.axvline(x=time[maximum], c='r')
+
+    shift = (maxima[1] - maxima[0])//2
+
+    if len(intervals) > 2:
+        x_vals = [time[ind] for ind in maxima[:-1] + shift]
         mean = data["beatrate_avg"]
         std = data["beatrate_std"]
-
-        for i in intervals:
-            axis.axvline(x=time[i[0]], c='r')
-            axis.axvline(x=time[i[1]], c='r')
 
         axis.errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
         axis.set_ylabel("Beatrate")
@@ -122,9 +122,8 @@ def visualize_over_time(data, filename, extension=".png"):
         axis.set_ylabel(label)
 
     axes[-1].set_xlabel(r"Time ($ms$)")
-    
+
     filename += extension
-    print("file: ", filename)
 
     plt.savefig(filename, dpi=500)
     plt.clf()

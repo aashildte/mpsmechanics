@@ -4,7 +4,5 @@
     -   id: pylint
         args:
         - --max-line-length=70
-        - --ignore-imports=yes
         - -d duplicate-code
-        format:
         - --good-names=dx

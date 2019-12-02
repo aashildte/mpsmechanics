@@ -111,7 +111,7 @@ def _calc_spatial_max(maxima, intervals, disp_folded):
     return argmax_list.astype(int)
 
 
-def _calc_spatial_beatrate(disp_folded, maxima, intervals, time):
+def calc_beatrate(disp_folded, maxima, intervals, time):
     """
 
     Estimates beatrate as a metric, per spatial point (x, y).
@@ -127,6 +127,9 @@ def _calc_spatial_beatrate(disp_folded, maxima, intervals, time):
             contains difference between two intervals in given
             spatial point
     """
+
+    if len(maxima) < 3:
+        return np.nan
 
     argmax = _calc_spatial_max(maxima, intervals, disp_folded)
     num_intervals = len(argmax)
@@ -144,35 +147,3 @@ def _calc_spatial_beatrate(disp_folded, maxima, intervals, time):
                         unit_in_ms / (time[stop_in] - time[start_in])
 
     return beatrate_spatial
-
-
-def calc_beatrate(disp_folded, maxima, intervals, time):
-    """
-
-    Estimates beatrate as a metric, per spatial point (x, y).
-
-    Args:
-        disp_folded - T x X x Y numpy array (displacement)
-        maxima - indices for overall peaks, over time
-        intervals - indices for interval subdivision
-        time - numpy array giving time steps
-
-    Returns:
-        D x X x Y numpy array, where D = num_intervals; each value
-            contains difference between two intervals in given
-            spatial point
-        numpy array of length D-1, average across all spatial values
-        numpy array of length D-1, standard deviation across all \
-            spatial values
-
-    """
-
-    if len(maxima) < 3:
-        return [np.nan]*3
-
-    beatrate_spatial = \
-            _calc_spatial_beatrate(disp_folded, maxima, intervals, time)
-    beatrate_avg = np.mean(beatrate_spatial, axis=(1, 2))
-    beatrate_std = np.std(beatrate_spatial, axis=(1, 2))
-
-    return beatrate_spatial, beatrate_avg, beatrate_std

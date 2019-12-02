@@ -9,6 +9,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from .setup_plots import make_pretty_label
 
 def get_minmax_values(avg_values, std_values, value_range):
     """
@@ -60,7 +61,6 @@ def plot_over_time(axis, avg_values, std_values, time, value_range):
 
     """
 
-
     minvalues, maxvalues = get_minmax_values(avg_values, std_values, value_range)
 
     axis.plot(time, avg_values)
@@ -79,10 +79,10 @@ def _plot_beatrate(axis, data, time):
 
     if len(intervals) > 2:
         x_vals = [time[ind] for ind in maxima[:-1] + shift]
-        mean = data["beatrate_avg"]
-        std = data["beatrate_std"]
+        avg = data["over_time_avg"]["beatrate"]
+        std = data["over_time_std"]["beatrate"]
 
-        axis.errorbar(x_vals, mean, std, ecolor='gray', fmt=".", capsize=3)
+        axis.errorbar(x_vals, avg, std, ecolor='gray', fmt=".", capsize=3)
         axis.set_ylabel("Beatrate")
 
 
@@ -100,7 +100,9 @@ def visualize_over_time(data, filename, extension=".png"):
     time = data["time"]
     # average over time
 
-    num_subplots = len(list(data["over_time_avg"].keys())) + 1
+    keys = list(data["all_values"].keys())
+    keys.remove("beatrate")             # special case
+    num_subplots = len(keys) + 1
 
     _, axes = plt.subplots(num_subplots, 1, \
             figsize=(14, 3*num_subplots), sharex=True)
@@ -111,14 +113,14 @@ def visualize_over_time(data, filename, extension=".png"):
 
     # then every other quantity
 
-    for (axis, key) in zip(axes[1:], data["over_time_avg"].keys()):
+    for (axis, key) in zip(axes[1:], keys):
         plot_over_time(axis, data["over_time_avg"][key], \
                 data["over_time_std"][key], data["time"], \
-                data["range"][key])
+                data["range_folded"][key])
+
         plot_intervals(axis, data["time"], data["intervals"])
 
-        label = (key.replace("_", " ")).capitalize() + " (" + \
-                data["units"][key] + ")"
+        label = make_pretty_label(key, data["unit"][key])
         axis.set_ylabel(label)
 
     axes[-1].set_xlabel(r"Time ($ms$)")

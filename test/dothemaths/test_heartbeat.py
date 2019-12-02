@@ -20,7 +20,8 @@ def test_calc_beat_maxima():
     data_exp = np.array([(3 + 7*i) for i in range(4)])
 
     assert np.allclose(data_exp,
-            mc.calc_beat_maxima(data_org, disp_threshold=1))
+                       mc.calc_beat_maxima(data_org,
+                                           disp_threshold=1))
 
 
 def test_calc_beat_intervals():
@@ -34,7 +35,8 @@ def test_calc_beat_intervals():
     data_exp = [(6 + 7*i, 6+7*(i+1)) for i in range(3)]
 
     assert np.allclose(data_exp,
-            mc.calc_beat_intervals(data_org, disp_threshold=1))
+                       mc.calc_beat_intervals(data_org,
+                                              disp_threshold=1))
 
 
 def test_calc_beatrate():
@@ -53,19 +55,13 @@ def test_calc_beatrate():
         data_org[i] = np.ones(shape[1:])
 
     data_exp_spatial = 500*np.ones((2, 4, 3))
-    avg_exp = 500
-    std_exp = 0
-    
-    beatrate_spatial, avg, std = \
-            mc.calc_beatrate(data_org, maxima, \
-                             intervals, np.arange(shape[0]))
 
-    assert np.allclose(data_exp_spatial, beatrate_spatial)
-    assert np.allclose(avg_exp, avg)
-    assert np.allclose(std_exp, std)
+    assert np.allclose(data_exp_spatial, 
+                       mc.calc_beatrate(data_org, maxima, \
+                                        intervals, np.arange(shape[0]))
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     test_calc_beat_maxima()
     test_calc_beat_intervals()
     test_calc_beatrate()

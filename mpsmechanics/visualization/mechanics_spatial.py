@@ -397,7 +397,7 @@ def _plot_for_each_key(input_data, param_list, overwrite, animate, scaling_facto
 
         values = mc_data["all_values"][key]
 
-        metadata = {"label" : make_pretty_label(key, mc_data["units"][key]),
+        metadata = {"label" : make_pretty_label(key, mc_data["unit"][key]),
                     "pixels2um" : mps_data.info["um_per_pixel"],
                     "blocksize" : images.shape[1] // values.shape[1]}
 

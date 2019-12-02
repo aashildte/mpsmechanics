@@ -8,13 +8,13 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..utils.data_layer import read_prev_layer, generate_filename
-from ..dothemaths.operations import calc_norm_over_time
-from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
-from .setup_plots import setup_frame, get_plot_fun, make_pretty_label
+from mpsmechanics.utils.data_layer import read_prev_layer, generate_filename
+from mpsmechanics.dothemaths.operations import calc_norm_over_time
+from mpsmechanics.mechanical_analysis.mechanical_analysis import analyze_mechanics
+from mpsmechanics.visualization.setup_plots import setup_frame, get_plot_fun, make_pretty_label
 
 
-def plot_distribution(axis, values, time, label):
+def plot_distribution(axis, values, time, value_range, label):
     """
 
     Plots histogram for 2D data (at a given time step).
@@ -23,6 +23,7 @@ def plot_distribution(axis, values, time, label):
         axis - axis in subplot instance
         values - X x Y numpy array
         time - which time step (number)
+        value_range - min and max meaningful values for this quantity
         label - description
 
     """
@@ -32,16 +33,18 @@ def plot_distribution(axis, values, time, label):
 
     axis.set_yscale("log")
 
-    lim = 1.1*np.max(np.abs(values))
-    axis.set_xlim(-lim, lim)
+    lim = np.max(np.abs(values))
+    spacing = 0.1*lim
+    axis.set_xlim(max(-lim, value_range[0]) - spacing, \
+                  min(lim, value_range[1]) + spacing)
+    
     num_bins = 100
-
     axis.hist(values.flatten(), bins=num_bins, color='#28349C')
 
     plt.suptitle(f"{label}\nTime: {int(time)} ms")
 
 
-def plot_1d_values(values, time, time_step, label):
+def plot_1d_values(values, time, time_step, value_range, label):
     """
 
     Plots histogram for 1D data.
@@ -50,6 +53,7 @@ def plot_1d_values(values, time, time_step, label):
         values - T x X x Y numpy array
         time - corresponding time steps; 1D numpy array of length T
         time_step - which time step to plot for
+        value_range - min and max meaningful values for this quantity
         label - description
 
     """
@@ -57,13 +61,13 @@ def plot_1d_values(values, time, time_step, label):
     axes, _ = setup_frame(1, 1, True, True)
 
     plot_distribution(axes[0], values[time_step], \
-                      time[time_step], label)
+                      time[time_step], value_range, label)
 
     axes[0].set_title(f"Scalar value")
     axes[0].set_xlabel(label)
 
 
-def plot_2d_values(values, time, time_step, label):
+def plot_2d_values(values, time, time_step, value_range, label):
     """
 
     Plots histogram for 2D data.
@@ -72,6 +76,7 @@ def plot_2d_values(values, time, time_step, label):
         values - T x X x Y x 2 numpy array
         time - corresponding time steps; 1D numpy array of length T
         time_step - which time step to plot for
+        value_range - min and max meaningful values for this quantity
         label - description
 
     """
@@ -83,13 +88,13 @@ def plot_2d_values(values, time, time_step, label):
 
     for (axis, component) in zip(axes, (x_values, y_values)):
         plot_distribution(axis, component[time_step], \
-                          time[time_step], label)
+                          time[time_step], value_range, label)
 
     axes[0].set_title("x component")
     axes[1].set_title("y component")
 
 
-def plot_2x2d_values(values, time, time_step, label):
+def plot_2x2d_values(values, time, time_step, value_range, label):
     """
 
     Plots histogram for 2D data.
@@ -98,6 +103,7 @@ def plot_2x2d_values(values, time, time_step, label):
         values - T x X x Y x 2 x 2 numpy array
         time - corresponding time steps; 1D numpy array of length T
         time_step - which time step to plot for
+        value_range - min and max meaningful values for this quantity
         label - description
 
     """
@@ -114,13 +120,13 @@ def plot_2x2d_values(values, time, time_step, label):
 
     for (axis, component) in zip(axes, all_components):
         plot_distribution(axis, component[time_step], \
-                      time[time_step], label)
+                      time[time_step], value_range, label)
 
     for (axis, title) in zip(axes, subtitles):
         axis.set_title(title)
 
 
-def plot_at_peak(values, time, label, fname):
+def plot_at_peak(values, time, value_range, label, fname):
     """
 
     Plots histogram at peak value.
@@ -128,6 +134,7 @@ def plot_at_peak(values, time, label, fname):
     Args:
         values - T x X x Y x D numpy array, D in [(), (2,) or (2, 2)]
         time - corresponding time steps; 1D numpy array of length T
+        value_range - min and max meaningful values for this quantity
         label - description
         fname - save plots here
 
@@ -137,14 +144,10 @@ def plot_at_peak(values, time, label, fname):
     plot_fn = get_plot_fun(values, \
             [plot_1d_values, plot_2d_values, plot_2x2d_values])
 
-    plot_fn(values, time, peak, label)
-
-    ymax = plt.ylim()[1]
+    plot_fn(values, time, peak, value_range, label)
 
     plt.savefig(fname)
     plt.close('all')
-
-    return ymax
 
 
 def _plot_for_each_key(f_in, mc_data, param_list, overwrite):
@@ -160,16 +163,17 @@ def _plot_for_each_key(f_in, mc_data, param_list, overwrite):
         fname = generate_filename(f_in, \
                                   f"distribution_{key}", \
                                   param_list[:2],
-                                  "png",
+                                  ".png",
                                   subfolder="distributions")
 
-        if not overwrite and not os.path.isfile(fname):
+        if overwrite or not os.path.isfile(fname):
             print("Plots for " + key + " ...")
 
-            label = make_pretty_label(key, mc_data["units"][key])
+            label = make_pretty_label(key, mc_data["unit"][key])
 
             values = mc_data["all_values"][key]
-            plot_at_peak(values, time, label, fname)
+            value_range = mc_data["range"][key]
+            plot_at_peak(values, time, value_range, label, fname)
 
 
 def plot_distributions(f_in, overwrite, overwrite_all, param_list):

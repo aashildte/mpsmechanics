@@ -31,6 +31,14 @@ from .mechanical_analysis.mechanical_analysis import (
     analyze_mechanics,
 )
 
+from .mechanical_analysis.filters import (
+    calc_std_tf_filter,
+    calc_avg_tf_filter,
+    filter_constrained,
+    filter_time_dependent,
+    filter_uniform,
+)
+
 from .motion_tracking import (
     apply_filter,
     block_matching,

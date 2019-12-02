@@ -58,8 +58,7 @@ def test_calc_beatrate():
 
     assert np.allclose(data_exp_spatial, 
                        mc.calc_beatrate(data_org, maxima, \
-                                        intervals, np.arange(shape[0]))
-
+                                        intervals, np.arange(shape[0])))
 
 if __name__ == "__main__":
     test_calc_beat_maxima()

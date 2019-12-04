@@ -1,15 +1,33 @@
+"""
 
+Åshild Telle / Simula Research Laboratory / 2019
+
+"""
 import os
-import mps
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib import animation
-import matplotlib.colors as mcolors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from ..utils.data_layer import read_prev_layer, generate_filename
-from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
+from ..dothemaths.operations import calc_norm_over_time
+from ..utils.data_layer import generate_filename
+from .animation_funs import get_animation_configuration, make_animation
+from .setup_plots import load_input_data
+
+def _calc_value_range(image_x_dim, image_y_dim, x_coord, y_coord, width):
+    x_from = int(x_coord - width/2)
+    y_from = int(y_coord - width/2)
+    x_to = int(x_coord + width/2)
+    y_to = int(y_coord + width/2)
+
+    if x_from < 0:
+        x_from = 0
+    if x_to > image_x_dim:
+        x_to = image_x_dim - 1
+    if y_from < 0:
+        y_from = 0
+    if y_to > image_y_dim:
+        y_to = image_y_dim - 1
+
+    return x_from, x_to, y_from, y_to
 
 
 def _set_ticks(axis, x_from, x_to, y_from, y_to):
@@ -27,153 +45,178 @@ def _set_ticks(axis, x_from, x_to, y_from, y_to):
     axis.set_yticks([int(x) for x in x_coords])
 
 
-def _mesh_over_image(org_x_coords, org_y_coords, coord_range, step, displacement, images, time, time_step):
-    x_coords = org_x_coords + displacement[time_step, :, :, 0]
-    y_coords = org_y_coords + displacement[time_step, :, :, 1]
-    
-    x_from, x_to, y_from, y_to = coord_range
+def _plot_part_of_image(axis, images, time_step, im_config):
+    x_from, x_to, y_from, y_to = _calc_value_range(images.shape[1], images.shape[2], **im_config)
+    part_of_im = images[:, x_from:x_to, y_from:y_to]
+    im_subplot = plt.imshow(part_of_im[time_step], cmap='gray')
 
+    _set_ticks(axis, x_from, x_to, y_from, y_to)
+
+    plt.xlim(0, y_to-y_from-1)
+    plt.ylim(0, x_to-x_from-1)
+
+    return im_subplot, part_of_im, [x_from, y_from]
+
+
+def _calc_mesh_coords(spatial_data, start_indices, step):
+    displacement = spatial_data["displacement"]
+    images = spatial_data["images"]
+    block_size = images.shape[1] // displacement.shape[1]
+
+    disp_x_dim, disp_y_dim = displacement.shape[1:3]
+
+    x_range = np.linspace(0, disp_x_dim*block_size, \
+                          disp_x_dim // step) - start_indices[0]
+    y_range = np.linspace(0, disp_y_dim*block_size, \
+                          disp_y_dim // step) - start_indices[1]
+
+    org_y_coords, org_x_coords = np.meshgrid(y_range, x_range)
+
+    all_x_coords = org_x_coords + displacement[:, ::step, ::step, 0]
+    all_y_coords = org_y_coords + displacement[:, ::step, ::step, 1]
+
+    return all_x_coords, all_y_coords
+
+
+def _plot_mesh(spatial_data, time_step, spatial_step, start_indices):
+    x_coords, y_coords = _calc_mesh_coords(spatial_data, start_indices, \
+            spatial_step)
+
+    all_x_values, all_y_values, all_lines = [], [], []
+
+    for _x in range(x_coords.shape[1]):
+        x_values = x_coords[:, _x, :]
+        y_values = y_coords[:, _x, :]
+        line = plt.plot(y_values[time_step], \
+                        x_values[time_step], \
+                        c='white', linewidth=0.5)[0]
+
+        all_x_values.append(x_values)
+        all_y_values.append(y_values)
+        all_lines.append(line)
+
+    for _y in range(y_coords.shape[2]):
+        x_values = x_coords[:, :, _y]
+        y_values = y_coords[:, :, _y]
+        line = plt.plot(y_values[time_step], \
+                        x_values[time_step], \
+                        c='white', linewidth=0.5)[0]
+
+        all_x_values.append(x_values)
+        all_y_values.append(y_values)
+        all_lines.append(line)
+
+    return all_x_values, all_y_values, all_lines
+
+
+def _plot_mesh_over_image(spatial_data, user_params, time, time_step):
     fig = plt.figure()
     axis = fig.add_subplot()
-    
-    _set_ticks(axis, x_from, x_to, y_from, y_to)
-    axis.set_xlim(0, y_to-y_from-1)
-    axis.set_ylim(0, x_to-x_from-1)
 
-    im_subplot = axis.imshow(images[x_from:x_to, y_from:y_to, 0], cmap='gray')
+    im_subplot, im_part, start_indices = \
+            _plot_part_of_image(axis, \
+                                spatial_data["images"], \
+                                time_step, \
+                                user_params["im_config"])
 
-    T, X, Y, _ = displacement.shape
+    x_values, y_values, lines = \
+            _plot_mesh(spatial_data, time_step, \
+                       user_params["step"], start_indices)
 
-    all_lines = []
-
-    for x in range(0, X, step):
-        x_values = x_coords[x, :]
-        y_values = y_coords[x, :]
-        all_lines.append(axis.plot(y_values, x_values, c='white', linewidth=0.5)[0])
-
-    for y in range(0, Y, step):
-        x_values = x_coords[:, y]
-        y_values = y_coords[:, y]
-        all_lines.append(axis.plot(y_values, x_values, c='white', linewidth=0.5)[0])
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
-    
-    return fig, axis, im_subplot, all_lines
+
+    def _update(index):
+        im_subplot.set_array(im_part[index])
+        for (_x_values, _y_values, line) in zip(x_values, y_values, lines):
+            line.set_ydata(_x_values[index])
+            line.set_xdata(_y_values[index])
+
+        plt.suptitle("Time: {} ms".format(int(time[index])))
+
+    return fig, _update
 
 
-def _calc_value_range(x_coord, y_coord, width, X_image, Y_image):
-    x_from = int(x_coord - width/2)
-    y_from = int(y_coord - width/2)
-    x_to = int(x_coord + width/2)
-    y_to = int(y_coord + width/2)
+def _plot_at_peak(spatial_data, user_params, time, fname):
+    displacement = spatial_data["displacement"]
 
-    if x_from < 0:
-        x_from = 0
-    if x_to > X_image:
-        x_to = X_image - 1
-    if y_from < 0:
-        y_from = 0
-    if y_to > Y_image:
-        y_to = Y_image - 1
+    peak = np.argmax(calc_norm_over_time(displacement))
+    _plot_mesh_over_image(spatial_data, user_params, time, peak)
 
-    return x_from, x_to, y_from, y_to
+    filename = fname + ".png"
+    plt.savefig(filename)
+    plt.close('all')
 
 
-def _mesh_over_movie(mps_data, mc_data, fname, animate, scaling_factor, width, x_coord, y_coord, step):
+def _make_animation(spatial_data, user_params, time, fname, animation_config):
+    fig, update = _plot_mesh_over_image(spatial_data, user_params, time, 0)
+    make_animation(fig, update, fname, **animation_config)
 
-    displacement = mc_data["all_values"]["displacement"]
-    T, X, Y, _ = displacement.shape
-    time = mc_data["time"]
-    peak = np.argmax(mc_data["over_time_avg"]["displacement"])
 
-    images = mps_data.frames 
-    framerate = mps_data.framerate
-    
-    X_image, Y_image = images.shape[:2]
-    X_disp, Y_disp = displacement.shape[1:3]
-   
-    x_from, x_to, y_from, y_to = _calc_value_range(x_coord, y_coord, width, X_image, Y_image)
+def _get_image_configuration(params):
+    x_coord = params["x_coord"]
+    y_coord = params["y_coord"]
+    width = params["width"]
+    step = params["step"]
 
-    x_range = np.linspace(0, X_disp * (X_image // X_disp), X_disp)
-    y_range = np.linspace(0, Y_disp * (Y_image // Y_disp), Y_disp)
+    return {"step" : step,
+            "im_config" : {"x_coord" : x_coord,
+                           "y_coord" : y_coord,
+                           "width" : width}}
 
-    org_y_coords, org_x_coords = np.meshgrid(y_range - y_from, x_range - x_from)
 
-    # one plot
-    _mesh_over_image(org_x_coords, org_y_coords, \
-            [x_from, x_to, y_from, y_to], step, displacement, images, time, peak)
-    plt.savefig(fname + ".png")
+def _generate_param_filename(f_in, param_list, user_params):
+    x_coord = user_params["im_config"]["x_coord"]
+    y_coord = user_params["im_config"]["y_coord"]
+    width = user_params["im_config"]["width"]
+    step = user_params["step"]
 
-    # and one movie, if applicable
+    fname = generate_filename(f_in, \
+                              f"mesh_over_images_{x_coord}_{y_coord}_{width}_{step}",
+                              param_list[:2],
+                              "",        # mp3 or png
+                              subfolder="mesh_over_images")
+    return fname
 
-    if animate:
 
-        fig, axis, im_subplot, all_lines = _mesh_over_image(org_x_coords, org_y_coords, \
-                [x_from, x_to, y_from, y_to], step, displacement, images, time, 0)
-
-        def update(index):
-            x_coords = org_x_coords + displacement[index, :, :, 0]
-            y_coords = org_y_coords + displacement[index, :, :, 1]
-
-            #im_subplot.set_array(images[:, :, index])
-            im_subplot.set_array(images[x_from:x_to, y_from:y_to, index])
-
-            cnt = 0
-            for x in range(0, X, step):
-                x_values = x_coords[x, :]
-                y_values = y_coords[x, :]
-                all_lines[cnt].set_ydata(x_values)
-                all_lines[cnt].set_xdata(y_values)
-                cnt += 1
-
-            for y in range(0, Y, step):
-                x_values = x_coords[:, y]
-                y_values = y_coords[:, y]
-                all_lines[cnt].set_ydata(x_values)
-                all_lines[cnt].set_xdata(y_values)
-                cnt += 1 
-
-            plt.suptitle("Time: {} ms".format(int(time[index])))
-        
-        # perform animation
-        writer = animation.writers["ffmpeg"](fps=scaling_factor*framerate)
-        anim = animation.FuncAnimation(fig, update, T)
-
-        fname = os.path.splitext(fname)[0]
-        anim.save("{}.{}".format(fname, "mp4"), writer=writer)
-
-        plt.close()
-
-    
-
-def animate_mesh_over_movie(f_in, overwrite, param_list):
+def animate_mesh_over_movie(f_in, overwrite, overwrite_all, param_list):
     """
 
     "main function"
 
+    Args:
+        f_in - BF / nd2 file
+        overwrite - make plots again if they don't exist or not
+        overwrite_all - recalculate data from previous layers or not
+        param_list - list of lists; 3 sublists. First 2 are passed to
+            previous layers if data needs to be recalculated; last gives
+            parameters for this script.
+
     """
-    
-    print("Parameters animation of mesh over movie:")
+
+    print("Parameters visualize distributions:")
+
     for key in param_list[2].keys():
         print(" * {}: {}".format(key, param_list[2][key]))
-    
-    mps_data = mps.MPS(f_in)
-    mc_data = read_prev_layer(
-        f_in,
-        analyze_mechanics,
-        param_list[:-1],
-        overwrite
-    )
 
-    x_coord = param_list[2]["x_coord"]
-    y_coord = param_list[2]["y_coord"]
-    width = param_list[2]["width"]
+    mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
+    animation_config = get_animation_configuration(param_list[2], mps_data)
 
-    fname = generate_filename(f_in, \
-                              f"animation_{x_coord}_{y_coord}_{width}",
-                              param_list[:2],
-                              "",        # mp3 or png
-                              subfolder="animate_mesh_over_movie")
+    displacement = mc_data["all_values"]["displacement"]
+    images = np.moveaxis(mps_data.frames, 2, 0)
+    time = mc_data["time"]
 
-    _mesh_over_movie(mps_data, mc_data, fname, **param_list[-1])
+    spatial_data = {"images" : images,
+                    "displacement" : displacement}
+    user_params = _get_image_configuration(param_list[-1])
+    fname = _generate_param_filename(f_in, param_list, user_params)
 
-    print("Visualization done, finishing ..")
+    if overwrite or not os.path.isfile(fname + ".png"):
+        _plot_at_peak(spatial_data, user_params, time, fname)
+
+    animate = animation_config.pop("animate")
+
+    if animate and (overwrite or not os.path.isfile(fname + ".mp4")):
+        print("Making a movie ..")
+        _make_animation(spatial_data, user_params, time, fname, animation_config)
+
+    print("Mesh over movie done, finishing ...")

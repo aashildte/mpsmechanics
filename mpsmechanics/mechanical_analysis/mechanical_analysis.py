@@ -13,7 +13,6 @@ import numpy as np
 import mps
 
 from mpsmechanics.utils.data_layer import read_prev_layer, generate_filename, save_dictionary
-from mpsmechanics.visualization.overtime import visualize_over_time
 from mpsmechanics.dothemaths.heartbeat import calc_beat_intervals, calc_beat_maxima
 from mpsmechanics.dothemaths.operations import calc_norm_over_time
 from mpsmechanics.motion_tracking.motion_tracking import track_motion
@@ -57,8 +56,7 @@ def _calc_mechanical_quantities(mps_data, mt_data, type_filter, sigma):
     um_per_pixel = mps_data.info["um_per_pixel"]
 
     angle = mt_data["angle"]
-    block_size = mt_data["block_size"]
-    dx = um_per_pixel*block_size
+    dx = um_per_pixel*mt_data["block_size"]
 
     disp_data = um_per_pixel*apply_filter(mt_data["displacement_vectors"], type_filter, sigma)
     disp_data_folded = calc_norm_over_time(disp_data)
@@ -116,7 +114,5 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, save_data=True
 
     if save_data:
         save_dictionary(filename, mechanical_quantities)
-
-    visualize_over_time(mechanical_quantities, filename[:-4])
 
     return mechanical_quantities

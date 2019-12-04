@@ -5,10 +5,7 @@
 """
 
 from . import mechanical_analysis
-from . import motion_tracking
 from . import pillar_tracking
-from . import visualization
-from . import statistical_analysis
 
 from .dothemaths import (
     calc_beat_intervals,

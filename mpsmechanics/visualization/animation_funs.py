@@ -8,7 +8,29 @@ import os
 from matplotlib import animation
 import matplotlib.pyplot as plt
 
-def make_animation(fig, update, num_frames, framerate, fname, extension):
+
+def get_animation_configuration(params, mps_data):
+    """
+
+    Creates dictionary with standard animation properties.
+
+    Args:
+        params - parameter from command line, including
+            animate (bool) and scaling_factor (float)
+        mps_data - MPS object
+
+    Return:
+        Dictionary with configuration properties.
+
+    """
+
+    return {"animate" : params["animate"],
+            "framerate" : mps_data.framerate*params["scaling_factor"],
+            "num_frames" : mps_data.frames.shape[-1],
+            "extension" : "mp4"}
+
+
+def make_animation(fig, update, fname, num_frames, framerate, extension):
     
     extensions = ["gif", "mp4"]
     msg = "Invalid extension {}. Expected one of {}".format(extension, extensions)

@@ -9,14 +9,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-import mps
-
-from ..utils.data_layer import read_prev_layer, generate_filename
-from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
-from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
-from .animation_funs import make_animation
-from .setup_plots import setup_frame, get_plot_fun, make_pretty_label
-
+from ..utils.data_layer import generate_filename
+from ..dothemaths.operations import calc_magnitude, normalize_values, \
+        calc_norm_over_time
+from .animation_funs import make_animation, get_animation_configuration
+from .setup_plots import setup_frame, get_plot_fun, make_pretty_label, load_input_data
 
 def make_quiver_plot(axis, values, quiver_step, color, scale):
     """
@@ -370,19 +367,37 @@ def _plot_at_peak(spatial_data, time, metadata, fname):
     plt.close('all')
 
 
-def _make_animation(spatial_data, time, metadata, fname, framerate):
-    extension = "mp4"
+def _make_animation(spatial_data, time, metadata, fname, animation_config):
     plot_fn = get_plot_fun(spatial_data["derived_quantity"], \
             [plot_1d_values, plot_2d_values, plot_2x2d_values])
     fig, _update = plot_fn(spatial_data, time, 0, metadata)
 
-    num_frames = len(time)
-    make_animation(fig, _update, num_frames, framerate, fname, extension)
+    make_animation(fig, _update, fname, **animation_config)
 
 
-def _plot_for_each_key(input_data, param_list, overwrite, animate, scaling_factor):
+def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
+    """
 
-    f_in, mps_data, mc_data = input_data
+    "main function"
+
+    Args:
+        f_in - BF / nd2 file
+        overwrite - make plots again if they don't exist or not
+        overwrite_all - recalculate data from previous layers or not
+        param_list - list of lists; 3 sublists. First 2 are passed to
+            previous layers if data needs to be recalculated; last gives
+            parameters for this script.
+
+    """
+
+    print("Parameters visualize distributions:")
+
+    for key in param_list[2].keys():
+        print(" * {}: {}".format(key, param_list[2][key]))
+
+    mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
+    animation_config = get_animation_configuration(param_list[2], mps_data)
+
     images = np.moveaxis(mps_data.frames, 2, 0)
     time = mc_data["time"]
 
@@ -407,40 +422,11 @@ def _plot_for_each_key(input_data, param_list, overwrite, animate, scaling_facto
         if not overwrite and not os.path.isfile(fname + ".png"):
             _plot_at_peak(spatial_data, time, metadata, fname)
 
+        animate = animation_config.pop("animate")
+
         if animate and not overwrite and not os.path.isfile(fname + ".mp4"):
             print("Making a movie ..")
             _make_animation(spatial_data, time, metadata, fname, \
-                    scaling_factor*mps_data.framerate)
-
-
-def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
-    """
-
-    "main function"
-
-    Args:
-        f_in - BF / nd2 file
-        overwrite - recalculate previous data or not
-        param_list - list of lists; 3 sublists. First 2 are passed to
-            previous layers if data needs to be recalculated; last gives
-            parameters for this script.
-
-    """
-
-    print("Parameters visualize distributions:")
-    for key in param_list[2].keys():
-        print(" * {}: {}".format(key, param_list[2][key]))
-
-    mps_data = mps.MPS(f_in)
-
-    mc_data = read_prev_layer(
-        f_in,
-        analyze_mechanics,
-        param_list[:-1],
-        overwrite_all
-    )
-
-    input_data = [f_in, mps_data, mc_data]
-    _plot_for_each_key(input_data, param_list, overwrite, **param_list[-1])
+                    animation_config)
 
     print("Visualization done, finishing ...")

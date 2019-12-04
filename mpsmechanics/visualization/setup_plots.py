@@ -6,6 +6,38 @@
 
 import matplotlib.pyplot as plt
 
+import mps
+from ..utils.data_layer import read_prev_layer
+from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
+
+
+def load_input_data(f_in, param_list, overwrite_all):
+    """
+    
+    Reads in / loads information from input files.
+
+    Args:
+        f_in - BF / nd2 file
+        param_list - parameters given at command line
+        overwrite_all - boolean value; recalculate previous layers or not
+
+    Returns:
+        mps_data - MPS object
+        mc_data - dictionary with results from mechanical analysis
+
+    """
+
+    mps_data = mps.MPS(f_in)
+
+    mc_data = read_prev_layer(
+        f_in,
+        analyze_mechanics,
+        param_list[:-1],
+        overwrite_all
+    )
+
+    return mps_data, mc_data
+
 
 def make_pretty_label(key, unit):
     """

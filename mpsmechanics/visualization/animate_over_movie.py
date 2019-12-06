@@ -48,7 +48,7 @@ def _set_ticks(axis, x_from, x_to, y_from, y_to):
 def _plot_part_of_image(axis, images, time_step, im_config):
     x_from, x_to, y_from, y_to = _calc_value_range(images.shape[1], images.shape[2], **im_config)
     part_of_im = images[:, x_from:x_to, y_from:y_to]
-    im_subplot = plt.imshow(part_of_im[time_step], cmap='gray')
+    im_subplot = plt.imshow(part_of_im[time_step], cmap='gray', origin='upper')
 
     _set_ticks(axis, x_from, x_to, y_from, y_to)
 
@@ -66,9 +66,11 @@ def _calc_mesh_coords(spatial_data, start_indices, step):
     disp_x_dim, disp_y_dim = displacement.shape[1:3]
 
     x_range = np.linspace(0, disp_x_dim*block_size, \
-                          disp_x_dim // step) - start_indices[0]
+                          disp_x_dim // step) \
+                          - start_indices[0] + block_size/2
     y_range = np.linspace(0, disp_y_dim*block_size, \
-                          disp_y_dim // step) - start_indices[1]
+                          disp_y_dim // step) \
+                          - start_indices[1] + block_size/2
 
     org_y_coords, org_x_coords = np.meshgrid(y_range, x_range)
 
@@ -124,6 +126,7 @@ def _plot_mesh_over_image(spatial_data, user_params, time, time_step):
                        user_params["step"], start_indices)
 
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
+    plt.ylim(max(plt.ylim()), min(plt.ylim()))
 
     def _update(index):
         im_subplot.set_array(im_part[index])

@@ -27,3 +27,7 @@ from .vectorfield import (
 from .animate_over_movie import (
     animate_mesh_over_movie,
 )
+
+from .setup_plots import (
+    make_pretty_label,
+)

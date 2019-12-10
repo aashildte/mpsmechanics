@@ -25,8 +25,8 @@ def make_quiver_plot(axis, values, quiver_step, color, scale):
     assert values.shape[2:] == (2,), \
             f"Error: Given value shape ({values.shape[2:]}) do not corresponds to vector values."
 
-    coords = [np.linspace(0, quiver_step*values.shape[1], values.shape[1]),
-              np.linspace(0, quiver_step*values.shape[2], values.shape[2])]
+    coords = [np.linspace(0, quiver_step*values.shape[0], values.shape[0]),
+              np.linspace(0, quiver_step*values.shape[1], values.shape[1])]
 
     axis.invert_yaxis()
 
@@ -59,20 +59,23 @@ def make_heatmap_plot(axis, scalars, vmin, vmax, cmap):
             cmap=cmap)
 
 
-def _set_ax_units(axis, scale):
+def _set_ax_units(axis, scale, shift):
 
     axis.set_aspect("equal")
     num_yticks = 8
     num_xticks = 4
+    
+    y_range = axis.get_ylim()
+    x_range = axis.get_xlim()
 
-    y_to, _ = axis.get_ylim()
-    _, x_to = axis.get_xlim()
+    y_to = y_range[0] #- y_range[1]
+    x_to = x_range[1] #- x_range[0]
 
     yticks = np.linspace(0, y_to, num_yticks)
-    ylabels = scale*yticks
+    ylabels = scale*yticks + shift
 
     xticks = np.linspace(0, x_to, num_xticks)
-    xlabels = scale*xticks
+    xlabels = scale*xticks + shift
 
     xlabels = xlabels.astype(int)
     ylabels = ylabels.astype(int)
@@ -130,10 +133,10 @@ def _make_1d_plot_pretty(fig, axes, subplots, subtitles, metadata):
     fig.colorbar(subplots[1], ax=axes[1]).set_label(label)
 
     for (axis, subtitle) in zip(axes, subtitles):
-        axis.set_subtitle(subtitle)
+        axis.set_title(subtitle)
 
-    _set_ax_units(axes[0], pixels2um)
-    _set_ax_units(axes[1], blocksize*pixels2um)
+    _set_ax_units(axes[0], pixels2um, 0)
+    _set_ax_units(axes[1], blocksize*pixels2um, blocksize//2)
 
 
 def plot_1d_values(spatial_data, time, time_step, metadata):
@@ -187,15 +190,16 @@ def _init_subplots_2d(all_components, time, time_step, quiver_step):
     images, values, normalized, magnitude, x_values, y_values = \
             all_components
 
-    vmin, vmax = _get_value_range([x_values, y_values])
-
+    #vmin, vmax = _get_value_range([x_values, y_values])
+    vmin, vmax = -0.1, 0.1
+    vmax_mag = 0.1
     subplots = [axes[0].imshow(images[time_step], cmap="gray"),
                 make_quiver_plot(axes[1], values[time_step], quiver_step, \
                            'red', _find_arrow_scaling(values)),
                 make_quiver_plot(axes[2], normalized[time_step], quiver_step, \
                            'black', 1.5/quiver_step),
                 make_heatmap_plot(axes[3], magnitude[time_step], 0, \
-                              np.max(magnitude), "viridis"),
+                              vmax_mag, "viridis"),
                 make_heatmap_plot(axes[4], x_values[time_step], \
                               vmin, vmax, "bwr"),
                 make_heatmap_plot(axes[5], y_values[time_step], \
@@ -213,6 +217,7 @@ def _make_2d_plot_pretty(fig, axes, subplots, subtitles, metadata):
 
     for axis in axes[:3]:
         _align_subplot(axis)
+        axis.set_aspect('equal')
 
     for i in range(3, 6):
         fig.colorbar(subplots[i], ax=axes[i]).set_label(label)
@@ -220,10 +225,10 @@ def _make_2d_plot_pretty(fig, axes, subplots, subtitles, metadata):
     for (subtitle, axis) in zip(subtitles, axes):
         axis.set_title(subtitle)
 
-    _set_ax_units(axes[0], pixels2um)
+    _set_ax_units(axes[0], pixels2um, 0)
 
-    for axis in axes[3:]:
-        _set_ax_units(axis, blocksize*pixels2um)
+    for axis in axes[1:]:
+        _set_ax_units(axis, blocksize*pixels2um, blocksize//2)
 
 def plot_2d_values(spatial_data, time, time_step, metadata):
     """
@@ -284,14 +289,15 @@ def _init_subplots_2x2d(all_components, time, time_step):
 
     vmin, vmax = _get_value_range([ux_values, uy_values, \
                                    vx_values, vy_values])
-
+    vmin, vmax = -0.1, 0.1
+    vmax_mag = 0.1
     subplots = [axes[0].imshow(images[time_step], cmap="gray"),
                 make_heatmap_plot(axes[1], ux_values[time_step], \
                     vmin, vmax, "bwr"),
                 make_heatmap_plot(axes[2], uy_values[time_step], \
                     vmin, vmax, "bwr"),
                 make_heatmap_plot(axes[3], sg_values[time_step], \
-                        np.min(sg_values), np.max(sg_values), "viridis"),
+                        np.min(sg_values), vmax_mag, "viridis"),
                 make_heatmap_plot(axes[4], vx_values[time_step], \
                     vmin, vmax, "bwr"),
                 make_heatmap_plot(axes[5], vy_values[time_step], \
@@ -315,9 +321,9 @@ def _make_2x2d_plot_pretty(fig, axes, subplots, subtitles, metadata):
 
     _align_subplot(axes[0])
 
-    _set_ax_units(axes[0], pixels2um)
+    _set_ax_units(axes[0], pixels2um, 0)
     for axis in axes[1:]:
-        _set_ax_units(axis, blocksize*pixels2um)
+        _set_ax_units(axis, blocksize*pixels2um, blocksize//2)
 
 
 def plot_2x2d_values(spatial_data, time, time_step, metadata):
@@ -397,11 +403,12 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
 
     mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
     animation_config = get_animation_configuration(param_list[2], mps_data)
+    animate = animation_config.pop("animate")
 
     images = np.moveaxis(mps_data.frames, 2, 0)
     time = mc_data["time"]
-
-    for key in mc_data["all_values"].keys():
+    keys = ["principal_strain", "Green-Lagrange_strain_tensor"]
+    for key in keys: #mc_data["all_values"].keys():
         print("Plots for " + key + " ...")
 
         fname = generate_filename(f_in, \
@@ -419,12 +426,11 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
         spatial_data = {"images" : images,
                         "derived_quantity" : values}
 
-        if not overwrite and not os.path.isfile(fname + ".png"):
+        if overwrite or (not os.path.isfile(fname + ".png")):
+            print("Spatial plots ..")
             _plot_at_peak(spatial_data, time, metadata, fname)
 
-        animate = animation_config.pop("animate")
-
-        if animate and not overwrite and not os.path.isfile(fname + ".mp4"):
+        if animate and (overwrite or (not os.path.isfile(fname + ".mp4"))):
             print("Making a movie ..")
             _make_animation(spatial_data, time, metadata, fname, \
                     animation_config)

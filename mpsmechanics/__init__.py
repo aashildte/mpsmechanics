@@ -74,6 +74,7 @@ from .utils import (
 
 from .visualization import (
     animate_mesh_over_movie,
+    make_pretty_label,
     plot_distributions,
     visualize_calcium_spatial,
     visualize_mechanics,

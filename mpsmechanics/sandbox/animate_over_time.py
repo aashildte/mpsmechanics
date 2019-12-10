@@ -7,6 +7,7 @@ import numpy as np
 
 import mpsmechanics as mc
 import mps
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def get_filename(input_file, quantity):

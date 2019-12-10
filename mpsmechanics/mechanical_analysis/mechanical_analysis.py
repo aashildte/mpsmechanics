@@ -89,6 +89,8 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, save_data=True
 
     filename = generate_filename(f_in, "analyze_mechanics", param_list, ".npy")
 
+    print("filename: ", filename)
+
     if not overwrite and os.path.isfile(filename):
         print("Previous data exist. Use flag --overwrite / -o to recalculate this layer.")
         print("Use flag --overwrite_all / -oa to recalculate data for all layers.")

@@ -31,7 +31,7 @@ def get_animation_configuration(params, mps_data):
 
 
 def make_animation(fig, update, fname, num_frames, framerate, extension):
-    
+
     extensions = ["gif", "mp4"]
     msg = "Invalid extension {}. Expected one of {}".format(extension, extensions)
     assert extension in extensions, msg

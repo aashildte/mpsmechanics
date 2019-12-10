@@ -116,12 +116,17 @@ def add_parameters_parser_arguments(parser, level):
                             help="Block size for motion tracking",
                             type=int)
 
+        parser.add_argument("-mb", "--max_block_movement", \
+                            default=3,
+                            help="Matching method for motion tracking",
+                            type=int)
+
         parser.add_argument("-m", "--matching_method", \
                             default="block_matching",
                             help="Matching method for motion tracking",
                             type=str)
 
-        l0_keys = ["block_size", "matching_method"]
+        l0_keys = ["block_size", "max_block_movement", "matching_method"]
         all_keys.append(l0_keys)
 
     if level >= 1:

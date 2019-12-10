@@ -6,6 +6,9 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+import matplotlib.colors as mcolors
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ..dothemaths.operations import calc_norm_over_time
 from ..utils.data_layer import generate_filename
@@ -48,12 +51,12 @@ def _set_ticks(axis, x_from, x_to, y_from, y_to):
 def _plot_part_of_image(axis, images, time_step, im_config):
     x_from, x_to, y_from, y_to = _calc_value_range(images.shape[1], images.shape[2], **im_config)
     part_of_im = images[:, x_from:x_to, y_from:y_to]
-    im_subplot = plt.imshow(part_of_im[time_step], cmap='gray', origin='upper')
+    im_subplot = axis.imshow(part_of_im[time_step], cmap='gray', origin='upper')
 
     _set_ticks(axis, x_from, x_to, y_from, y_to)
 
-    plt.xlim(0, y_to-y_from-1)
-    plt.ylim(0, x_to-x_from-1)
+    axis.set_xlim(0, y_to-y_from-1)
+    axis.set_ylim(0, x_to-x_from-1)
 
     return im_subplot, part_of_im, [x_from, y_from]
 
@@ -80,7 +83,7 @@ def _calc_mesh_coords(spatial_data, start_indices, step):
     return all_x_coords, all_y_coords
 
 
-def _plot_mesh(spatial_data, time_step, spatial_step, start_indices):
+def _plot_mesh(axis, spatial_data, time_step, spatial_step, start_indices):
     x_coords, y_coords = _calc_mesh_coords(spatial_data, start_indices, \
             spatial_step)
 
@@ -89,7 +92,7 @@ def _plot_mesh(spatial_data, time_step, spatial_step, start_indices):
     for _x in range(x_coords.shape[1]):
         x_values = x_coords[:, _x, :]
         y_values = y_coords[:, _x, :]
-        line = plt.plot(y_values[time_step], \
+        line = axis.plot(y_values[time_step], \
                         x_values[time_step], \
                         c='white', linewidth=0.5)[0]
 
@@ -100,7 +103,7 @@ def _plot_mesh(spatial_data, time_step, spatial_step, start_indices):
     for _y in range(y_coords.shape[2]):
         x_values = x_coords[:, :, _y]
         y_values = y_coords[:, :, _y]
-        line = plt.plot(y_values[time_step], \
+        line = axis.plot(y_values[time_step], \
                         x_values[time_step], \
                         c='white', linewidth=0.5)[0]
 
@@ -111,28 +114,89 @@ def _plot_mesh(spatial_data, time_step, spatial_step, start_indices):
     return all_x_values, all_y_values, all_lines
 
 
-def _plot_mesh_over_image(spatial_data, user_params, time, time_step):
-    fig = plt.figure()
-    axis = fig.add_subplot()
+def _plot_points(axis, spatial_data, time_step, spatial_step, start_indices):
+    x_coords, y_coords = \
+            _calc_mesh_coords(spatial_data, start_indices, \
+                              spatial_step)
+    strain = spatial_data["principal_strain"]
 
-    im_subplot, im_part, start_indices = \
+    x_dim, y_dim = strain.shape[1:3]
+    x_range = np.arange(0, x_dim, spatial_step)
+    y_range = np.arange(0, y_dim, spatial_step)
+
+    x_range = x_range.astype(int)
+    y_range = y_range.astype(int)
+
+    pts_subplot = axis.scatter(y_coords[time_step].flatten(), x_coords[time_step].flatten())
+
+    clm = cm.get_cmap('Reds')
+    norm = mcolors.Normalize(0, 0.1) #np.max(strain))
+
+    colors = clm(norm(strain.reshape(strain.shape[0], strain.shape[1]*strain.shape[2])))
+    pts_subplot.set_color(colors[time_step])
+
+    return pts_subplot, y_coords, x_coords, colors, norm, clm
+
+
+def _plot_mesh_over_image(spatial_data, user_params, time, time_step):
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+    image_subplots = []
+
+    for axis in axes:
+        im_subplot, im_part, start_indices = \
             _plot_part_of_image(axis, \
                                 spatial_data["images"], \
                                 time_step, \
                                 user_params["im_config"])
+        image_subplots.append(im_subplot)
+
+    spatial_step = user_params["step"]
 
     x_values, y_values, lines = \
-            _plot_mesh(spatial_data, time_step, \
-                       user_params["step"], start_indices)
+            _plot_mesh(axes[0], spatial_data, time_step, \
+                       spatial_step, start_indices)
+    
+    pts_subplot, y_coords, x_coords, colors, norm, clm = \
+            _plot_points(axes[1], spatial_data, time_step, \
+                         spatial_step, start_indices)
+    """
+    x_midpt = x_coords[:, 169, 20]
+    y_midpt = y_coords[:, 169, 20]
+    midpt = axes[0].plot(y_midpt[time_step], x_midpt[time_step], 'ro')[0]
+
+    print(x_midpt[time_step], y_midpt[time_step])
+    """
+    divider = make_axes_locatable(axes[0])
+    cax = divider.append_axes("right", size="5%", pad=0.1)
+    cax.remove()
+
+    divider = make_axes_locatable(axes[1])
+    cax = divider.append_axes("right", size="5%", pad=0.1)
+    cbar = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=clm), \
+            ticks=[0, 0.25, 0.5, 0.75, 0.1], cax=cax)
+    cbar.ax.set_yticklabels(['0', '0.25', '0.5', '0.75', '> 0.1'])
+    cbar.set_label("Principal strain (magnitude)")
+
 
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
-    plt.ylim(max(plt.ylim()), min(plt.ylim()))
+
+    for axis in axes:
+        axis.set_ylim(max(axis.get_ylim()), min(axis.get_ylim()))
 
     def _update(index):
-        im_subplot.set_array(im_part[index])
+        for im_subplot in image_subplots:
+            im_subplot.set_array(im_part[index])
+
         for (_x_values, _y_values, line) in zip(x_values, y_values, lines):
             line.set_ydata(_x_values[index])
             line.set_xdata(_y_values[index])
+
+        pts_subplot.set_offsets(np.c_[y_coords[index].flatten(), x_coords[index].flatten()])
+        pts_subplot.set_color(colors[index])
+
+        #midpt.set_ydata(x_midpt[index])
+        #midpt.set_xdata(y_midpt[index])
 
         plt.suptitle("Time: {} ms".format(int(time[index])))
 
@@ -140,9 +204,9 @@ def _plot_mesh_over_image(spatial_data, user_params, time, time_step):
 
 
 def _plot_at_peak(spatial_data, user_params, time, fname):
-    displacement = spatial_data["displacement"]
+    #displacement = spatial_data["displacement"]
 
-    peak = np.argmax(calc_norm_over_time(displacement))
+    peak = 30  #np.argmax(calc_norm_over_time(displacement))
     _plot_mesh_over_image(spatial_data, user_params, time, peak)
 
     filename = fname + ".png"
@@ -204,12 +268,14 @@ def animate_mesh_over_movie(f_in, overwrite, overwrite_all, param_list):
     mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
     animation_config = get_animation_configuration(param_list[2], mps_data)
 
-    displacement = mc_data["all_values"]["displacement"]
+    displacement = (1/mps_data.info["um_per_pixel"])*mc_data["all_values"]["displacement"]
     images = np.moveaxis(mps_data.frames, 2, 0)
     time = mc_data["time"]
 
     spatial_data = {"images" : images,
-                    "displacement" : displacement}
+                    "displacement" : displacement,
+                    "principal_strain" : mc_data["folded"]["principal_strain"]}
+
     user_params = _get_image_configuration(param_list[-1])
     fname = _generate_param_filename(f_in, param_list, user_params)
 

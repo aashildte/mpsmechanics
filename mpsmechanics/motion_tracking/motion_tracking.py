@@ -134,7 +134,7 @@ def block_matching(reference_image, image, block_size, max_block_movement):
     shape = (y_size // block_size, x_size // block_size)
     vectors = np.zeros((shape[0], shape[1], 2))
     costs = np.ones((2 * max_block_movement + 1, 2 * max_block_movement + 1))
-
+    print("block size, max block movement: ", block_size, max_block_movement)
     # Need to copy images to float array
     # otherwise negative values will be converted to large 16-bit integers
     ref_block = np.zeros((block_size, block_size))  # Block for reference image

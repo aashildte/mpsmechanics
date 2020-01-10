@@ -5,11 +5,7 @@
 """
 
 from . import mechanical_analysis
-from . import motion_tracking
 from . import pillar_tracking
-from . import visualization
-from . import statistical_analysis
-
 
 from .dothemaths import (
     calc_beat_intervals,
@@ -28,52 +24,61 @@ from .dothemaths import (
     normalize_values,
 )
 
-
 from .mechanical_analysis.mechanical_analysis import (
-        analyze_mechanics,
-)
-from .motion_tracking.motion_tracking import (
-        track_motion,
-        MotionTracking,
+    analyze_mechanics,
 )
 
-from .motion_tracking.restore_resolution import apply_filter
+from .mechanical_analysis.filters import (
+    calc_std_tf_filter,
+    calc_avg_tf_filter,
+    filter_constrained,
+    filter_time_dependent,
+    filter_uniform,
+)
+
+from .motion_tracking import (
+    apply_filter,
+    block_matching,
+    calculate_minmax,
+    convert_disp_data,
+    template_matching,
+    track_motion,
+    MotionTracking,
+)
 
 from .pillar_tracking.pillar_tracking import (
-        track_pillars,
-        track_pillars_sgvalue,
+    track_pillars,
+    track_pillars_sgvalue,
 )
 
-from .statistical_analysis.statistical_analysis import (
-        calculate_stats_chips,
-)
-from .statistical_analysis.metrics import (
-        calculate_metrics,
-        calculate_metrics_all,
+from .statistical_analysis import (
+    calculate_metrics,
+    calculate_metrics_all,
+    calculate_stats_chips,
 )
 
-from .utils.iofuns.command_line import (
-        get_input_files,
-        add_default_parser_arguments,
-        add_animation_parser_arguments,
-        add_parameters_parser_arguments,
+from .utils import (
+    add_animation_parser_arguments,
+    add_default_parser_arguments,
+    add_focus_parser_arguments,
+    add_parameters_parser_arguments,
+    generate_filename,
+    get_full_filename,
+    get_input_files,
+    make_dir_layer_structure,
+    read_prev_layer,
+    run_script,
+    save_dictionary,
+    split_parameter_dictionary,
 )
-
-from .utils.iofuns.data_layer import (
-        read_prev_layer,
-        get_full_filename,
-        save_dictionary,
-)
-
 
 from .visualization import (
-    animate_decomposition,
-    animate_vectorfield,
-    plot_decomposition_at_peak,
-    plot_vectorfield_at_peak,
+    animate_mesh_over_movie,
+    make_pretty_label,
+    plot_distributions,
     visualize_calcium_spatial,
-    visualize_distributions,
     visualize_mechanics,
     visualize_over_time,
     visualize_vectorfield,
 )
+

@@ -1,5 +1,4 @@
 
-import sys
 import os
 import mps
 import numpy as np
@@ -79,8 +78,12 @@ def get_frame(x_range, y_range, im_x, im_y, offset=0):
     return int(x_from), int(x_to), int(y_from), int(y_to)
 
 
-def get_filename(input_file, matching_method, block_size, type_filter, sigma, im_x_um, im_y_um, offset):
-    folder = os.path.join(input_file[:-4], "mpsmechanics", "point_animation")
+def get_filename(input_file, matching_method, block_size, type_filter, sigma, im_x_um, im_y_um, offset, type_animation="mesh"):
+    if type_animation=="points":
+        folder = os.path.join(input_file[:-4], "mpsmechanics", "point_animation")
+    else:
+        folder = os.path.join(input_file[:-4], "mpsmechanics", "mesh_animation")
+
     os.makedirs(folder, exist_ok=True)
 
     im_x = int(im_x_um)
@@ -119,8 +122,97 @@ def get_mpsmechanics_data(input_file, matching_method, block_size, type_filter, 
 
     return time, displacement, pr_strain
 
+def set_ticks(axis, x_from, y_from, x_to, y_to)
+    axis.set_xlabel("Pixels")
+    axis.set_ylabel("Pixels")
 
-def animate_points_on_image(pr_strain, displacement, xy_list, images, x_from, x_to, y_from, y_to, x_range, y_range, time, framerate, fname):
+    x_coords = np.linspace(0, x_to-x_from-1, 5)
+    x_ticks = np.linspace(x_from, x_to-1, 5)
+    y_coords = np.linspace(0, y_to-y_from-1, 5)
+    y_ticks = np.linspace(y_from, y_to-1, 5)
+
+    axis.set_yticklabels([int(y) for y in y_ticks])
+    axis.set_xticklabels([int(x) for x in x_ticks])
+    axis.set_yticks([int(y) for y in y_coords])
+    axis.set_xticks([int(x) for x in x_coords])
+
+
+def animate_mesh_over_image(pr_strain, displacement, images, x_from, x_to, y_from, y_to, time, framerate, x_range, y_range, fname):
+    step_size = 1
+
+    scale = displacement.shape[1] / images.shape[0]
+    block_size = images.shape[0] // displacement.shape[1]
+     
+    print("x range: ", x_range)
+    print(x_from, x_to, y_from, y_to)
+
+    org_y_coords, org_x_coords = np.meshgrid(y_range - y_from, x_range - x_from)
+
+    x_coords = org_x_coords + displacement[0, :, :, 0]
+    y_coords = org_y_coords + displacement[0, :, :, 1]
+
+    fig = plt.figure()
+    axis = fig.add_subplot()
+
+    set_ticks(axis, x_from, x_to, y_from, y_to)
+    axis.set_xlim(0, x_to-x_from-1)
+    axis.set_ylim(0, y_to-y_from-1)
+
+    im_subplot = axis.imshow(images[x_from:x_to, y_from:y_to, 0], cmap='gray')
+    #im_subplot = axis.imshow(images[:, :, 0], cmap='gray')
+
+    T, X, Y, _ = displacement.shape
+
+    all_values = []
+
+    for x in range(0, X, step_size):
+        x_values = x_coords[x, :]
+        y_values = y_coords[x, :]
+        all_values.append(axis.plot(y_values, x_values, c='white', linewidth=0.5)[0])
+
+    for y in range(0, Y, step_size):
+        x_values = x_coords[:, y]
+        y_values = y_coords[:, y]
+        all_values.append(axis.plot(y_values, x_values, c='white', linewidth=0.5)[0])
+    plt.suptitle("Time: {} ms".format(int(time[0])))
+    
+    def update(index):
+        x_coords = org_x_coords + displacement[index, :, :, 0]
+        y_coords = org_y_coords + displacement[index, :, :, 1]
+    
+        #im_subplot.set_array(images[:, :, index])
+        im_subplot.set_array(images[x_from:x_to, y_from:y_to, index])
+
+        cnt = 0
+        for x in range(0, X, step_size):
+            x_values = x_coords[x, :]
+            y_values = y_coords[x, :]
+            all_values[cnt].set_ydata(x_values)
+            all_values[cnt].set_xdata(y_values)
+            cnt += 1
+
+        for y in range(0, Y, step_size):
+            x_values = x_coords[:, y]
+            y_values = y_coords[:, y]
+            all_values[cnt].set_ydata(x_values)
+            all_values[cnt].set_xdata(y_values)
+            cnt += 1 
+
+        plt.suptitle("Time: {} ms".format(int(time[index])))
+
+    #plt.tight_layout()
+
+    # perform animation
+    writer = animation.writers["ffmpeg"](fps=0.2*framerate)
+    anim = animation.FuncAnimation(fig, update, T)
+
+    fname = os.path.splitext(fname)[0]
+    anim.save("{}.{}".format(fname, "mp4"), writer=writer)
+
+    plt.close()
+
+
+def animate_points_over_image(pr_strain, displacement, xy_list, images, x_from, x_to, y_from, y_to, x_range, y_range, time, framerate, fname):
     
     x_coords, y_coords = get_xy_coords(xy_list, 0, x_range, y_range, \
             displacement, x_from, y_from)
@@ -148,18 +240,7 @@ def animate_points_on_image(pr_strain, displacement, xy_list, images, x_from, x_
 
     plt.suptitle("Time: {} ms".format(int(time[0])))
     
-    #plt.xlabel("Pixels")
-    #plt.ylabel("Pixels")
-
-    y_coords = np.linspace(1, y_to-y_from-1, 5)
-    y_ticks = np.linspace(y_from+1, y_to-1, 5)
-    x_coords = np.linspace(1, x_to-x_from-1, 5)
-    x_ticks = np.linspace(x_from+1, x_to-1, 5)
-
-    axis.set_yticks([int(y) for y in y_coords])
-    axis.set_xticks([int(x) for x in x_coords])
-    axis.set_yticklabels([int(y) for y in y_ticks])
-    axis.set_xticklabels([int(x) for x in x_ticks])
+    set_ticks(axis, x_from, x_to, y_from, y_to)
 
     def update(index):
         colors = [clm(norm(pr_strain[index, x, y])) for (x, y) in (xy_list)]
@@ -185,67 +266,8 @@ def animate_points_on_image(pr_strain, displacement, xy_list, images, x_from, x_
     plt.close()
 
 
-
-def animate_points_over_time(pr_strain, displacement, xy_list, images, x_from, x_to, y_from, y_to, x_range, y_range, time, framerate, fname):
- 
-    fig, axes = plt.subplots(2, 1, figsize=(14, 7), dpi=400)
-    
-    axes[0].set_xlim(0, time[-1])
-    axes[0].set_ylim(-0.3, 1.2*np.max(displacement))
-    axes[0].set_xlabel("Time (ms)")
-    axes[0].set_ylabel("Displacement (magnitude)")
-    
-    axes[1].set_xlim(0, time[-1])
-    axes[1].set_ylim(-0.05, 1.1*np.max(pr_strain))
-    axes[1].set_xlabel("Time (ms)")
-    axes[1].set_ylabel("Principal strain (magnitude)")
-    
-    
-    lines_disp = []
-    values_disp = []
-
-    for (x, y) in xy_list: 
-        text = "(" + str(int(y_range[y])) + ", " + str(int(x_range[x])) + ")"
-        val = np.linalg.norm(displacement[:, x, y, :], axis=1)
-        line, = axes[0].plot(time[0], val[0], alpha=0.5, label=text)
-        lines_disp.append(line)
-        values_disp.append(val)
-    
-    axes[0].legend(loc=1)
-
-    lines_strain = []
-    values_strain = []
-
-    for (x, y) in xy_list:
-        text = str(int(x)) + ", " + str(int(y))
-        val = pr_strain[:, x, y]
-        line, = axes[1].plot(time[0], val[0], alpha=0.5)
-        lines_strain.append(line)
-        values_strain.append(val)
-    
-    def update(index):
-        for (values, lines) in zip((values_disp, values_strain), \
-                                    (lines_disp, lines_strain)):
-            for (val, line) in zip(values, lines):
-                line.set_xdata(time[:index])
-                line.set_ydata(val[:index])
-         
-    fig.tight_layout()
-    # perform animation
-    T = len(pr_strain)
-    writer = animation.writers["ffmpeg"](fps=0.1*framerate)
-    anim = animation.FuncAnimation(fig, update, T)
-
-    fname = os.path.splitext(fname)[0]
-
-    anim.save("{}.{}".format(fname, "mp4"), writer=writer)
-
-    plt.close()
-
-
-
 def animate_points(input_file, matching_method, block_size, type_filter, sigma, \
-        im_x_um, im_y_um, offset):
+        im_x_um=0, im_y_um=0, offset=0):
     # read from files
 
     fname = get_filename(input_file, matching_method, block_size, type_filter, sigma, im_x_um, im_y_um, offset)
@@ -274,23 +296,8 @@ def animate_points(input_file, matching_method, block_size, type_filter, sigma, 
     x_from, x_to, y_from, y_to = get_frame(x_range, y_range, im_x, im_y, offset)
     xy_list = get_diamond_stensil(im_x, im_y, X, Y)
 
-    animate_points_over_time(pr_strain, displacement, xy_list, images, x_from, x_to, y_from, y_to, x_range, y_range, time, framerate, fname + "_over_time")
-    animate_points_on_image(pr_strain, displacement, xy_list, images, x_from, x_to, y_from, y_to, x_range, y_range, time, framerate, fname + "_over_image")
+    #animate_points_over_image(pr_strain, displacement, xy_list, images, x_from, x_to, y_from, y_to, x_range, y_range, time, framerate, fname + "_over_image")
+    animate_mesh_over_image(pr_strain, displacement, images, x_from, x_to, y_from, y_to, time, framerate, x_range, y_range, fname + "_with_mesh")
 
 
-def animate_given_pts(input_file, matching_method, block_size, type_filter, sigma):
 
-    points = [(77*9, 27*9)] # MM 4
-    for (im_x, im_y) in points:
-        for offset in [50, 100, 200]:
-            animate_points(input_file, matching_method, block_size, type_filter, sigma, \
-                    im_x, im_y, offset)
-
-input_file = sys.argv[1]
-matching_method = sys.argv[2]
-block_size = sys.argv[3]
-type_filter = sys.argv[4]
-sigma = int(sys.argv[5])
-assert ".nd2" in input_file and "BF" in input_file, "Error: Wrong file formate."
-
-animate_given_pts(input_file, matching_method, block_size, type_filter, sigma)

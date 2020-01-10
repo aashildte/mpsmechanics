@@ -9,8 +9,8 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 
-from ..utils.iofuns.data_layer import read_prev_layer
-from ..mechanical_analysis.mechanical_analysis import \
+from mpsmechanics.utils.data_layer import read_prev_layer
+from mpsmechanics.mechanical_analysis.mechanical_analysis import \
         analyze_mechanics
 
 def _get_file_info(f_in, doses, pacings, media):

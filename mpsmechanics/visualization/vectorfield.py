@@ -14,11 +14,12 @@ import multiprocessing as mp
 
 import mps
 
-from ..utils.iofuns.data_layer import read_prev_layer
-from ..utils.iofuns.folder_structure import make_dir_layer_structure
+from ..utils.data_layer import read_prev_layer, generate_filename
+from ..utils.folder_structure import make_dir_layer_structure
 from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
 from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
-
+from .animation_funs import make_animation, get_animation_configuration
+from .setup_plots import setup_frame, get_plot_fun, make_pretty_label, load_input_data
 
 def setup_frame(values, dpi, images, num_rows, num_cols):
     Nx, Ny = images.shape[:2]
@@ -74,12 +75,20 @@ def _set_ax_units(axis, shape, scale):
 def _find_arrow_scaling(values, num_arrows):
     return 1.5/(num_arrows)*np.mean(np.abs(values))
 
+def plot_vectorfield(spatial_data, time, time_step, metadata):
+    
+    values = spatial_data["derived_quantity"]
+    images = spatial_data["images"]
+    label = metadata["label"]
+    pixels2um = metadata["pixels2um"]
 
-def plot_vectorfield(values, time, time_step, label, num_arrows, dpi, pixels2um, images):
+    dpi=300
+
     x, y, axes, fig = setup_frame(values, dpi, images, 1, 1)
 
     block_size = len(x) // values.shape[1]
     scale_n = max(np.divide(values.shape[1:3], block_size))
+    num_arrows = 3
 
     scale_xy = np.max(np.abs(values))
     scale_arrows = _find_arrow_scaling(values, num_arrows)
@@ -101,27 +110,20 @@ def plot_vectorfield(values, time, time_step, label, num_arrows, dpi, pixels2um,
     return fig, update
 
 
-
-def plot_vectorfield_at_peak(values, time, label, pixels2um, images, fname, \
-                        extension="mp4", dpi=300, num_arrows=3):
-    
-    num_dims = values.shape[3:] 
-    assert num_dims == (2,), "Error: T x X x Y x 2 numpy array expected as first argument."
-    
+def _plot_at_peak(spatial_data, time, metadata, fname):
+ 
+    values = spatial_data["derived_quantity"]
     peak = np.argmax(calc_norm_over_time(values))
          
-    plot_vectorfield(values, time, peak, label, num_arrows, dpi, pixels2um, images)
+    plot_vectorfield(spatial_data, time, peak, metadata)
 
     filename = fname + ".png"
     plt.savefig(filename)
     plt.close('all')
     
 
-def animate_vectorfield(values, time, label, pixels2um, images, fname, \
+def _make_animation(values, time, label, pixels2um, images, fname, \
                         framerate=None, extension="mp4", dpi=300, num_arrows=3):
-    
-    num_dims = values.shape[3:] 
-    assert num_dims == (2,), "Error: T x X x Y x 2 numpy array expected as first argument."
     
     fig, update = plot_vectorfield(values, time, 0, label, num_arrows, dpi, pixels2um, images)
 
@@ -142,9 +144,6 @@ def animate_vectorfield(values, time, label, pixels2um, images, fname, \
 
 def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
         images, framerate, animate, fname):
-    num_dims = values.shape[3:] 
-    if num_dims != (2,):
-        return
      
     plot_vectorfield_at_peak(values, time, label, pixels2um, \
                     images, fname)
@@ -155,40 +154,61 @@ def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, 
                     images, fname, framerate=framerate)
     
     
-
-def visualize_vectorfield(f_in, scaling_factor, sigma, animate=False, overwrite=False, save_data=True):
+def visualize_vectorfield(f_in, overwrite, overwrite_all, param_list):
     """
 
-    Visualize fields - "main function"
+    "main function"
+
+    Args:
+        f_in - BF / nd2 file
+        overwrite - make plots again if they don't exist or not
+        overwrite_all - recalculate data from previous layers or not
+        param_list - list of lists; 3 sublists. First 2 are passed to
+            previous layers if data needs to be recalculated; last gives
+            parameters for this script.
 
     """
-    
-    mt_data = mps.MPS(f_in)
-    pixels2um = mt_data.info["um_per_pixel"]
-    images = mt_data.data.frames
-    framerate = mt_data.framerate
 
-    output_folder = make_dir_layer_structure(f_in, \
-            os.path.join("mpsmechanics", "visualize_vectorfield"))
-    os.makedirs(output_folder, exist_ok=True)
-    
-    sigma_text = str(sigma)
-    sigma_text = sigma_text.replace(".", "p")
+    print("Parameters visualize vectorfield:")
 
-    mc_data = read_prev_layer(f_in, f"analyze_mechanics_{sigma_text}", analyze_mechanics, save_data)
+    for key in param_list[2].keys():
+        print(" * {}: {}".format(key, param_list[2][key]))
 
+    mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
+    animation_config = get_animation_configuration(param_list[2], mps_data)
+    animate = animation_config.pop("animate")
+
+    images = np.moveaxis(mps_data.frames, 2, 0)
     time = mc_data["time"]
 
     for key in mc_data["all_values"].keys():
+        if mc_data["all_values"][key].shape[3:] != (2,):
+            continue
+
         print("Plots for " + key + " ...")
-        label = key.capitalize() + "({})".format(mc_data["units"][key])
-        label.replace("_", " ")
-        fname = os.path.join(output_folder, f"vectorfield_{key}_{sigma}")
+
+        fname = generate_filename(f_in, \
+                                  f"decomposition_{key}", \
+                                  param_list[:2],
+                                  "",        # mp3 or png
+                                  subfolder="visualize_mechanics")
 
         values = mc_data["all_values"][key]
 
-        _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-                images, scaling_factor*framerate, animate, fname)
+        metadata = {"label" : make_pretty_label(key, mc_data["unit"][key]),
+                    "pixels2um" : mps_data.info["um_per_pixel"],
+                    "blocksize" : images.shape[1] // values.shape[1]}
 
-    print("Visualization done, finishing ..")
+        spatial_data = {"images" : images,
+                        "derived_quantity" : values}
 
+        if overwrite or (not os.path.isfile(fname + ".png")):
+            print("Spatial plots ..")
+            _plot_at_peak(spatial_data, time, metadata, fname)
+
+        if animate and (overwrite or (not os.path.isfile(fname + ".mp4"))):
+            print("Making a movie ..")
+            _make_animation(spatial_data, time, metadata, fname, \
+                    animation_config)
+
+    print("Visualization done, finishing ...")

@@ -7,242 +7,200 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib import animation
-from matplotlib.colors import SymLogNorm, Normalize
 
-import mps
-
-from ..utils.iofuns.data_layer import read_prev_layer
-from ..utils.iofuns.folder_structure import make_dir_layer_structure
-from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
-from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
+from mpsmechanics.utils.data_layer import read_prev_layer, generate_filename
+from mpsmechanics.dothemaths.operations import calc_norm_over_time
+from mpsmechanics.mechanical_analysis.mechanical_analysis import analyze_mechanics
+from mpsmechanics.visualization.setup_plots import setup_frame, get_plot_fun, make_pretty_label
 
 
-def setup_frame(num_rows, num_cols, dpi, yscale, ymax=None):
-    figsize = (14, 12)
-    fig, axes = plt.subplots(num_rows, num_cols, \
-                             sharex=True, sharey=True, \
-                             figsize=figsize, dpi=dpi, squeeze=False)
+def plot_distribution(axis, values, time, value_range, label):
+    """
+
+    Plots histogram for 2D data (at a given time step).
+
+    Args:
+        axis - axis in subplot instance
+        values - X x Y numpy array
+        time - which time step (number)
+        value_range - min and max meaningful values for this quantity
+        label - description
+
+    """
+
+    assert len(values.shape) == 2, \
+            "Error: 2D numpy array expected as input."
+
+    axis.set_yscale("log")
+
+    lim = np.max(np.abs(values))
+    spacing = 0.1*lim
+    axis.set_xlim(max(-lim, value_range[0]) - spacing, \
+                  min(lim, value_range[1]) + spacing)
     
-    axes = axes.flatten()
-    fig.align_ylabels(axes)
+    num_bins = 100
+    axis.hist(values.flatten(), bins=num_bins, color='#28349C')
 
-    for axis in axes:
-        axis.set_yscale(yscale)
-
-        if ymax is not None:
-            axis.set_ylim(0, ymax)
-
-    return axes, fig
+    plt.suptitle(f"{label}\nTime: {int(time)} ms")
 
 
-def plot_distribution(ax, data, time, min_range, max_range):
-    assert len(data.shape)==2, "Error: 2D numpy array expected as input."
-     
-    values = []
-    X, Y = data.shape
-    
-    for x in range(X):
-        for y in range(Y):
-            values.append(data[x, y])
+def plot_1d_values(values, time, time_step, value_range, label):
+    """
 
-    num_bins = 300
-    bins = list(np.linspace(min_range, max_range, num_bins))
+    Plots histogram for 1D data.
 
-    ax.set_xlim(min_range, max_range)
-    ax.hist(values, bins=bins, color='#28349C')
-    #ax.text(1100, 10000, r"$\mu = {:.2f}$".format(np.mean(data)))
-    #ax.text(1100, 8500, r"$\sigma = {:.2f}$".format(np.std(data)))
-    
-    plt.suptitle("Time: {} ms".format(int(time)))
+    Args:
+        values - T x X x Y numpy array
+        time - corresponding time steps; 1D numpy array of length T
+        time_step - which time step to plot for
+        value_range - min and max meaningful values for this quantity
+        label - description
 
+    """
 
-def _get_minmax_range(values, time_step):
-    min_range = -np.max(np.abs(values[time_step]))
-    max_range = np.max(np.abs(values[time_step]))
-    return min_range, max_range
-
-def plot_1Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
-    axes, fig = setup_frame(1, 1, dpi, yscale, ymax)
-    
-    min_range, max_range = _get_minmax_range(values, time_step)
+    axes, _ = setup_frame(1, 1, True, True)
 
     plot_distribution(axes[0], values[time_step], \
-                        time[time_step],
-                        min_range, max_range)
+                      time[time_step], value_range, label)
 
     axes[0].set_title(f"Scalar value")
-
-    def update(index):
-        plot_distribution(axes[0], values[index], \
-                        time[index], \
-                        min_range, max_range)
-
-    return fig, update
+    axes[0].set_xlabel(label)
 
 
-def plot_2Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
-    axes, fig = setup_frame(1, 2, dpi, yscale, ymax)
-    
-    min_range, max_range = _get_minmax_range(values, time_step)
-    
-    plot_distribution(axes[0], values[time_step,:,:,0], \
-                        time[time_step],
-                        min_range, max_range)
-    plot_distribution(axes[1], values[time_step,:,:,1], \
-                        time[time_step],
-                        min_range, max_range)
+def plot_2d_values(values, time, time_step, value_range, label):
+    """
+
+    Plots histogram for 2D data.
+
+    Args:
+        values - T x X x Y x 2 numpy array
+        time - corresponding time steps; 1D numpy array of length T
+        time_step - which time step to plot for
+        value_range - min and max meaningful values for this quantity
+        label - description
+
+    """
+
+    axes, _ = setup_frame(1, 2, True, True)
+
+    x_values = values[:, :, :, 0]
+    y_values = values[:, :, :, 1]
+
+    for (axis, component) in zip(axes, (x_values, y_values)):
+        plot_distribution(axis, component[time_step], \
+                          time[time_step], value_range, label)
 
     axes[0].set_title("x component")
     axes[1].set_title("y component")
 
-    def update(index):
-        plot_distribution(axes[0], values[index,:,:,0], \
-                    time[index], \
-                    min_range, max_range)
-        plot_distribution(axes[1], values[index,:,:,1], \
-                    time[index], \
-                    min_range, max_range)
 
-    return fig, update
+def plot_2x2d_values(values, time, time_step, value_range, label):
+    """
 
+    Plots histogram for 2D data.
 
-def plot_4Dvalues(values, time_step, yscale, label, time, dpi=None, ymax=None):
-    axes, fig = setup_frame(2, 2, dpi, yscale, ymax)
-    
-    min_range, max_range = _get_minmax_range(values, time_step)
-    
-    plot_distribution(axes[0], values[time_step,:,:,0,0], \
-                        time[time_step], \
-                        min_range, max_range)
-    plot_distribution(axes[1], values[time_step,:,:,0,1], \
-                        time[time_step],
-                        min_range, max_range)
-    plot_distribution(axes[2], values[time_step,:,:,1,0], \
-                        time[time_step],
-                        min_range, max_range)
-    plot_distribution(axes[3], values[time_step,:,:,1,1], \
-                        time[time_step],
-                        min_range, max_range)
+    Args:
+        values - T x X x Y x 2 x 2 numpy array
+        time - corresponding time steps; 1D numpy array of length T
+        time_step - which time step to plot for
+        value_range - min and max meaningful values for this quantity
+        label - description
 
-    axes[0].set_title("xx component")
-    axes[1].set_title("xy component")
-    axes[2].set_title("yx component")
-    axes[3].set_title("yy component")
+    """
 
-    def update(index):
-        plot_distribution(axes[0], values[index,:,:,0,0], \
-                        time[index], \
-                        min_range, max_range)
-        plot_distribution(axes[1], values[index,:,:,0,1], \
-                        time[index],
-                        min_range, max_range)
-        plot_distribution(axes[2], values[index,:,:,1,0], \
-                        time[index],
-                        min_range, max_range)
-        plot_distribution(axes[3], values[index,:,:,1,1], \
-                        time[index],
-                        min_range, max_range)
+    axes, _ = setup_frame(2, 2, True, True)
 
-    return fig, update
+    ux_values = values[:, :, :, 0, 0]
+    uy_values = values[:, :, :, 0, 1]
+    vx_values = values[:, :, :, 1, 0]
+    vy_values = values[:, :, :, 1, 1]
+
+    all_components = [ux_values, uy_values, vx_values, vy_values]
+    subtitles = [r"$u_x$", r"$u_y$", r"$v_x$", r"$v_y$"]
+
+    for (axis, component) in zip(axes, all_components):
+        plot_distribution(axis, component[time_step], \
+                      time[time_step], value_range, label)
+
+    for (axis, title) in zip(axes, subtitles):
+        axis.set_title(title)
 
 
-def make_animations(values, yscale, label, fname, time, \
-        framerate=None, extension="mp4", dpi=100, ymax=None):
-    
-    plot_fn = get_plot_fn(values)
+def plot_at_peak(values, time, value_range, label, fname):
+    """
 
-    extensions = ["gif", "mp4"]
-    msg = "Invalid extension {}. Expected one of {}".format(extension, extensions)
-    assert extension in extensions, msg
+    Plots histogram at peak value.
 
-    fig, update = plot_fn(values, 0, yscale, label, time, dpi=dpi, ymax=ymax)
+    Args:
+        values - T x X x Y x D numpy array, D in [(), (2,) or (2, 2)]
+        time - corresponding time steps; 1D numpy array of length T
+        value_range - min and max meaningful values for this quantity
+        label - description
+        fname - save plots here
 
-    # Set up formatting for the movie files
-    if extension == "mp4":
-        Writer = animation.writers["ffmpeg"]
-    else:
-        Writer = animation.writers["imagemagick"]
-    writer = Writer(fps=framerate)
-
-    N = values.shape[0]
-    anim = animation.FuncAnimation(fig, update, N)
-
-    fname = os.path.splitext(fname)[0]
-    anim.save("{}.{}".format(fname, extension), writer=writer)
-    plt.close('all')
-
-
-def get_plot_fn(values):
-    num_dims = values.shape[3:]
-    
-    if num_dims == ():
-        return plot_1Dvalues
-    
-    if num_dims == (2,):
-        return plot_2Dvalues
-    
-    if num_dims == (2, 2):
-        return plot_4Dvalues
-    
-    print("Error: shape of {} not recognized.".format(num_dims))
-
-
-def plot_at_peak(values, yscale, label, time, fname, \
-        dpi=300, extension="png"):
+    """
 
     peak = np.argmax(calc_norm_over_time(values))
-    plot_fn = get_plot_fn(values)
-    
-    fig, update = plot_fn(values, peak, yscale, label, time, dpi=dpi)
+    plot_fn = get_plot_fun(values, \
+            [plot_1d_values, plot_2d_values, plot_2x2d_values])
 
-    ymax = plt.ylim()[1]
+    plot_fn(values, time, peak, value_range, label)
 
-    filename = fname + "." + extension
-    plt.savefig(filename)
+    plt.savefig(fname)
     plt.close('all')
 
-    return ymax
 
-
-def visualize_distributions(f_in, scaling_factor, matching_method, block_size, type_filter, sigma, animate=False, overwrite=False, save_data=True):
+def _plot_for_each_key(f_in, mc_data, param_list, overwrite):
     """
 
-    Make plots for distributions over different quantities - "main function"
+    Make histogram plots for distributions over different quantities
 
     """
-    output_folder = make_dir_layer_structure(f_in, \
-            os.path.join("mpsmechanics", "distributions"))
-    os.makedirs(output_folder, exist_ok=True)
-    
-    mt_data = mps.MPS(f_in)
-    print("Init distributions") 
+    time = mc_data["time"]
+    keys = mc_data["all_values"].keys()
 
-    source_file = f"analyze_mechanics_{matching_method}_{block_size}_{type_filter}_{sigma}"
-    kwargs = {"matching_method" : matching_method,
-              "block_size" : block_size,
-              "type_filter" : type_filter,
-              "sigma" : sigma}
-    mc_data = read_prev_layer(f_in, source_file, analyze_mechanics, kwargs, save_data) 
-    yscale = "log"
-    time = mc_data["time"] 
+    for key in keys:
+        fname = generate_filename(f_in, \
+                                  f"distribution_{key}", \
+                                  param_list[:2],
+                                  ".png",
+                                  subfolder="distributions")
 
-    for key in ["Green-Lagrange_strain_tensor"]:
-        print("Plots for " + key + " ...")
+        if overwrite or not os.path.isfile(fname):
+            print("Plots for " + key + " ...")
 
-        label = key.capitalize() + "({})".format(mc_data["units"][key])
-        label = label.replace("_", " ")
+            label = make_pretty_label(key, mc_data["unit"][key])
 
-        values = mc_data["all_values"][key]
- 
-        result_file = f"distribution_{key}_{matching_method}_{block_size}_{type_filter}_{sigma}"
-        fname = os.path.join(output_folder, result_file)
+            values = mc_data["all_values"][key]
+            value_range = mc_data["range"][key]
+            plot_at_peak(values, time, value_range, label, fname)
 
-        ymax = plot_at_peak(values, yscale, label, time, fname)
-        
-        if animate:
-            make_animations(values, yscale, label, fname, \
-                    time, framerate=scaling_factor*mt_data.framerate, ymax=ymax)
+
+def plot_distributions(f_in, overwrite, overwrite_all, param_list):
+    """
+
+    "main function"
+
+    Args:
+        f_in - BF / nd2 file
+        overwrite - recalculate previous data or not
+        param_list - list of lists; 3 sublists. First 2 are passed to
+            previous layers if data needs to be recalculated; last gives
+            parameters for this script.
+
+    """
+
+    print("Parameters visualize distributions:")
+    for key in param_list[2].keys():
+        print(" * {}: {}".format(key, param_list[2][key]))
+
+    mc_data = read_prev_layer(
+        f_in,
+        analyze_mechanics,
+        param_list[:-1],
+        overwrite_all
+    )
+
+    _plot_for_each_key(f_in, mc_data, param_list, overwrite)
 
     print("Distributions plotted, finishing ..")

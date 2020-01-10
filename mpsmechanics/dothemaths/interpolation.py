@@ -27,7 +27,7 @@ def interpolate_values_xy(x_coords, y_coords, org_data):
         function fn_rel : R2 -> R2 - relative displacement
     """
 
-    assert len(org_data.shape)==3, \
+    assert len(org_data.shape) == 3, \
             "Error: Shape of input data not recognized."
 
     assert org_data.shape[-1] == 2, \

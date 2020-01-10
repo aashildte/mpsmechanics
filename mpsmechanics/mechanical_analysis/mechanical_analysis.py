@@ -10,216 +10,76 @@ Computes mechanical quantities over space and time.
 import os
 from collections import defaultdict
 import numpy as np
+import mps
 
-try:
-    import mps
-except ImportError:
-    print("Can't import mps; can't do mechanical analysis.")
-    exit(-1)
+from mpsmechanics.utils.data_layer import read_prev_layer, generate_filename, save_dictionary
+from mpsmechanics.dothemaths.heartbeat import calc_beat_intervals, calc_beat_maxima
+from mpsmechanics.dothemaths.operations import calc_norm_over_time
+from mpsmechanics.motion_tracking.motion_tracking import track_motion
+from mpsmechanics.motion_tracking.restore_resolution import apply_filter
 
+from .metrics_spatial import calc_spatial_metrics
+from .metrics_beatrate import calc_beatrate_metric
 
-
-from ..motion_tracking.motion_tracking import track_motion
-from ..motion_tracking.ref_frame import convert_disp_data, \
-        calculate_minmax
-from ..motion_tracking.restore_resolution import apply_filter
-
-from ..dothemaths.mechanical_quantities import \
-        calc_gradients, calc_principal_strain, calc_gl_strain_tensor, calc_deformation_tensor
-from ..dothemaths.angular import calc_projection_fraction
-from ..dothemaths.heartbeat import calc_beatrate
-from .statistics import chip_statistics
-
-from ..utils.iofuns.data_layer import read_prev_layer, get_full_filename, save_dictionary
-from ..visualization.overtime import visualize_over_time
-
-def calc_filter_time(dist):
+def _swap_dict_keys(dict_org):
     """
 
-    Filter dependent on time (different for all time steps).
-
-    """
-    return np.any((dist != 0), axis=-1)
-
-
-def calc_strain_filter(dist, size):
-    """
-
-    Filter independent of time (same for all time steps);
-    more restrictive than the one used for displacement etc.
-
-    """
-
-    filter_org = np.any((dist != 0), axis=(0, -1))
-
-    filter_new = np.copy(filter_org)
-
-    X, Y = filter_org.shape
-
-    for x in range(X):
-        for y in range(Y):
-            if not filter_org[x, y]:
-                xm2 = x - size if x > size else 0
-                xp2 = x + size if (x+size) < X else X-1
-
-                ym2 = y - size if y > size else 0
-                yp2 = y + size if (y+size) < Y else Y-1
-                filter_new[xm2:xp2+1, ym2:yp2+1] *= False
-
-    return np.broadcast_to(filter_new, dist.shape[:3])
-
-
-def calc_filter_all(dist):
-    """
-
-    Filter independent of time (same for all time steps).
-
-    """
-
-    return np.broadcast_to(np.any((dist != 0),
-                                  axis=(0, -1)),
-                           dist.shape[:3])
-
-
-def _calc_mechanical_quantities(displacement, um_per_pixel, block_size, \
-        angle, time, strain_filter_size):
-    """
-
-    Derived quantities - reshape to match expected data structure
-    for derived layers
+    Given a nested dictionary, swap layers.
 
     Args:
-        displacement - displacement data, T x X x Y x 2 numpy array
-        scale - scaling factor (pixels to um); dx
-        angle - angle chamber is tilted with
-        time - all time steps
+        dict_org - dictionary of dictionaries with same
+           structure (same keys)
 
     Returns:
-        dictionary - key: description;
-                     value: quantity; unit; filter; value range
+        dictionary of dictionaries with same structure;
+            with keys opposite compared to the original
 
     """
-    
-    displacement = um_per_pixel * displacement
 
-    displacement_minmax = convert_disp_data(
-        displacement, calculate_minmax(displacement)
-    )
+    def_key_set = list(dict_org.values())[0].keys()
+    for dictionary in dict_org.values():
+        assert dictionary.keys() == def_key_set, \
+                f"Error: Inconsistent set of keys in nested dictionary: \
+                {dictionary.keys()}, {def_key_set}."
 
-    xmotion = calc_projection_fraction(displacement, angle)
-    ymotion = calc_projection_fraction(displacement, np.pi/2 + angle)
+    dict_swapped = defaultdict(dict)
+    for key_l1 in dict_org.keys():
+        dictionary = dict_org[key_l1]
+        for key_l2 in dictionary.keys():
+            dict_swapped[key_l2][key_l1] = dict_org[key_l1][key_l2]
 
-    ms_to_s = 1e3
-    threshold = 2      # um/s
-
-    velocity = ms_to_s * np.divide(
-        np.gradient(displacement, axis=0), \
-        np.gradient(time)[:, None, None, None]
-    )
-
-    velocity_norm = np.linalg.norm(velocity, axis=-1)
-    prevalence = np.where(velocity_norm > threshold*np.ones(velocity_norm.shape),
-                    np.ones(velocity_norm.shape), np.zeros(velocity_norm.shape))
-
-    dx = um_per_pixel*block_size
-
-    gradients = calc_gradients(displacement, dx)
-    deformation_tensor = calc_deformation_tensor(displacement, dx)
-    gl_strain_tensor = calc_gl_strain_tensor(displacement, dx)
-    principal_strain = calc_principal_strain(displacement, dx)
-
-    filter_time = calc_filter_time(displacement)
-    filter_all = calc_filter_all(displacement)
-    filter_strain = calc_strain_filter(displacement, strain_filter_size)
-
-    return {
-        "displacement": (
-            displacement,
-            r"$\mu m$",
-            filter_all,
-            (0, np.nan),
-        ),
-        "displacement_maximum_difference": (
-            displacement_minmax,
-            r"$\mu m$",
-            filter_all,
-            (0, np.nan),
-        ),
-        "xmotion": (
-            xmotion,
-            "-",
-            filter_time,
-            (0, 1),
-        ),
-        "ymotion": (
-            ymotion,
-            "-",
-            filter_time,
-            (0, 1),
-        ),
-        "velocity": (
-            velocity,
-            r"$\mu m / s$",
-            filter_all,
-            (0, np.nan),
-        ),
-        "prevalence": (
-            prevalence,
-            "-",
-            filter_all,
-            (0, np.nan),
-        ),
-        "gradients": (
-            gradients,
-            "-",
-            filter_strain,
-            (0, np.nan),
-        ),
-        "deformation_tensor": (
-            deformation_tensor,
-            "-",
-            filter_strain,
-            (0, np.nan),
-        ),
-        "Green-Lagrange_strain_tensor": (
-            gl_strain_tensor,
-            "-",
-            filter_strain,
-            (0, np.nan),
-        ),
-        "principal_strain": (
-            principal_strain,
-            "-",
-            filter_strain,
-            (0, np.nan),
-        ),
-    }
+    return dict_swapped
 
 
-def _calc_beatrate(disp_folded, maxima, intervals, time):
+def _calc_mechanical_quantities(mps_data, mt_data, type_filter, sigma):
+    time = mps_data.time_stamps
+    um_per_pixel = mps_data.info["um_per_pixel"]
 
-    data = defaultdict(dict)
+    angle = mt_data["angle"]
+    dx = um_per_pixel*mt_data["block_size"]
 
-    beatrate_spatial, beatrate_avg, beatrate_std = \
-            calc_beatrate(disp_folded, maxima, intervals, time)
+    disp_data = um_per_pixel*apply_filter(mt_data["displacement_vectors"], type_filter, sigma)
+    disp_data_folded = calc_norm_over_time(disp_data)
+    maxima = calc_beat_maxima(disp_data_folded)
+    intervals = calc_beat_intervals(disp_data_folded)
 
-    if len(intervals) == 0:
-        data["metrics_max_avg"] = data["metrics_avg_avg"] = \
-                data["metrics_max_std"] = data["metrics_avg_std"] = 0
-    else:
-        data["metrics_max_avg"] = np.max(beatrate_avg)
-        data["metrics_avg_avg"] = np.mean(beatrate_avg)
-        data["metrics_max_std"] = np.max(beatrate_std)
-        data["metrics_avg_std"] = np.mean(beatrate_std)
+    spatial = calc_spatial_metrics(disp_data, time, dx, angle, intervals)
+    beatrate = calc_beatrate_metric(disp_data, time, maxima, intervals)
 
-    return beatrate_spatial, beatrate_avg, beatrate_std, data
+    d_all = _swap_dict_keys({**spatial, **beatrate})
+    d_all["time"] = mps_data.time_stamps
+    d_all["maxima"] = maxima
+    d_all["intervals"] = intervals
+
+    return d_all
 
 
-def analyze_mechanics(input_file, overwrite, matching_method, block_size, type_filter, sigma, save_data=True):
+
+def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, save_data=True):
     """
 
     Args:
-        input_file - file name; either nd2 or npy file
+        f_in - file name; either nd2 or npy file
         save_data - to store values or not; default value True
 
     Returns:
@@ -227,75 +87,34 @@ def analyze_mechanics(input_file, overwrite, matching_method, block_size, type_f
 
     """
 
-    result_file = f"analyze_mechanics_{matching_method}_{block_size}_{type_filter}_{sigma}"
-    filename = get_full_filename(input_file, result_file)
+    filename = generate_filename(f_in, "analyze_mechanics", param_list, ".npy")
 
-    if (not overwrite and os.path.isfile(filename)):
-        print("Previous data exist. Use flag --overwrite / -o to recalculate.")
-        return
+    print("filename: ", filename)
 
-    data = read_prev_layer(
-        input_file,
-        f"track_motion_{matching_method}_{block_size}",
+    if not overwrite and os.path.isfile(filename):
+        print("Previous data exist. Use flag --overwrite / -o to recalculate this layer.")
+        print("Use flag --overwrite_all / -oa to recalculate data for all layers.")
+        return np.load(filename, allow_pickle=True).item()
+
+    print("Parameters mechanical analysis:")
+    for key in param_list[1].keys():
+        print(" * {}: {}".format(key, param_list[1][key]))
+
+    mps_data = mps.MPS(f_in)
+    mt_data = read_prev_layer(
+        f_in,
         track_motion,
-        {"matching_method" : matching_method, "block_size" : block_size},
-        save_data=save_data
+        param_list[:-1],
+        overwrite_all
     )
-    mt_data = mps.MPS(input_file)
-    angle = data["angle"]
-    time = mt_data.time_stamps
 
-    # FIXME until motion tracking is updated everywhere
+    print(f"Calculating mechanical quantities for {f_in}")
 
-    if "displacement vectors" in data.keys():
-        disp_data = data["displacement vectors"]
-    else:
-        disp_data = data["displacement_vectors"]
+    mechanical_quantities = _calc_mechanical_quantities(mps_data, mt_data, **param_list[1])
 
-    disp_data = apply_filter(disp_data, type_filter, sigma)
-
-    if "block size" in data.keys():
-        block_size = data["block size"]
-    else:
-        block_size = data["block_size"]
-
-    print("Calculating mechanical quantities for " + input_file)
-
-    um_per_pixel = mt_data.info["um_per_pixel"]
-
-    values_over_time = \
-            _calc_mechanical_quantities(disp_data, um_per_pixel, block_size, \
-            angle, time, strain_filter_size=2)
-
-    d_all = chip_statistics(values_over_time)
-
-    d_all["time"] = mt_data.time_stamps
-
-    br_spa, beatrate_avg, beatrate_std, data_beatrate = \
-            _calc_beatrate(
-                d_all["folded"]["displacement"],
-                d_all["maxima"],
-                d_all["intervals"],
-                d_all["time"],
-            )
-
-    d_all["beatrate_spatial"] = br_spa
-    d_all["beatrate_avg"] = beatrate_avg
-    d_all["beatrate_std"] = beatrate_std
-    d_all["range"]["beatrate"] = (0, np.nan)
-    d_all["units"]["beatrate"] = "beats/s"
-
-    for k in ["metrics_max_avg",
-              "metrics_avg_avg",
-              "metrics_max_std",
-              "metrics_avg_std"]:
-        d_all[k]["beatrate"] = data_beatrate[k]
-
-    print(f"Done calculating mechanical quantities for {input_file}.")
+    print(f"Done calculating mechanical quantities for {f_in}.")
 
     if save_data:
-        save_dictionary(input_file, result_file, d_all)
+        save_dictionary(filename, mechanical_quantities)
 
-    visualize_over_time(d_all, filename[:-4])
-
-    return d_all
+    return mechanical_quantities

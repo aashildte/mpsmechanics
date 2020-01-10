@@ -6,26 +6,35 @@
 
 """
 
-from scipy.ndimage import gaussian_filter
-from medpy.filter.smoothing import anisotropic_diffusion
 import numpy as np
 
 
 def calc_gradients(data, dx):
+    """
+    Computes gradients u_x, u_y, v_x, v_y from values in data
+
+    Args:
+        data - numpy array of dimensions T x X x Y x 2
+        dx - float; spatial difference between two points/blocks
+
+    Returns:
+        numpy array of dimensions T x X x Y x 2 x 2
+
+    """
+
     dudx = 1/dx*np.gradient(data[:, :, :, 0], axis=1)
     dudy = 1/dx*np.gradient(data[:, :, :, 0], axis=2)
     dvdx = 1/dx*np.gradient(data[:, :, :, 1], axis=1)
     dvdy = 1/dx*np.gradient(data[:, :, :, 1], axis=2)
-    
-    gradients = [dudx, dudy, dvdx, dvdy]
-    G = np.zeros(data.shape + (2,))
 
-    G[:, :, :, 0, 0] = gradients[0]
-    G[:, :, :, 0, 1] = gradients[1]
-    G[:, :, :, 1, 0] = gradients[2]
-    G[:, :, :, 1, 1] = gradients[3]
+    gradients = np.zeros(data.shape + (2,))
 
-    return G
+    gradients[:, :, :, 0, 0] = dudx
+    gradients[:, :, :, 0, 1] = dudy
+    gradients[:, :, :, 1, 0] = dvdx
+    gradients[:, :, :, 1, 1] = dvdy
+
+    return gradients
 
 
 def calc_deformation_tensor(data, dx):
@@ -60,11 +69,13 @@ def calc_gl_strain_tensor(data, dx):
 
     """
 
-    F = calc_deformation_tensor(data, dx)
-    C = np.matmul(F, F.transpose(0, 1, 2, 4, 3))
-    E = 0.5*(C - np.eye(2)[None, None, None, :, :])
+    def_tensor = calc_deformation_tensor(data, dx)
+    def_tensor_transp = def_tensor.transpose(0, 1, 2, 4, 3)
 
-    return E
+    right_cg_tensor = np.matmul(def_tensor, def_tensor_transp)
+    gl_strain_tensor = 0.5*(right_cg_tensor - np.eye(2)[None, None, None, :, :])
+
+    return gl_strain_tensor
 
 
 def calc_principal_strain(data, dx):
@@ -82,9 +93,8 @@ def calc_principal_strain(data, dx):
 
     """
 
-    E = calc_gl_strain_tensor(data, dx)
-
-    eigenvalues, eigenvectors = np.linalg.eig(E)
+    gl_strain_tensor = calc_gl_strain_tensor(data, dx)
+    eigenvalues, eigenvectors = np.linalg.eig(gl_strain_tensor)
 
     eigen_filter = np.abs(eigenvalues[:, :, :, 0]) \
             > np.abs(eigenvalues[:, :, :, 1])

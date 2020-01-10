@@ -9,12 +9,10 @@ from .calcium_spatial import (
 )
 
 from .distributions import (
-    visualize_distributions,
+    plot_distributions,
 )
 
 from .mechanics_spatial import (
-    animate_decomposition,
-    plot_decomposition_at_peak,
     visualize_mechanics,
 )
 
@@ -23,7 +21,13 @@ from .overtime import (
 )
 
 from .vectorfield import (
-    animate_vectorfield,
-    plot_vectorfield_at_peak,
     visualize_vectorfield,
+)
+
+from .animate_over_movie import (
+    animate_mesh_over_movie,
+)
+
+from .setup_plots import (
+    make_pretty_label,
 )

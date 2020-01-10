@@ -1027,6 +1027,106 @@ def test_displacements():
     assert np.nanmean(factor_tot) - 1.0 < 1e-12
 
 
+def test_template_matching_nd2():
+
+    block_size = 40
+    p = 30
+    data = mps.MPS("PointMM_4_ChannelBF_VC_Seq0000.nd2")
+    # from IPython import embed; embed()
+    # exit()
+
+    T1 = 10
+    T2 = 30
+    x_start = 646
+    x_end = x_start + 100
+    y_start = 198
+    y_end = y_start + 100
+    # A = np.array([data.frames[1000:1100, 100:200, T1],data.frames[1000:1100, 100:200, T2]]).T
+    A = np.array([data.frames[x_start:x_end, y_start:y_end, T1],data.frames[x_start:x_end, y_start:y_end, T2]]).T
+    
+    # fig, ax = plt.subplots(2, 1)
+    # ax[0].imshow(A[:, :, 0], cmap="gray")
+    # ax[1].imshow(A[:, :, 1], cmap="gray")
+    # plt.show()
+    # exit()
+    vectors = mc.motion_tracking.template_matching(
+        A[:, :, 0], A[:, :, 1], block_size=block_size, max_block_movement=p
+    )
+
+    # vectors = mc.motion_tracking.block_matching(
+    #     A[:, :, 0], A[:, :, 1], block_size=block_size, max_block_movement=p
+    # )
+    amp = np.linalg.norm(vectors, axis=2)
+
+    print(f"Max X: {vectors[:, :, 0].max()}, Min X: {vectors[:, :, 0].min()}")
+    print(f"Max Y: {vectors[:, :, 1].max()}, Min Y: {vectors[:, :, 1].min()}")
+    print(f"Max amp: {amp.max()}, Min amp: {amp.min()}")
+    # if y_end >= y_start:
+    #     assert vectors[:, :, 0].min() == -dy
+    # else:
+    #     assert vectors[:, :, 0].max() == -dy
+    # if x_end >= x_start:
+    #     assert vectors[:, :, 1].min() == -dx
+    # else:
+    #     assert vectors[:, :, 1].max() == -dx
+
+    # assert amp.max() == np.linalg.norm([dx, dy])
+
+    if 1:
+        fig, ax = plt.subplots(1, 2)
+        ax[0].imshow(A[:, :, 0])
+        ax[0].set_title(f"First frame no noise")
+        ax[1].imshow(A[:, :, 1])
+        ax[1].set_title(f"Second frame no noise")
+        for axi in ax:
+            axi.grid(True)
+
+        fig, ax = plt.subplots(2, 2)
+
+        ax[0, 0].imshow(A[:, :, 0])
+        im = ax[0, 0].imshow(A[:, :, 1], alpha=0.5)
+        ax[0, 0].grid(True)
+        ax[0, 0].set_title("Data")
+        fig.colorbar(im, ax=ax[0, 0])
+
+        im = ax[0, 1].imshow(amp)
+        ax[0, 1].grid(True)
+        ax[0, 1].set_title("Amplitude")
+
+        fig.colorbar(im, ax=ax[0, 1])
+
+        im = ax[1, 0].imshow(vectors[:, :, 0])
+        ax[1, 0].grid(True)
+        ax[1, 0].set_title("X vector")
+        fig.colorbar(im, ax=ax[1, 0])
+
+        im = ax[1, 1].imshow(vectors[:, :, 1])
+        ax[1, 1].grid(True)
+        ax[1, 1].set_title("Y vector")
+        fig.colorbar(im, ax=ax[1, 1])
+        fig.tight_layout()
+
+        fig, ax = plt.subplots()
+        x = np.linspace(0, data.frames.shape[0], vectors.shape[0])
+        y = np.linspace(0, data.frames.shape[1], vectors.shape[1])
+        # X, Y = np.meshgrid(x, y)
+        ax.quiver(
+            y,
+            x,
+            -vectors[:, :, 1],
+            vectors[:, :, 0],
+            angles="xy",
+            scale_units="xy",
+            scale=1,
+        )
+        ax.set_aspect("equal")
+        plt.show()
+
+
+    # from IPython import embed; embed()
+    # exit()
+
+
 if __name__ == "__main__":
     # test_block_matching(8, 10, 10, 10)
     # plot_block_matching()
@@ -1042,4 +1142,5 @@ if __name__ == "__main__":
     # test_save_cache()
     # test_displacements()
     # plot_template_matching_double_circle()
-    plot_template_matching()
+    # plot_template_matching()
+    test_template_matching_nd2()

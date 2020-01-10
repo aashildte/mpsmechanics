@@ -437,7 +437,7 @@ class MotionTracking(object):
         block_size=3,
         max_block_movement=3,
         reference_frame="mean",
-        delay=None,
+        delay=1,
         outdir=None,
         serial=False,
         filter_kernel_size=8,
@@ -448,10 +448,12 @@ class MotionTracking(object):
         global logger
         logger = utils.get_logger(__name__, loglevel)
         self.data = data
-        self.block_size_microns = block_size
-        self.block_size = int(block_size / data.info["um_per_pixel"])
-        self.max_block_movement_microns = max_block_movement
-        self.max_block_movement = int(max_block_movement / data.info["um_per_pixel"])
+        self.block_size_microns = block_size * data.info.get("um_per_pixel", 1)
+        self.block_size = block_size
+        self.max_block_movement_microns = max_block_movement * data.info.get(
+            "um_per_pixel", 1
+        )
+        self.max_block_movement = max_block_movement
         self.serial = serial
         self.reference_frame = reference_frame
         self.filter_kernel_size = filter_kernel_size
@@ -471,8 +473,6 @@ class MotionTracking(object):
                 f"/ {self.max_block_movement_microns} um \n"
             )
         )
-        if delay is None:
-            delay = int(np.ceil(0.1 * data.framerate))
         self.delay = delay
 
         self.macro_shape = (
@@ -576,36 +576,6 @@ class MotionTracking(object):
 
         return gen()
 
-    def _edge_detection(self):
-
-        logger.info("Run edge detection")
-
-        self._edges = np.zeros(
-            (self.shape[0], self.shape[1], self.data.num_frames), dtype=np.uint16
-        )
-
-        iterable = (
-            self.data.frames[: self.shape[0], : self.shape[1], i]
-            for i in range(self.data.num_frames)
-        )
-        t0 = time.time()
-        if self.serial:
-            for i, e in enumerate(map(edge_detection, iterable)):
-                if i % 50 == 0:
-                    logger.info(f"Processing frame {i}/{self.data.num_frames}")
-                self._edges[:, :, i] = scale_to_macro_block(e, self.block_size)
-
-        else:
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, e in enumerate(executor.map(edge_detection, iterable)):
-                    if i % 50 == 0:
-                        logger.info(f"Processing frame {i}/{self.data.num_frames}")
-                    self._edges[:, :, i] = scale_to_macro_block(e, self.block_size)
-
-        t1 = time.time()
-        logger.info(f"Done with edge detection - Elapsed time = {t1-t0:.2f} seconds")
-        self.computed["edges"] = True
-
     def _get_velocities(self):
 
         logger.info("Get velocities")
@@ -659,45 +629,6 @@ class MotionTracking(object):
             ("Done getting displacements " f" - Elapsed time = {t1-t0:.2f} seconds")
         )
         self.computed["displacements"] = True
-
-    def _get_angle(self):
-        """
-        
-        Estimating angle/how much the chamber is tilted using linear
-        regression.
-        
-        """
-
-        disp = self.displacement_vectors
-        T = disp.shape[-1]
-
-        xs, ys = [], []
-
-        for t in range(T):
-            xs_, ys_, _ = np.nonzero(disp[:, :, :, t])
-            xs += list(xs_)
-            ys += list(ys_)
-
-        if not xs:
-            print("Warning: No nonzero values detected.")
-            slope = 0
-        else:
-            slope = st.linregress(xs, ys)[0]
-
-        self._angle = np.arctan(slope)
-        self.computed["angle"] = True
-
-    @property
-    def angle(self):
-        if True or not self.has_results("angle"):
-            self._get_angle()
-        return np.copy(self._angle)
-
-    @property
-    def edges(self):
-        if not self.has_results("edges"):
-            self._edge_detection()
-        return np.copy(self._edges)
 
     @property
     def displacement_vectors(self):
@@ -767,74 +698,6 @@ class MotionTracking(object):
             )
         return self._displacement_data
 
-    def plot_displacement_data(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("displacement_data")
-        logger.info("Plot displacement data")
-        plotter.plot_contraction_data(
-            contraction_data=self.displacement_data,
-            time_stamps=self.data.time_stamps,
-            time_unit=self.data.info["time_unit"],
-            label="Micrometers",
-            fname=fname,
-        )
-
-    def plot_velocity_data(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("velocity_data")
-        logger.info("Plot velocity data")
-        plotter.plot_contraction_data(
-            contraction_data=self.velocity_data,
-            time_stamps=self.data.time_stamps,
-            time_unit=self.data.info["time_unit"],
-            label="Micrometers / millisecond",
-            fname=fname,
-        )
-
-    def plot_mean_displacement(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("mean_displacement")
-        logger.info("Plot mean displacement")
-        plotter.plot_mean_contraction(
-            frames=self.data.frames,
-            contraction_data=self.mean_displacement,
-            label="Micrometers",
-            fname=fname,
-        )
-
-    def plot_mean_velocity(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("mean_velocity")
-        logger.info("Plot mean velocity")
-        plotter.plot_mean_contraction(
-            frames=self.data.frames,
-            contraction_data=self.mean_velocity,
-            label="Micrometers / millisecond",
-            fname=fname,
-        )
-
-    def plot_velocity_field(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("velocity_field")
-        logger.info("Plot velocity field")
-        plotter.animate_vectorfield(
-            vectors=self.velocity_vectors,
-            images=self.data.frames,
-            framerate=self.data.framerate,
-            fname=fname,
-        )
-
-    def plot_displacement_field(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("displacement_field")
-        logger.info("Plot displacement field")
-        plotter.animate_vectorfield(
-            vectors=self.displacement_vectors,
-            images=self.data.frames,
-            framerate=self.data.framerate,
-            fname=fname,
-        )
-
     def has_results(self, key):
         """
         Check if key is in the results and that it is differnet from zero.
@@ -849,39 +712,6 @@ class MotionTracking(object):
             fname = self.outdir.joinpath("motion")
         utils.frames2mp4(self.data.frames.T, fname, self.data.framerate)
 
-    def save_displacement(self, fname=None):
-
-        logger.info("Save displacements to csv")
-        header = ["t", "x", "y", "displacement_X", "displacement_Y"]
-
-        if fname is None:
-            fname = self.outdir.joinpath("displacement").as_posix()
-
-        d = self.displacement_vectors
-        N = d.shape[-1] * d.shape[0] * d.shape[1]
-        res = np.zeros((N, 5))
-        i = 0
-        # This is really slow - we could vectorize it,
-        # but do we really want to save this to csv?
-        for t in range(d.shape[-1]):
-            for y in range(d.shape[1]):
-                for x in range(d.shape[0]):
-                    res[i, :] = [t, x, y, d[x, y, 0, t], d[x, y, 1, t]]
-                    i += 1
-
-        utils.to_csv(res, fname, header)
-        logger.info("Done saving displacements to csv")
-
-    def plot_all(self):
-        self.plot_displacement_data()
-        self.plot_velocity_data()
-        self.plot_mean_displacement()
-        self.plot_mean_velocity()
-        self.plot_velocity_field()
-        self.plot_displacement_field()
-
-        return True
-
     def run(self):
         """
         Run the full motion tracking algorithm.
@@ -889,8 +719,8 @@ class MotionTracking(object):
         if not self.has_results("velocities"):
             self._get_velocities()
 
-        if not self.has_results("displacements"):
-            self._get_displacements()
+        # if not self.has_results("displacements"):
+        #     self._get_displacements()
 
         return True
 
@@ -906,7 +736,9 @@ class MotionTracking(object):
         )
 
 
-def track_motion(input_file, matching_method, block_size, overwrite=False, save_data=True):
+def track_motion(
+    input_file, matching_method, block_size, overwrite=False, save_data=True
+):
     """
 
     Args:
@@ -919,10 +751,10 @@ def track_motion(input_file, matching_method, block_size, overwrite=False, save_
 
     """
 
-    assert matching_method in ("block_matching", "template_matching"), \
-            "Error: matching method not recognized."
-
-    name = input_file[:-4]
+    assert matching_method in (
+        "block_matching",
+        "template_matching",
+    ), "Error: matching method not recognized."
 
     result_file = f"track_motion_{matching_method}_{block_size}"
     filename = get_full_filename(input_file, result_file)
@@ -936,17 +768,21 @@ def track_motion(input_file, matching_method, block_size, overwrite=False, save_
 
     assert mt_data.num_frames != 1, "Error: Single frame used as input"
 
-    scaling_factor = mt_data.info["um_per_pixel"]
-    motion = MotionTracking(mt_data, block_size=block_size, \
-            matching_method=matching_method, reference_frame="median")
+    motion = MotionTracking(
+        mt_data,
+        block_size=block_size,
+        matching_method=matching_method,
+        reference_frame="median",
+    )
 
     # restore original resolution, if possible??
-    ref_factor = int(block_size / mt_data.info["um_per_pixel"])
     angle = motion.angle
 
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
 
-    disp_data = np.swapaxes(np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3)
+    disp_data = np.swapaxes(
+        np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3
+    )
 
     # save values
 

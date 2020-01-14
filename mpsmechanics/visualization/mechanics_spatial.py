@@ -10,10 +10,12 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ..utils.data_layer import generate_filename
-from ..dothemaths.operations import calc_magnitude, normalize_values, \
-        calc_norm_over_time
-from .animation_funs import make_animation, get_animation_configuration
-from .setup_plots import setup_frame, get_plot_fun, make_pretty_label, load_input_data
+from ..dothemaths.operations import calc_magnitude, \
+        normalize_values, calc_norm_over_time
+from .animation_funs import make_animation, \
+        get_animation_configuration
+from .setup_plots import setup_frame, get_plot_fun, \
+        make_pretty_label, load_input_data
 
 def make_quiver_plot(axis, values, quiver_step, color, scale):
     """
@@ -190,9 +192,9 @@ def _init_subplots_2d(all_components, time, time_step, quiver_step):
     images, values, normalized, magnitude, x_values, y_values = \
             all_components
 
-    #vmin, vmax = _get_value_range([x_values, y_values])
-    vmin, vmax = -0.1, 0.1
-    vmax_mag = 0.1
+    vmin, vmax = _get_value_range([x_values, y_values])
+    
+    vmax_mag = np.max(magnitude)
     subplots = [axes[0].imshow(images[time_step], cmap="gray"),
                 make_quiver_plot(axes[1], values[time_step], quiver_step, \
                            'red', _find_arrow_scaling(values)),
@@ -282,7 +284,7 @@ def _get_2x2d_values(images, values):
     return all_components, subtitles
 
 
-def _init_subplots_2x2d(all_components, time, time_step):
+def _init_subplots_2x2d(all_components, time, time_step, shift_diagonal):
     images, ux_values, uy_values, \
             sg_values, vx_values, vy_values = all_components
     axes, fig = setup_frame(2, 3, False, False)
@@ -291,17 +293,25 @@ def _init_subplots_2x2d(all_components, time, time_step):
                                    vx_values, vy_values])
     vmin, vmax = -0.1, 0.1
     vmax_mag = 0.1
+
+    if shift_diagonal:
+        shift = 1
+    else:
+        shift = 0
+
+    sg_mean = np.mean(sg_values)
+
     subplots = [axes[0].imshow(images[time_step], cmap="gray"),
                 make_heatmap_plot(axes[1], ux_values[time_step], \
-                    vmin, vmax, "bwr"),
+                    vmin + shift, vmax + shift, "bwr"),
                 make_heatmap_plot(axes[2], uy_values[time_step], \
                     vmin, vmax, "bwr"),
                 make_heatmap_plot(axes[3], sg_values[time_step], \
-                        np.min(sg_values), vmax_mag, "viridis"),
+                        sg_mean - 0.05, sg_mean + 0.05, "viridis"),
                 make_heatmap_plot(axes[4], vx_values[time_step], \
                     vmin, vmax, "bwr"),
                 make_heatmap_plot(axes[5], vy_values[time_step], \
-                    vmin, vmax, "bwr")]
+                    vmin + shift, vmax + shift, "bwr")]
 
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
 
@@ -346,7 +356,7 @@ def plot_2x2d_values(spatial_data, time, time_step, metadata):
     values = spatial_data["derived_quantity"]
 
     all_components, subtitles = _get_2x2d_values(images, values)
-    axes, fig, subplots = _init_subplots_2x2d(all_components, time, time_step)
+    axes, fig, subplots = _init_subplots_2x2d(all_components, time, time_step, metadata["shift_diagonal"])
     _make_2x2d_plot_pretty(fig, axes, subplots, subtitles, metadata)
 
     def _update(index):
@@ -407,8 +417,8 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
 
     images = np.moveaxis(mps_data.frames, 2, 0)
     time = mc_data["time"]
-    keys = ["principal_strain", "Green-Lagrange_strain_tensor"]
-    for key in keys: #mc_data["all_values"].keys():
+
+    for key in mc_data["all_values"].keys():
         print("Plots for " + key + " ...")
 
         fname = generate_filename(f_in, \
@@ -421,7 +431,8 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
 
         metadata = {"label" : make_pretty_label(key, mc_data["unit"][key]),
                     "pixels2um" : mps_data.info["um_per_pixel"],
-                    "blocksize" : images.shape[1] // values.shape[1]}
+                    "blocksize" : images.shape[1] // values.shape[1],
+                    "shift_diagonal" : key in ["deformation_tensor"]}
 
         spatial_data = {"images" : images,
                         "derived_quantity" : values}

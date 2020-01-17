@@ -52,8 +52,8 @@ def _calc_relevant_stats(values, intervals, tf_filter):
             "over_time_std" : over_time_std,
             "metrics_max_avg" : metrics_max_avg,
             "metrics_avg_avg" : metrics_avg_avg,
-            "metrix_max_std" : metrics_max_std,
-            "metrix_avg_std" : metrics_avg_std}
+            "metrics_max_std" : metrics_max_std,
+            "metrics_avg_std" : metrics_avg_std}
 
 
 def _calc_displacement(displacement, intervals, tf_filter):

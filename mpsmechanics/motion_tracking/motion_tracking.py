@@ -134,7 +134,7 @@ def block_matching(reference_image, image, block_size, max_block_movement):
     shape = (y_size // block_size, x_size // block_size)
     vectors = np.zeros((shape[0], shape[1], 2))
     costs = np.ones((2 * max_block_movement + 1, 2 * max_block_movement + 1))
-    print("block size, max block movement: ", block_size, max_block_movement)
+
     # Need to copy images to float array
     # otherwise negative values will be converted to large 16-bit integers
     ref_block = np.zeros((block_size, block_size))  # Block for reference image
@@ -435,7 +435,7 @@ class MotionTracking(object):
         self,
         data,
         block_size=3,
-        max_block_movement=3,
+        max_block_movement=6,
         reference_frame="median",
         delay=None,
         outdir=None,
@@ -929,19 +929,17 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
         return np.load(filename, allow_pickle=True).item()
     
-    print("Parameters motion tracking:")
-    for key in param_list[0].keys():
-        print(" * {}: {}".format(key, param_list[0][key]))
-
     np.seterr(invalid="ignore")
 
     mps_data = mps.MPS(f_in)
     assert mps_data.num_frames != 1, "Error: Single frame used as input"
 
-    motion = MotionTracking(mps_data, **(param_list[0]))
+    if len(param_list) > 1:
+        motion = MotionTracking(mps_data, **(param_list[0]))
+    else:
+        motion = MotionTracking(mps_data)
 
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
-
     disp_data = np.swapaxes(np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3)
 
     # save values
@@ -949,7 +947,7 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
     d_all = {}
     d_all["displacement_vectors"] = disp_data
     d_all["angle"] = motion.angle
-    d_all["block_size"] = int(param_list[0]["block_size"] / mps_data.info["um_per_pixel"])
+    d_all["block_size"] = motion.block_size
 
     print("Motion tracking done.")
 

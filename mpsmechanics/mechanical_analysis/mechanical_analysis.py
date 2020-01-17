@@ -51,7 +51,7 @@ def _swap_dict_keys(dict_org):
     return dict_swapped
 
 
-def _calc_mechanical_quantities(mps_data, mt_data, type_filter, sigma):
+def _calc_mechanical_quantities(mps_data, mt_data, type_filter="gaussian", sigma=3):
     time = mps_data.time_stamps
     um_per_pixel = mps_data.info["um_per_pixel"]
 
@@ -88,17 +88,11 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, save_data=True
     """
 
     filename = generate_filename(f_in, "analyze_mechanics", param_list, ".npy")
-
     print("filename: ", filename)
-
-    if not overwrite and os.path.isfile(filename):
+    if not overwrite_all and not overwrite and os.path.isfile(filename):
         print("Previous data exist. Use flag --overwrite / -o to recalculate this layer.")
         print("Use flag --overwrite_all / -oa to recalculate data for all layers.")
         return np.load(filename, allow_pickle=True).item()
-
-    print("Parameters mechanical analysis:")
-    for key in param_list[1].keys():
-        print(" * {}: {}".format(key, param_list[1][key]))
 
     mps_data = mps.MPS(f_in)
     mt_data = read_prev_layer(
@@ -110,7 +104,10 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, save_data=True
 
     print(f"Calculating mechanical quantities for {f_in}")
 
-    mechanical_quantities = _calc_mechanical_quantities(mps_data, mt_data, **param_list[1])
+    if len(param_list) > 1:
+        mechanical_quantities = _calc_mechanical_quantities(mps_data, mt_data, **param_list[1])
+    else:
+        mechanical_quantities = _calc_mechanical_quantities(mps_data, mt_data)
 
     print(f"Done calculating mechanical quantities for {f_in}.")
 

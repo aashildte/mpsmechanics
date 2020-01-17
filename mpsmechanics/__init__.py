@@ -53,7 +53,6 @@ from .pillar_tracking.pillar_tracking import (
 
 from .statistical_analysis import (
     calculate_metrics,
-    calculate_metrics_all,
     calculate_stats_chips,
 )
 

@@ -10,6 +10,5 @@ from .statistical_analysis import (
 
 from .metrics import (
         calculate_metrics,
-        calculate_metrics_all,
 )
 

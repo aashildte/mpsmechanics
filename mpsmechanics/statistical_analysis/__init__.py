@@ -4,10 +4,6 @@
 
 """
 
-from .statistical_analysis import (
-        calculate_stats_chips,
-)
-
 from .metrics import (
         calculate_metrics,
 )

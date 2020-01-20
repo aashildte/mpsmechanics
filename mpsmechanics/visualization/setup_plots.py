@@ -4,6 +4,7 @@
 
 """
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 import mps
@@ -106,3 +107,77 @@ def get_plot_fun(values, corr_plots):
         return plot_2d_values
 
     return plot_4d_values
+
+
+def make_quiver_plot(axis, values, coords, color, scale):
+    """
+
+    Quiver plots for 2D values.
+
+    """
+
+    assert values.shape[2:] == (2,), \
+            f"Error: Given value shape ({values.shape[2:]}) do not corresponds to vector values."
+
+    axis.invert_yaxis()
+
+    return axis.quiver(
+        coords[1],
+        coords[0],
+        values[:, :, 1],
+        -values[:, :, 0],
+        color=color,
+        units="xy",
+        headwidth=6,
+        scale=scale,
+    )
+
+
+def make_heatmap_plot(axis, scalars, vmin, vmax, cmap):
+    """
+
+    Gives a heatmap based on magnitude given in scalars.
+
+    Args:
+        axis - defines subplot
+        scalars - values; X x Y numpy array
+        vmin - minimum value possible
+        vmax - maximum value possible
+        cmap - type of colour map
+
+    """
+
+    return axis.imshow(scalars, vmin=vmin, vmax=vmax, \
+            cmap=cmap)
+
+
+def setup_for_key(mps_data, mc_data, key):
+    """
+
+    Some possible useful way to structure the input data.
+
+    Args:
+        mps_data - output from mps script
+        mc_data - output from mpsmechanics/analyze_mechanics script
+        key - which value to track for; key for mc_data dicts
+
+    Return:
+        metadata - dict with info for labels, axes, etc.
+        spatial_data - dict with spatial information (values, images)
+        time - numpy array
+
+    """
+    
+    images = np.moveaxis(mps_data.frames, 2, 0)
+    time = mc_data["time"]
+
+    values = mc_data["all_values"][key]
+
+    metadata = {"label" : make_pretty_label(key, mc_data["unit"][key]),
+                "pixels2um" : mps_data.info["um_per_pixel"],
+                "blocksize" : images.shape[1] // values.shape[1]}
+
+    spatial_data = {"images" : images,
+                    "derived_quantity" : values}
+
+    return metadata, spatial_data, time

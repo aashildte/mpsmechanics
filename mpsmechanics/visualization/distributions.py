@@ -190,10 +190,6 @@ def plot_distributions(f_in, overwrite, overwrite_all, param_list):
 
     """
 
-    print("Parameters visualize distributions:")
-    for key in param_list[2].keys():
-        print(" * {}: {}".format(key, param_list[2][key]))
-
     mc_data = read_prev_layer(
         f_in,
         analyze_mechanics,

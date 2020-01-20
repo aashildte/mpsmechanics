@@ -40,8 +40,13 @@ def read_prev_layer(input_file, layer_fn, param_list, overwrite):
 
     print('Looking for file: ', data_path)
 
-    return layer_fn(input_file, overwrite=overwrite, \
-                    overwrite_all=overwrite, param_list=param_list)
+    if not overwrite and os.path.isfile(filename):
+        return np.load(filename, allow_pickle=True).item()
+    else:
+        return layer_fn(input_file, \
+                        overwrite=overwrite, \
+                        overwrite_all=overwrite, \
+                        param_list=param_list)
 
 
 def get_full_filename(input_file, filename, subfolder=""):
@@ -83,7 +88,7 @@ def generate_filename(input_file, script_name, param_list, extention, subfolder=
 
 
     Returns:
-        filename - input file/mpsmechanics/[script_name]_[parameters]
+        filename - input file/mpsmechanics/{script_name}_{parameters}
 
     """
 
@@ -95,7 +100,7 @@ def generate_filename(input_file, script_name, param_list, extention, subfolder=
 
         for key in key_list:
             value = param_dict[key]
-            param_name += f"_{key}:{value}"
+            param_name += f"__{key}_{value}"
     
     param_name = param_name.replace(".", "p") + extention
 

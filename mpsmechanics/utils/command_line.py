@@ -106,6 +106,10 @@ def add_parameters_parser_arguments(parser, level):
         parser - argument parser
         level - 0, 1 or higher
 
+    Returns:
+        list of strings which identify the different 
+            arguments added to the argument parser
+
     """
 
     all_keys = []
@@ -124,6 +128,10 @@ def add_animation_parser_arguments(parser):
 
     Args:
         parser - argument parser
+
+    Returns:
+        list of strings which identify the different 
+            arguments added to the argument parser
 
     """
 
@@ -154,17 +162,17 @@ def add_focus_parser_arguments(parser):
                         help="Width (in pixels) for focus area.",
                         type=int)
 
-    parser.add_argument("-x", "--x_coord", \
+    parser.add_argument("-x", "--xcoord", \
                         default=100,
                         help="Middle point; x direction (along chamber), in pixels.",
                         type=int)
 
-    parser.add_argument("-y", "--y_coord", \
+    parser.add_argument("-y", "--ycoord", \
                         default=100,
                         help="Middle point; y direction (across chamber), in pixels.",
                         type=int)
 
-    return ["width", "x_coord", "y_coord"]
+    return ["width", "xcoord", "ycoord"]
 
 
 def split_parameter_dictionary(vargs, keys):

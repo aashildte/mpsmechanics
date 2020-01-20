@@ -7,61 +7,29 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib import animation
-from matplotlib.colors import SymLogNorm, Normalize
-import multiprocessing as mp
 
-import mps
-
-from ..utils.data_layer import read_prev_layer, generate_filename
-from ..utils.folder_structure import make_dir_layer_structure
-from ..dothemaths.operations import calc_magnitude, normalize_values, calc_norm_over_time
-from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
-from .animation_funs import make_animation, get_animation_configuration
-from .setup_plots import setup_frame, get_plot_fun, make_pretty_label, load_input_data
-
-def setup_frame(values, dpi, images, num_rows, num_cols):
-    Nx, Ny = images.shape[:2]
-    x = np.linspace(0, Nx, values.shape[1])
-    y = np.linspace(0, Ny, values.shape[2])
-
-    figsize = (14, 12)
-    fig, axes = plt.subplots(num_rows, num_cols, \
-                             figsize=figsize, dpi=dpi, squeeze=False)
-    
-    axes = axes.flatten()
-    fig.align_ylabels(axes)
-
-    return x, y, axes, fig
-
-
-def plt_quiver(ax, i, values, x, y, num_arrows, color, scale):
-    ax.invert_yaxis()
-    
-    return ax.quiver(
-        y[::num_arrows],
-        x[::num_arrows],
-        values[i, ::num_arrows, ::num_arrows, 1],
-        -values[i, ::num_arrows, ::num_arrows, 0],
-        color=color,
-        units="xy",
-        headwidth=6,
-        scale=scale,
-    )
-
+from ..utils.data_layer import generate_filename
+from ..dothemaths.operations import calc_norm_over_time
+from .animation_funs import make_animation, \
+        get_animation_configuration
+from .setup_plots import setup_frame, load_input_data, \
+        make_quiver_plot, setup_for_key
 
 def _set_ax_units(axis, shape, scale):
-    
+
     axis.set_aspect("equal")
     num_yticks = 8
     num_xticks = 4
 
-    yticks = [int(shape[0]*i/num_yticks) for i in range(num_yticks)]
-    ylabels = [int(scale*shape[0]*i/num_yticks) for i in range(num_yticks)]
+    yticks = [int(shape[0]*i/num_yticks) \
+                for i in range(num_yticks)]
+    ylabels = [int(scale*shape[0]*i/num_yticks) \
+                for i in range(num_yticks)]
 
-    xticks = [int(shape[1]*i/num_xticks) for i in range(num_xticks)]
-    xlabels = [int(scale*shape[1]*i/num_xticks) for i in range(num_xticks)]
+    xticks = [int(shape[1]*i/num_xticks) \
+                for i in range(num_xticks)]
+    xlabels = [int(scale*shape[1]*i/num_xticks) \
+                for i in range(num_xticks)]
 
     axis.set_yticks(yticks)
     axis.set_xticks(xticks)
@@ -72,88 +40,81 @@ def _set_ax_units(axis, shape, scale):
     axis.set_ylabel(r"$\mu m$")
 
 
-def _find_arrow_scaling(values, num_arrows):
-    return 1.5/(num_arrows)*np.mean(np.abs(values))
+def _find_arrow_scaling(values, quiver_step):
+    return 1.5/(quiver_step)*np.mean(np.abs(values))
 
-def plot_vectorfield(spatial_data, time, time_step, metadata):
-    
+
+def _find_xy_coords(images, values, quiver_step):
+    x_len, y_len = images.shape[1:3]
+    x_coords = np.linspace(0, x_len, values.shape[1])
+    y_coords = np.linspace(0, y_len, values.shape[2])
+
+    return np.asarray([x_coords[::quiver_step], \
+                       y_coords[::quiver_step]])
+
+
+def _plot_vectorfield(spatial_data, time, time_step, metadata):
+
     values = spatial_data["derived_quantity"]
     images = spatial_data["images"]
-    label = metadata["label"]
     pixels2um = metadata["pixels2um"]
 
-    dpi=300
+    axes, fig = setup_frame(1, 1, True, True)
+    quiver_step = 3
 
-    x, y, axes, fig = setup_frame(values, dpi, images, 1, 1)
+    coords = _find_xy_coords(images, values, quiver_step)
 
-    block_size = len(x) // values.shape[1]
-    scale_n = max(np.divide(values.shape[1:3], block_size))
-    num_arrows = 3
-
-    scale_xy = np.max(np.abs(values))
-    scale_arrows = _find_arrow_scaling(values, num_arrows)
-    
-    Q1 = axes[0].imshow(images[:, :, time_step], cmap=cm.gray) 
-    Q2 = plt_quiver(axes[0], time_step, values, x, y, num_arrows, 'red', scale_arrows)
+    im_subplot = axes[0].imshow(images[time_step], "gray")
+    qu_subplot = \
+            make_quiver_plot(axes[0], \
+                             values[time_step, ::quiver_step, ::quiver_step],
+                             coords, \
+                             "red", \
+                             _find_arrow_scaling(values, quiver_step))
 
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
- 
-    _set_ax_units(axes[0], images.shape[:2], pixels2um)
 
-    def update(index):
-        Q1.set_array(images[:, :, index])
-        Q2.set_UVC(values[index, ::num_arrows, ::num_arrows, 1], \
-                   values[index, ::num_arrows, ::num_arrows, 0])
+    _set_ax_units(axes[0], images.shape[1:3], pixels2um)
+
+    def _update(index):
+        im_subplot.set_array(images[index])
+        qu_subplot.set_UVC(values[index, ::quiver_step, ::quiver_step, 1], \
+                   values[index, ::quiver_step, ::quiver_step, 0])
 
         plt.suptitle("Time: {} ms".format(int(time[index])))
 
-    return fig, update
+    return fig, _update
 
 
 def _plot_at_peak(spatial_data, time, metadata, fname):
- 
+
     values = spatial_data["derived_quantity"]
     peak = np.argmax(calc_norm_over_time(values))
-         
-    plot_vectorfield(spatial_data, time, peak, metadata)
 
-    filename = fname + ".png"
-    plt.savefig(filename)
+    _plot_vectorfield(spatial_data, time, peak, metadata)
+
+    plt.savefig(fname)
     plt.close('all')
-    
-
-def _make_animation(values, time, label, pixels2um, images, fname, \
-                        framerate=None, extension="mp4", dpi=300, num_arrows=3):
-    
-    fig, update = plot_vectorfield(values, time, 0, label, num_arrows, dpi, pixels2um, images)
-
-    if extension == "mp4":
-        Writer = animation.writers["ffmpeg"]
-    else:
-        Writer = animation.writers["imagemagick"]
-    writer = Writer(fps=framerate)
-
-    N = values.shape[0]
-    anim = animation.FuncAnimation(fig, update, N)
-
-    fname = os.path.splitext(fname)[0]
-    anim.save("{}.{}".format(fname, extension), writer=writer)
-    plt.close('all')
-    
 
 
-def _make_vectorfield_plots(values, time, key, label, output_folder, pixels2um, \
-        images, framerate, animate, fname):
-     
-    plot_vectorfield_at_peak(values, time, label, pixels2um, \
-                    images, fname)
+def _make_animation(spatial_data, time, metadata, fname, \
+        animation_config):
+    fig, _update = _plot_vectorfield(spatial_data, time, 0, metadata)
+    make_animation(fig, _update, fname, **animation_config)
 
-    if animate:
-        print("Making a movie ..")
-        animate_vectorfield(values, time, label, pixels2um, \
-                    images, fname, framerate=framerate)
-    
-    
+
+def _make_filenames(f_in, key):
+    fname = generate_filename(f_in, \
+                              f"vectorfield_{key}", \
+                              [],
+                              "",        # mp3 or png
+                              subfolder="visualize_vectorfield")
+    fname_png = fname + ".png"
+    fname_mp4 = fname + ".mp4"
+
+    return fname_png, fname_mp4
+
+
 def visualize_vectorfield(f_in, overwrite, overwrite_all, param_list):
     """
 
@@ -169,17 +130,9 @@ def visualize_vectorfield(f_in, overwrite, overwrite_all, param_list):
 
     """
 
-    print("Parameters visualize vectorfield:")
-
-    for key in param_list[2].keys():
-        print(" * {}: {}".format(key, param_list[2][key]))
-
     mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
-    animation_config = get_animation_configuration(param_list[2], mps_data)
+    animation_config = get_animation_configuration(param_list[-1], mps_data)
     animate = animation_config.pop("animate")
-
-    images = np.moveaxis(mps_data.frames, 2, 0)
-    time = mc_data["time"]
 
     for key in mc_data["all_values"].keys():
         if mc_data["all_values"][key].shape[3:] != (2,):
@@ -187,28 +140,23 @@ def visualize_vectorfield(f_in, overwrite, overwrite_all, param_list):
 
         print("Plots for " + key + " ...")
 
-        fname = generate_filename(f_in, \
-                                  f"decomposition_{key}", \
-                                  param_list[:2],
-                                  "",        # mp3 or png
-                                  subfolder="visualize_mechanics")
+        fname_png, fname_mp4 = _make_filenames(f_in, key)
+        metadata, spatial_data, time = setup_for_key(mps_data, mc_data, key)
 
-        values = mc_data["all_values"][key]
+        if overwrite or (not os.path.isfile(fname_png)):
+            _plot_at_peak(spatial_data, time, metadata, fname_png)
+            print("Plot at peak done; " + \
+                  f"image saved to {fname_png}")
+        else:
+            print(f"Image {fname_png} already exists")
 
-        metadata = {"label" : make_pretty_label(key, mc_data["unit"][key]),
-                    "pixels2um" : mps_data.info["um_per_pixel"],
-                    "blocksize" : images.shape[1] // values.shape[1]}
-
-        spatial_data = {"images" : images,
-                        "derived_quantity" : values}
-
-        if overwrite or (not os.path.isfile(fname + ".png")):
-            print("Spatial plots ..")
-            _plot_at_peak(spatial_data, time, metadata, fname)
-
-        if animate and (overwrite or (not os.path.isfile(fname + ".mp4"))):
-            print("Making a movie ..")
-            _make_animation(spatial_data, time, metadata, fname, \
-                    animation_config)
+        if animate:
+            if(overwrite or (not os.path.isfile(fname_mp4))):
+                _make_animation(spatial_data, time, metadata, fname_mp4, \
+                                animation_config)
+                print("Animation movie produced; " + \
+                      f"movie saved to {fname_mp4}")
+            else:
+                print(f"Movie {fname_mp4} already exists")
 
     print("Visualization done, finishing ...")

@@ -14,7 +14,7 @@ def _cl_parser():
     channel = "BF"
 
     mc.add_default_parser_arguments(parser, channel)
-    keys = mc.add_parameters_parser_arguments(parser, 1)
+    keys = mc.add_parameters_parser_arguments(parser, 2)
 
     return parser, channel, keys
 

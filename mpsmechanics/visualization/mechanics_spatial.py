@@ -14,59 +14,15 @@ from ..dothemaths.operations import calc_magnitude, \
         normalize_values, calc_norm_over_time
 from .animation_funs import make_animation, \
         get_animation_configuration
-from .setup_plots import setup_frame, get_plot_fun, \
-        make_pretty_label, load_input_data
-
-def make_quiver_plot(axis, values, quiver_step, color, scale):
-    """
-
-    Quiver plots for 2D values.
-
-    """
-
-    assert values.shape[2:] == (2,), \
-            f"Error: Given value shape ({values.shape[2:]}) do not corresponds to vector values."
-
-    coords = [np.linspace(0, quiver_step*values.shape[0], values.shape[0]),
-              np.linspace(0, quiver_step*values.shape[1], values.shape[1])]
-
-    axis.invert_yaxis()
-
-    return axis.quiver(
-        coords[1],
-        coords[0],
-        values[:, :, 1],
-        -values[:, :, 0],
-        color=color,
-        units="xy",
-        headwidth=6,
-        scale=scale,
-    )
-
-
-def make_heatmap_plot(axis, scalars, vmin, vmax, cmap):
-    """
-
-    Gives a heatmap based on magnitude given in scalars.
-
-    Args:
-        axis - defines subplot
-        scalars - values; X x Y numpy array
-        vmin - minimum value possible
-        vmax - maximum value possible
-        cmap - type of colour map
-
-    """
-    return axis.imshow(scalars, vmin=vmin, vmax=vmax, \
-            cmap=cmap)
-
+from .setup_plots import setup_frame, get_plot_fun, load_input_data, \
+        make_quiver_plot, make_heatmap_plot, setup_for_key
 
 def _set_ax_units(axis, scale, shift):
 
     axis.set_aspect("equal")
     num_yticks = 8
     num_xticks = 4
-    
+
     y_range = axis.get_ylim()
     x_range = axis.get_xlim()
 
@@ -92,7 +48,7 @@ def _set_ax_units(axis, scale, shift):
 
 
 def _find_arrow_scaling(values):
-    return 1.5*np.mean(np.abs(values))
+    return 0.5*np.mean(np.abs(values))
 
 
 def _get_value_range(values):
@@ -113,7 +69,7 @@ def _get_1d_values(images, values):
     return all_components, subtitles
 
 
-def _init_subplots_1d(all_components, time, time_step):
+def _init_subplots_1d(all_components, time_step):
     axes, fig = setup_frame(1, 2, False, False)
     subplots = []
 
@@ -121,8 +77,6 @@ def _init_subplots_1d(all_components, time, time_step):
     subplots.append(axes[0].imshow(images[time_step], cmap="gray"))
     subplots.append(make_heatmap_plot(axes[1], magnitude[time_step], \
                        0, np.max(magnitude), "viridis"))
-
-    plt.suptitle("Time: {} ms".format(int(time[time_step])))
 
     return axes, fig, subplots
 
@@ -160,8 +114,9 @@ def plot_1d_values(spatial_data, time, time_step, metadata):
     values = spatial_data["derived_quantity"]
 
     all_components, subtitles = _get_1d_values(images, values)
-    axes, fig, subplots = _init_subplots_1d(all_components, time, time_step)
+    axes, fig, subplots = _init_subplots_1d(all_components, time_step)
     _make_1d_plot_pretty(fig, axes, subplots, subtitles, metadata)
+    plt.suptitle("Time: {} ms".format(int(time[time_step])))
 
     def _update(index):
         subplots[0].set_array(images[index])
@@ -186,28 +141,36 @@ def _get_2d_values(images, values, quiver_step):
     return all_components, titles
 
 
-def _init_subplots_2d(all_components, time, time_step, quiver_step):
+def _find_xy_coords(images, values):
+    x_len, y_len = images.shape[1:3]
+    x_coords = np.linspace(0, x_len, values.shape[1])
+    y_coords = np.linspace(0, y_len, values.shape[2])
+
+    return np.asarray([x_coords, y_coords])
+
+
+def _init_subplots_2d(all_components, time_step):
     axes, fig = setup_frame(2, 3, False, False)
 
     images, values, normalized, magnitude, x_values, y_values = \
             all_components
 
     vmin, vmax = _get_value_range([x_values, y_values])
-    
+
+    coords = _find_xy_coords(images, values)
+
     vmax_mag = np.max(magnitude)
     subplots = [axes[0].imshow(images[time_step], cmap="gray"),
-                make_quiver_plot(axes[1], values[time_step], quiver_step, \
+                make_quiver_plot(axes[1], values[time_step], coords, \
                            'red', _find_arrow_scaling(values)),
-                make_quiver_plot(axes[2], normalized[time_step], quiver_step, \
-                           'black', 1.5/quiver_step),
+                make_quiver_plot(axes[2], normalized[time_step], coords, \
+                           'black', 0.05),
                 make_heatmap_plot(axes[3], magnitude[time_step], 0, \
                               vmax_mag, "viridis"),
                 make_heatmap_plot(axes[4], x_values[time_step], \
                               vmin, vmax, "bwr"),
                 make_heatmap_plot(axes[5], y_values[time_step], \
                               vmin, vmax, "bwr")]
-
-    plt.suptitle("Time: {} ms".format(int(time[time_step])))
 
     return axes, fig, subplots
 
@@ -253,8 +216,10 @@ def plot_2d_values(spatial_data, time, time_step, metadata):
 
     quiver_step = 3
     all_components, subtitles = _get_2d_values(images, values, quiver_step)
-    axes, fig, subplots = _init_subplots_2d(all_components, time, time_step, quiver_step)
+    axes, fig, subplots = _init_subplots_2d(all_components, time_step)
     _make_2d_plot_pretty(fig, axes, subplots, subtitles, metadata)
+
+    plt.suptitle("Time: {} ms".format(int(time[time_step])))
 
     def _update(index):
         for i in (0, 3, 4, 5):
@@ -284,36 +249,28 @@ def _get_2x2d_values(images, values):
     return all_components, subtitles
 
 
-def _init_subplots_2x2d(all_components, time, time_step, shift_diagonal):
-    images, ux_values, uy_values, \
-            sg_values, vx_values, vy_values = all_components
+def _init_subplots_2x2d(all_components, time_step, shift):
     axes, fig = setup_frame(2, 3, False, False)
 
-    vmin, vmax = _get_value_range([ux_values, uy_values, \
+    images, ux_values, uy_values, \
+            sg_values, vx_values, vy_values = all_components
+
+    val_range = _get_value_range([ux_values, uy_values, \
                                    vx_values, vy_values])
-    vmin, vmax = -0.1, 0.1
-    vmax_mag = 0.1
 
-    if shift_diagonal:
-        shift = 1
-    else:
-        shift = 0
-
-    sg_mean = np.mean(sg_values)
+    sg_range = np.min(sg_values), np.max(sg_values)
 
     subplots = [axes[0].imshow(images[time_step], cmap="gray"),
                 make_heatmap_plot(axes[1], ux_values[time_step], \
-                    vmin + shift, vmax + shift, "bwr"),
+                    val_range[0] + int(shift), val_range[1] + int(shift), "bwr"),
                 make_heatmap_plot(axes[2], uy_values[time_step], \
-                    vmin, vmax, "bwr"),
+                    val_range[0], val_range[1], "bwr"),
                 make_heatmap_plot(axes[3], sg_values[time_step], \
-                        sg_mean - 0.05, sg_mean + 0.05, "viridis"),
+                        sg_range[0], sg_range[1], "viridis"),
                 make_heatmap_plot(axes[4], vx_values[time_step], \
-                    vmin, vmax, "bwr"),
+                    val_range[0], val_range[1], "bwr"),
                 make_heatmap_plot(axes[5], vy_values[time_step], \
-                    vmin + shift, vmax + shift, "bwr")]
-
-    plt.suptitle("Time: {} ms".format(int(time[time_step])))
+                    val_range[0] + int(shift), val_range[1] + int(shift), "bwr")]
 
     return axes, fig, subplots
 
@@ -356,8 +313,16 @@ def plot_2x2d_values(spatial_data, time, time_step, metadata):
     values = spatial_data["derived_quantity"]
 
     all_components, subtitles = _get_2x2d_values(images, values)
-    axes, fig, subplots = _init_subplots_2x2d(all_components, time, time_step, metadata["shift_diagonal"])
-    _make_2x2d_plot_pretty(fig, axes, subplots, subtitles, metadata)
+    axes, fig, subplots = \
+            _init_subplots_2x2d(all_components, \
+                                time_step, \
+                                metadata["shift_diagonal"])
+    _make_2x2d_plot_pretty(fig, \
+                           axes, \
+                           subplots, \
+                           subtitles, \
+                           metadata)
+    plt.suptitle("Time: {} ms".format(int(time[time_step])))
 
     def _update(index):
         for (subplot, component) in zip(subplots, all_components):
@@ -370,7 +335,6 @@ def plot_2x2d_values(spatial_data, time, time_step, metadata):
 
 def _plot_at_peak(spatial_data, time, metadata, fname):
 
-    extension = "png"
     values = spatial_data["derived_quantity"]
 
     peak = np.argmax(calc_norm_over_time(values))
@@ -378,8 +342,7 @@ def _plot_at_peak(spatial_data, time, metadata, fname):
             [plot_1d_values, plot_2d_values, plot_2x2d_values])
     plot_fn(spatial_data, time, peak, metadata)
 
-    filename = fname + "." + extension
-    plt.savefig(filename)
+    plt.savefig(fname)
     plt.close('all')
 
 
@@ -389,6 +352,18 @@ def _make_animation(spatial_data, time, metadata, fname, animation_config):
     fig, _update = plot_fn(spatial_data, time, 0, metadata)
 
     make_animation(fig, _update, fname, **animation_config)
+
+
+def _make_filenames(f_in, key):
+    fname = generate_filename(f_in, \
+                              f"spatial_decomposition_{key}", \
+                              [],
+                              "",        # mp3 or png
+                              subfolder="visualize_mechanics")
+    fname_png = fname + ".png"
+    fname_mp4 = fname + ".mp4"
+
+    return fname_png, fname_mp4
 
 
 def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
@@ -406,44 +381,32 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
 
     """
 
-    print("Parameters visualize distributions:")
-
-    for key in param_list[2].keys():
-        print(" * {}: {}".format(key, param_list[2][key]))
-
     mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
-    animation_config = get_animation_configuration(param_list[2], mps_data)
+    animation_config = get_animation_configuration(param_list[-1], mps_data)
     animate = animation_config.pop("animate")
-
-    images = np.moveaxis(mps_data.frames, 2, 0)
-    time = mc_data["time"]
 
     for key in mc_data["all_values"].keys():
         print("Plots for " + key + " ...")
 
-        fname = generate_filename(f_in, \
-                                  f"decomposition_{key}", \
-                                  param_list[:2],
-                                  "",        # mp3 or png
-                                  subfolder="visualize_mechanics")
+        fname_png, fname_mp4 = _make_filenames(f_in, key)
+        metadata, spatial_data, time = setup_for_key(mps_data, mc_data, key)
 
-        values = mc_data["all_values"][key]
+        metadata["shift_diagonal"] = (key == "deformation_tensor")
 
-        metadata = {"label" : make_pretty_label(key, mc_data["unit"][key]),
-                    "pixels2um" : mps_data.info["um_per_pixel"],
-                    "blocksize" : images.shape[1] // values.shape[1],
-                    "shift_diagonal" : key in ["deformation_tensor"]}
+        if overwrite or (not os.path.isfile(fname_png)):
+            _plot_at_peak(spatial_data, time, metadata, fname_png)
+            print("Plot at peak done; " + \
+                  f"image saved to {fname_png}")
+        else:
+            print(f"Image {fname_png} already exists")
 
-        spatial_data = {"images" : images,
-                        "derived_quantity" : values}
-
-        if overwrite or (not os.path.isfile(fname + ".png")):
-            print("Spatial plots ..")
-            _plot_at_peak(spatial_data, time, metadata, fname)
-
-        if animate and (overwrite or (not os.path.isfile(fname + ".mp4"))):
-            print("Making a movie ..")
-            _make_animation(spatial_data, time, metadata, fname, \
-                    animation_config)
+        if animate:
+            if (overwrite or (not os.path.isfile(fname_mp4))):
+                _make_animation(spatial_data, time, metadata, fname_mp4, \
+                                animation_config)
+                print("Animation movie produced; " + \
+                      f"movie saved to {fname_mp4}")
+            else:
+                print(f"Movie {fname_mp4} already exists")
 
     print("Visualization done, finishing ...")

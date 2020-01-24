@@ -2,3 +2,9 @@ build
 dist
 __pycache__
 *.png
+.DS_Store
+*.egg-info
+*.vscode
+*.idea
+venv
+*npy

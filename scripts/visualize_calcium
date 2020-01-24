@@ -20,5 +20,5 @@ def _cl_parser():
     return parser, channel, keys
 
 if __name__ == "__main__":
-    mc.run_script(mc.visualize_mechanics, \
+    mc.run_script(mc.visualize_calcium_spatial, \
             "visualization of corrected calcium", *_cl_parser())

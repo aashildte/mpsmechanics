@@ -45,6 +45,7 @@ from scipy import ndimage
 import scipy.stats as st
 import numpy as np
 from skimage.feature import match_template
+import matplotlib.pyplot as plt
 
 import mps
 
@@ -121,7 +122,6 @@ def block_matching(reference_image, image, block_size, max_block_movement):
     into blocks of size `block_size x block_size` and compare the two images
     within a range of +/- max_block_movement for each block.
 
-
     Note
     ----
     Make sure to have max_block_movement big enough. If this is too small
@@ -193,6 +193,20 @@ def block_matching(reference_image, image, block_size, max_block_movement):
                 else:
                     vectors[y_block, x_block, 0] = max_block_movement - dy[0]
                     vectors[y_block, x_block, 1] = max_block_movement - dx[0]
+                    """
+                    if dy[0] != max_block_movement and dx[0] != max_block_movement:
+                       for _y in range(37): 
+                           plt.plot(costs[:, _y]) 
+
+                       plt.savefig(f"plots/{x_block}_{y_block}_ys.png")
+                       plt.clf()
+
+                       for _x in range(37): 
+                            plt.plot(costs[_x, :]) 
+
+                       plt.savefig(f"plots/{x_block}_{y_block}_xs.png")
+                       plt.clf()
+                    """
             else:
                 # If no values in box set to no movement
                 vectors[y_block, x_block, :] = 0
@@ -642,6 +656,7 @@ class MotionTracking(object):
 
         iterable = self._get_displacements_iter()
         t0 = time.time()
+        self.serial = True
         if self.serial:
             for i, v in enumerate(map(self.matching_map, iterable)):
                 if i % 50 == 0:

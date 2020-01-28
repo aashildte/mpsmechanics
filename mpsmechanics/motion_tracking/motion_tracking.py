@@ -32,6 +32,7 @@ __email__ = "henriknf@simula.no"
 This module is based on the Matlab code in the script scripttotry1105_nd2.m
 provided by Berenice
 """
+from typing import Optional
 import time
 import os
 import logging
@@ -96,6 +97,14 @@ except ImportError:
 
 
 def block_matching_map(args):
+    """Helper function for running block maching algorithm in paralell
+
+    Arguments
+    ---------
+    args: tuple
+        A tuple to be passed to `block_macthing`
+        `(reference_image, image, block_size, max_block_movement, filter_kernel_size)`.
+    """
     vectors = block_matching(*args[:-1])
 
     if args[-1] > 0:
@@ -105,6 +114,14 @@ def block_matching_map(args):
 
 
 def template_matching_map(args):
+    """Helper function for running template maching algorithm in paralell
+
+    Arguments
+    ---------
+    args: tuple
+        A tuple to be passed to `template_matching`
+        `(reference_image, image, block_size, max_block_movement, filter_kernel_size)`.
+    """
     vectors = template_matching(*args[:-1])
 
     if args[-1] > 0:
@@ -114,13 +131,29 @@ def template_matching_map(args):
 
 
 @jit(nopython=True)
-def block_matching(reference_image, image, block_size, max_block_movement):
+def block_matching(
+    reference_image: np.ndarray,
+    image: np.ndarray,
+    block_size: int,
+    max_block_movement: int,
+):
     """
     Computes the displacements from `reference_image` to `image`
-    using a block matching algorthim. Briefly, we subdivde the images
+    using a block matching algorithm. Briefly, we subdivde the images
     into blocks of size `block_size x block_size` and compare the two images
     within a range of +/- max_block_movement for each block.
 
+    Arguments
+    ---------
+    reference_image : np.ndarray
+        The frame used as reference
+    image : np.ndarray
+        The frame that you want to compute displacement for relative to
+        the referernce frame
+    block_size : int
+        Size of the blocks
+    max_block_movement : int
+        Maximum allowed movement of blocks when searching for best match.
 
     Note
     ----
@@ -200,7 +233,29 @@ def block_matching(reference_image, image, block_size, max_block_movement):
     return vectors
 
 
-def template_matching(reference_image, image, block_size, max_block_movement):
+def template_matching(
+    reference_image: np.ndarray,
+    image: np.ndarray,
+    block_size: int,
+    max_block_movement: int,
+):
+    """
+    Computes the displacements from `reference_image` to `image`
+    using a template matching algorithm (`skimage.feature.match_template`)
+
+    Arguments
+    ---------
+    reference_image : np.ndarray
+        The frame used as reference
+    image : np.ndarray
+        The frame that you want to compute displacement for relative to
+        the referernce frame
+    block_size : int
+        Size of the blocks
+    max_block_movement : int
+        Maximum allowed movement of blocks when searching for best match.
+
+    """
     # Shape of the image that is returned
     y_size, x_size = image.shape
     shape = (y_size // block_size, x_size // block_size)
@@ -259,71 +314,6 @@ def template_matching(reference_image, image, block_size, max_block_movement):
     return vectors
 
 
-def scale_to_macro_block(arr, block_size):
-
-    logger.debug("Scale to macro blocks")
-    shape = arr.shape
-    macro_shape = (shape[0] // block_size, shape[1] // block_size)
-
-    new_arr = np.zeros(shape, dtype=np.uint16)
-    for k, l in itertools.product(np.arange(macro_shape[0]), np.arange(macro_shape[1])):
-        b = np.uint16(
-            arr[
-                k * block_size : (k + 1) * block_size,
-                l * block_size : (l + 1) * block_size,
-            ]
-        ).prod()
-        new_arr[
-            k * block_size : (k + 1) * block_size, l * block_size : (l + 1) * block_size
-        ] = b
-    return new_arr
-
-
-def edge_detection(im):
-    """
-    Perform edge detection on image `im` and scale
-    the edges according to macro blocks
-    """
-
-    if skimage.__version__ >= "0.15":
-        msg = (
-            "Edge detection requires another version of skimage (you have {})"
-            'You need version < 0.15 - pip install "scikit-image<0.15"'
-            ""
-        ).format(skimage.__version__)
-        logger.warning(msg)
-
-    if isinstance(im, tuple):
-        im = im[0]
-    shape = im.shape
-    imgI = np.zeros(shape, dtype=np.uint16)
-    imgI[:] = im
-
-    # Apply some filters to mimic the edge detection algorithm in Matlab
-    logger.debug("Apply edge detector")
-    img = utils.normalize_frames(imgI)
-    gaussian = filters.gaussian(img)
-    sobel = utils.normalize_frames(filters.sobel(gaussian))
-    # Get edges
-    local_edges = feature.canny(sobel)
-    # Dilate edges
-    logger.debug("Apply dilation")
-    diamond = morphology.diamond(2)
-    local_edges_diamond = morphology.dilation(local_edges, diamond)
-
-    # Fill the holes
-    logger.debug("Fill holes")
-    seed = np.copy(local_edges_diamond)
-    seed[1:-1, 1:-1] = 1.0
-    filled = morphology.reconstruction(seed, local_edges_diamond, method="erosion")
-    # Remove small objects that have fewer than 0.2 percent of the whole size
-    min_size = int(img.shape[0] * img.shape[1] * 0.002)
-    logger.debug(f"Remove objects smaller then {min_size} pixels")
-    cleaned = morphology.remove_small_objects(filled.astype(bool), min_size=min_size)
-
-    return cleaned
-
-
 def mean_contraction(amplitude, vectors, um_per_pixel, factor=1.0):
 
     amplitude_map = np.sum(amplitude, 2)
@@ -349,7 +339,24 @@ def mean_contraction(amplitude, vectors, um_per_pixel, factor=1.0):
     return ContractionData(**results)
 
 
-def contraction_data(amplitude, vectors, um_per_pixel, factor=1.0):
+def contraction_data(
+    amplitude: np.ndarray, vectors: np.ndarray, um_per_pixel: float, factor=1.0
+):
+    """
+    Compute a collection of features from amplide and vectors
+
+    Arguments
+    ---------
+    amplitude : np.ndarray
+        L2 norm of the vectors
+    vectors : np.ndarray
+        Vectors coming from the matching algorithm
+    um_per_pixel : float
+        Conversion factor from pixel to micrometers
+    factor : float
+        Additional factor to scale output. For velocities this is
+        shoud be framerate / delay
+    """
 
     amplitude_map = np.sum(amplitude, 2)
     mask = amplitude_map < np.median(amplitude_map)
@@ -397,19 +404,6 @@ def contraction_data(amplitude, vectors, um_per_pixel, factor=1.0):
     return ContractionData(**results)
 
 
-def subtract_frame(img, frame="0"):
-    """
-    Remove frame from all other frames
-    """
-
-    f = np.zeros_like(img[0, 0, :])
-    if frame.isnumeric():
-        idx = int(frame)
-        f = img[:, :, idx]
-
-    return np.subtract(img, np.repeat(f, img.shape[-1]).reshape(img.shape))
-
-
 class MotionTracking(object):
     """
     Class for performing motion tracking on BrightField data, in order
@@ -424,23 +418,42 @@ class MotionTracking(object):
     max_block_movement: float
         Maximum allowed movement of each block in micrometers
         Default 3 micrometers.
+    reference_frame: str
+        What reference to use when computing displacements. Eiter 'mean', 'median' or
+        some integer refering to a particular frame. Default is 'median'. For 'median'/
+        'mean' the refercence frame will be the median/mean of all frames
+    delay: int
+        Delay between frames when computing the velocities. The default value
+        depends on the framerate. If set to 1 then the velocity will be computed
+        from each successive frame.
+    outdir: str
+        Output directory to store the results. If not provided, the the output directory
+        will try to match in directory of the input data.
+    serial : bool
+        Run motion tracking in serial. Default: False (i.e default is paralell).
+        Useful for debugging
+    filter_kernel_size: int
+        Size of kernel for median filter applied to the motion vectors. Default: 0 
+        (i.e no filtering)
     matching_method : str
         Method used for block matching. Choices "block_matching" (default) or
         "template_matching" 
+    loglevel : int
+        Level of how much that is printed (Default: 20 (INFO))
     """
 
     _arrays = ["velocity_vectors", "displacement_vectors"]
 
     def __init__(
         self,
-        data,
-        block_size=3,
-        max_block_movement=6,
-        reference_frame="median",
-        delay=None,
-        outdir=None,
-        serial=False,
-        filter_kernel_size=8,
+        data: mps.MPS,
+        block_size: int = 3,
+        max_block_movement: int = 6,
+        reference_frame: str = "median",
+        delay: Optional[int] = None,
+        outdir: Optional[str] = None,
+        serial: bool = False,
+        filter_kernel_size: int = 0,
         matching_method="block_matching",
         loglevel=logging.INFO,
     ):
@@ -479,6 +492,7 @@ class MotionTracking(object):
             data.frames.shape[0] // self.block_size,
             data.frames.shape[1] // self.block_size,
         )
+
         self.N = data.num_frames - self.delay
         self.shape = (
             self.macro_shape[0] * self.block_size,
@@ -513,14 +527,12 @@ class MotionTracking(object):
 
     def _init_arrays(self):
 
-        self.computed = dict(
-            angle=False, edges=False, velocities=False, displacements=False
-        )
+        self.computed = dict(angle=False, velocities=False, displacements=False)
 
     @property
     def _get_velocities_iter(self):
         """
-        Iterable to be passed in to the map fuction for GetMotionBioFormat
+        Iterable to be passed in to the map fuction for velocities
         """
 
         def gen():
@@ -537,8 +549,7 @@ class MotionTracking(object):
 
     def _get_displacements_iter(self):
         """
-        Iterable to be passed in to the map fuction for
-        GetMotionBioFormatStrainInterval
+        Iterable to be passed in to the map fuction for displacements
         """
 
         def check_int(s):
@@ -575,36 +586,6 @@ class MotionTracking(object):
                 )
 
         return gen()
-
-    def _edge_detection(self):
-
-        logger.info("Run edge detection")
-
-        self._edges = np.zeros(
-            (self.shape[0], self.shape[1], self.data.num_frames), dtype=np.uint16
-        )
-
-        iterable = (
-            self.data.frames[: self.shape[0], : self.shape[1], i]
-            for i in range(self.data.num_frames)
-        )
-        t0 = time.time()
-        if self.serial:
-            for i, e in enumerate(map(edge_detection, iterable)):
-                if i % 50 == 0:
-                    logger.info(f"Processing frame {i}/{self.data.num_frames}")
-                self._edges[:, :, i] = scale_to_macro_block(e, self.block_size)
-
-        else:
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, e in enumerate(executor.map(edge_detection, iterable)):
-                    if i % 50 == 0:
-                        logger.info(f"Processing frame {i}/{self.data.num_frames}")
-                    self._edges[:, :, i] = scale_to_macro_block(e, self.block_size)
-
-        t1 = time.time()
-        logger.info(f"Done with edge detection - Elapsed time = {t1-t0:.2f} seconds")
-        self.computed["edges"] = True
 
     def _get_velocities(self):
 
@@ -928,7 +909,7 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
     if not (overwrite or overwrite_all) and os.path.isfile(filename):
         print("Previous data exist. Use flag --overwrite / -o to recalculate.")
         return np.load(filename, allow_pickle=True).item()
-    
+
     np.seterr(invalid="ignore")
 
     mps_data = mps.MPS(f_in)
@@ -940,7 +921,9 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
         motion = MotionTracking(mps_data)
 
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
-    disp_data = np.swapaxes(np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3)
+    disp_data = np.swapaxes(
+        np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3
+    )
 
     # save values
 

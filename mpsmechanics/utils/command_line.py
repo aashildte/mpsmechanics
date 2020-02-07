@@ -115,9 +115,41 @@ def add_parameters_parser_arguments(parser, level):
     all_keys = []
 
     if level >= 0:
-        pass
+        parser.add_argument("-uv", "--use_velocity_vectors", \
+                            help="Reference velocity vectors, for motion tracking",
+                            action="store_true")
+
+        parser.add_argument("-b", "--block_size", \
+                            default=3,
+                            help="Block size for motion tracking",
+                            type=int)
+
+        parser.add_argument("-mb", "--max_block_movement", \
+                            default=3,
+                            help="Matching method for motion tracking",
+                            type=int)
+
+        parser.add_argument("-m", "--matching_method", \
+                            default="block_matching",
+                            help="Matching method for motion tracking",
+                            type=str)
+
+        l0_keys = ["block_size", "max_block_movement", "matching_method", "use_velocity_vectors"]
+        all_keys.append(l0_keys)
+
     if level >= 1:
-        pass
+        parser.add_argument("-si", "--sigma", \
+                            default=0,
+                            help="Filter parameter",
+                            type=float)
+
+        parser.add_argument("-fi", "--type_filter", \
+                            default="gaussian",
+                            help="Type filter ('gaussian' or 'downsampling')",
+                            type=str)
+
+        l1_keys = ["sigma", "type_filter"]
+        all_keys.append(l1_keys)
 
     return all_keys
 

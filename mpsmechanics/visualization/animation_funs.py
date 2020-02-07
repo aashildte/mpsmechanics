@@ -9,7 +9,7 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 
 
-def get_animation_configuration(params, mps_data):
+def get_animation_configuration(params, mps_data, mc_data):
     """
 
     Creates dictionary with standard animation properties.
@@ -26,7 +26,7 @@ def get_animation_configuration(params, mps_data):
 
     return {"animate" : params["animate"],
             "framerate" : mps_data.framerate*params["scaling_factor"],
-            "num_frames" : mps_data.frames.shape[-1]}
+            "num_frames" : mc_data["all_values"]["displacement"].shape[0]}
 
 
 def make_animation(fig, update, fname, num_frames, framerate):

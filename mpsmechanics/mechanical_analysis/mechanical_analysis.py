@@ -59,6 +59,9 @@ def _swap_dict_keys(dict_org):
 def _calc_mechanical_quantities(mps_data, mt_data, \
         type_filter="gaussian", sigma=3):
     time = mps_data.time_stamps
+    # trunkate:
+    time = time[:mt_data["displacement_vectors"].shape[0]]
+
     um_per_pixel = mps_data.info["um_per_pixel"]
 
     angle = mt_data["angle"]

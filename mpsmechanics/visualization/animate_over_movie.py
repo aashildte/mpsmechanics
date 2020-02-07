@@ -200,7 +200,7 @@ def _plot_mesh_over_image(spatial_data, user_params, time, time_step):
     colors = _color_points(fig, axes, spatial_data, pts_subplot, time_step)
 
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
-
+ 
     for axis in axes:
         axis.set_ylim(max(axis.get_ylim()), min(axis.get_ylim()))
 
@@ -246,10 +246,10 @@ def _get_image_configuration(params):
             "width" : width}
 
 
-def _generate_param_filename(f_in, user_params):
+def _generate_param_filename(f_in, param_list):
     fname = generate_filename(f_in, \
                               f"mesh_over_images",
-                              [user_params],
+                              param_list,
                               "",        # mp3 or png
                               subfolder="mesh_over_images")
     return fname
@@ -257,7 +257,7 @@ def _generate_param_filename(f_in, user_params):
 
 def _read_input_data(f_in, param_list, overwrite_all):
     mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
-    animation_config = get_animation_configuration(param_list[-1], mps_data)
+    animation_config = get_animation_configuration(param_list[-1], mps_data, mc_data)
 
     displacement_px = (1/mps_data.info["um_per_pixel"])*mc_data["all_values"]["displacement"]
     images = np.moveaxis(mps_data.frames, 2, 0)
@@ -289,7 +289,7 @@ def animate_mesh_over_movie(f_in, overwrite, overwrite_all, param_list):
             _read_input_data(f_in, param_list, overwrite_all)
 
     user_params = _get_image_configuration(param_list[-1])
-    fname_p = _generate_param_filename(f_in, user_params)
+    fname_p = _generate_param_filename(f_in, param_list)
     fname_png = fname_p + ".png"
     fname_mp4 = fname_p + ".mp4"
 

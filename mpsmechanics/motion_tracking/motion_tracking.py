@@ -468,7 +468,7 @@ class MotionTracking(object):
         delay: Optional[int] = None,
         outdir: Optional[str] = None,
         serial: bool = False,
-        filter_kernel_size: int = 0,
+        filter_kernel_size: int = 8,
         matching_method="block_matching",
         loglevel=logging.INFO,
     ):

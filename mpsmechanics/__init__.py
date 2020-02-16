@@ -38,12 +38,12 @@ from .mechanical_analysis.filters import (
 
 from .motion_tracking import (
     apply_filter,
-    block_matching,
     calculate_minmax,
     convert_disp_data,
-    template_matching,
     track_motion,
     MotionTracking,
+    calc_disp_vectors_interpolate,
+    calc_disp_vectors_meshpoints,
 )
 
 from .pillar_tracking.pillar_tracking import (

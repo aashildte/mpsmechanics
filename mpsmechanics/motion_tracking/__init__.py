@@ -1,9 +1,12 @@
 
 from .motion_tracking import (
-        block_matching,
-        template_matching,
-        track_motion,
         MotionTracking,
+        track_motion,
+)
+
+from .motion_tracking2 import (
+    calc_disp_vectors_interpolate,
+    calc_disp_vectors_meshpoints,
 )
 
 from .ref_frame import (

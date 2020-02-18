@@ -133,8 +133,10 @@ def test_calc_gl_strain_tensor_stretch():
         for _y in range(shape[2]):
             data_exp[0, _x, _y] = tile_exp
 
+    def_tensor = mc.calc_deformation_tensor(data_org, 1)
+
     assert np.allclose(data_exp, \
-                       mc.calc_gl_strain_tensor(data_org, 1))
+                       mc.calc_gl_strain_tensor(def_tensor))
 
 
 def test_calc_gl_strain_tensor_shear():
@@ -160,8 +162,10 @@ def test_calc_gl_strain_tensor_shear():
         for _y in range(shape[2]):
             data_exp[0, _x, _y] = tile_exp
 
+    def_tensor = mc.calc_deformation_tensor(data_org, 1)
+
     assert np.allclose(data_exp, \
-                       mc.calc_gl_strain_tensor(data_org, 1))
+                       mc.calc_gl_strain_tensor(def_tensor))
 
 
 def test_calc_principal_strain_stretch():
@@ -188,9 +192,12 @@ def test_calc_principal_strain_stretch():
     for _x in range(shape[1]):
         for _y in range(shape[2]):
             data_exp[0, _x, _y] = lambda1*ev1
+    
+    def_tensor = mc.calc_deformation_tensor(data_org, 1)
+    gl_strain_tensor = mc.calc_gl_strain_tensor(def_tensor)
 
     assert np.allclose(data_exp, \
-                       mc.calc_principal_strain(data_org, 1))
+                       mc.calc_principal_strain(gl_strain_tensor, 1))
 
 
 def test_calc_principal_strain_shear():
@@ -223,8 +230,11 @@ def test_calc_principal_strain_shear():
         for _y in range(shape[2]):
             data_exp[0, _x, _y] = pr_str
 
+    def_tensor = mc.calc_deformation_tensor(data_org, 1)
+    gl_strain_tensor = mc.calc_gl_strain_tensor(def_tensor)
+
     assert np.allclose(data_exp, \
-                       mc.calc_principal_strain(data_org, 1))
+                       mc.calc_principal_strain(gl_strain_tensor, 1))
 
 
 if __name__ == "__main__":

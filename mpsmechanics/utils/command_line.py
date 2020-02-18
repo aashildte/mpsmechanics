@@ -115,7 +115,7 @@ def add_parameters_parser_arguments(parser, level):
     all_keys = []
 
     if level >= 0:
-        parser.add_argument("-na", "--use_new_algorithm", \
+        parser.add_argument("-lk", "--use_lucas_kanade", \
                             help="Use new implementation",
                             action="store_true")
 

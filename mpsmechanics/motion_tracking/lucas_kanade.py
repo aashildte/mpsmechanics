@@ -1,4 +1,6 @@
 
+
+from scipy.integrate import cumtrapz
 import numpy as np
 
 
@@ -68,12 +70,12 @@ def lucas_kanade(mps_data, block_size=9):
     return vel
 
 
-def calc_disp_lc(mps_data):
+def calc_disp_lk(mps_data):
 
     vel_ = lucas_kanade(mps_data)
 
     # Subtract mean velocity
-    vel = vel_ - np.mean(vel_, axis=0)     # median??
+    vel = vel_ - np.mean(vel_, axis=0)
 
     # Integrate velocity to get displacement
     disp = cumtrapz(vel, axis=0)

@@ -921,10 +921,10 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
     
     
     
-    use_new_algorithm = param_list[0].pop("use_new_algorithm")
+    use_new_algorithm = param_list[0].pop("use_lucas_kanade")
 
     if use_new_algorithm:
-        disp_data = calc_disp_lc(mps_data)
+        disp_data = calc_disp_lk(mps_data)
         import IPython; IPython.embed()
         exit()
 

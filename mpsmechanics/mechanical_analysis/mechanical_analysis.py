@@ -13,7 +13,7 @@ import numpy as np
 import mps
 
 from mpsmechanics.utils.data_layer import read_prev_layer, \
-        generate_filename, save_dictionary
+        generate_filename, save_dictionary, write2read
 from mpsmechanics.dothemaths.heartbeat import \
         calc_beat_intervals, calc_beat_maxima
 from mpsmechanics.dothemaths.operations import calc_norm_over_time
@@ -56,7 +56,7 @@ def _swap_dict_keys(dict_org):
     return dict_swapped
 
 
-def _calc_mechanical_quantities(mps_data, mt_data, \
+def _calc_mechanical_quantities(mps_data, mt_data, output_folder, \
         type_filter="gaussian", sigma=3):
     time = mps_data.time_stamps
     # trunkate:
@@ -73,12 +73,21 @@ def _calc_mechanical_quantities(mps_data, mt_data, \
     maxima = calc_beat_maxima(disp_data_folded)
     intervals = calc_beat_intervals(disp_data_folded)
 
-    spatial = calc_spatial_metrics(disp_data, time, dx, angle, \
-                                   intervals)
-    beatrate = calc_beatrate_metric(disp_data, time, maxima, \
-                                    intervals)
+    # delete from memory
 
-    d_all = _swap_dict_keys({**spatial, **beatrate})
+    disp_data = write2read(disp_data, output_folder, "displacement_org")
+    disp_data_folded = write2read(disp_data, output_folder, "displacement_folded")
+
+    spatial = calc_spatial_metrics(disp_data, time, dx, angle, \
+                                   intervals, output_folder)
+    # TODO include beatrate again??
+    # beatrate = calc_beatrate_metric(disp_data, time, maxima, \
+    #                                intervals)
+
+    #d_all = _swap_dict_keys({**spatial, **beatrate})
+
+    d_all = _swap_dict_keys({**spatial})
+
     d_all["time"] = mps_data.time_stamps
     d_all["maxima"] = maxima
     d_all["intervals"] = intervals
@@ -108,6 +117,7 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
                                  "analyze_mechanics", \
                                  param_list, \
                                  ".npy")
+    output_folder = "test"
     print("filename: ", filename)
 
     if not overwrite_all and not overwrite and \
@@ -129,13 +139,15 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
     print(f"Calculating mechanical quantities for {f_in}")
 
     if len(param_list) > 1:
-        mechanical_quantities = \
+        params = param_list[1]
+    else:
+        params = {}
+
+    mechanical_quantities = \
                 _calc_mechanical_quantities(mps_data, \
                                             mt_data, \
-                                            **param_list[1])
-    else:
-        mechanical_quantities = \
-                _calc_mechanical_quantities(mps_data, mt_data)
+                                            output_folder, \
+                                            **params)
 
     print(f"Done calculating mechanical quantities for {f_in}.")
 

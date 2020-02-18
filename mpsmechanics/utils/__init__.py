@@ -28,5 +28,6 @@ from .data_layer import (
     get_full_filename,
     read_prev_layer,
     save_dictionary,
+    write2read,
 )
 

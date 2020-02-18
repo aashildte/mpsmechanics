@@ -54,22 +54,20 @@ def calc_deformation_tensor(data, dx):
     return gradients + np.eye(2)[None, None, None, :, :]
 
 
-def calc_gl_strain_tensor(data, dx):
+def calc_gl_strain_tensor(def_tensor):
     """
     Computes the transpose along the third dimension of data; if data
     represents the deformation gradient tensor F (over time and 2 spatial
     dimensions) this corresponds to the Green-Lagrange strain tensor E.
 
     Args:
-        data - numpy array of dimensions T x X x Y x 2 x 2
-        dx - float; spatial difference between two points/blocks
+        numpy array of dimensions T x X x Y x 2 x 2
 
     Returns
         numpy array of dimensions T x X x Y x 2 x 2
 
     """
 
-    def_tensor = calc_deformation_tensor(data, dx)
     def_tensor_transp = def_tensor.transpose(0, 1, 2, 4, 3)
 
     right_cg_tensor = np.matmul(def_tensor, def_tensor_transp)
@@ -78,22 +76,20 @@ def calc_gl_strain_tensor(data, dx):
     return gl_strain_tensor
 
 
-def calc_principal_strain(data, dx):
+def calc_principal_strain(gl_strain_tensor):
     """
     Computes the principal strain defined to be the largest eigenvector
     (eigenvector corresponding to largest eigenvalue, scaled) of the
     Cauchy-Green tensor, for each point (t, x, y).
 
     Args:
-        data - displacement data, numpy array of dimension T x X x Y x 2
-        dx - float; spatial difference between two points/blocks
+        numpy array of dimensions T x X x Y x 2 x 2
 
     Returns:
         numpy array of dimension T x X x Y x 2
 
     """
 
-    gl_strain_tensor = calc_gl_strain_tensor(data, dx)
     eigenvalues, eigenvectors = np.linalg.eig(gl_strain_tensor)
 
     eigen_filter = np.abs(eigenvalues[:, :, :, 0]) \

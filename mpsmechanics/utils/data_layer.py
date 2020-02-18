@@ -127,3 +127,9 @@ def save_dictionary(filename, dictionary):
     np.save(filename, dictionary)
 
     print(f"Values saved in {filename}.")
+
+
+def write2read(data, output_folder, filename_pref):
+    filename = os.path.join(output_folder, filename_pref + ".npy")
+    np.save(filename, data)
+    return np.load(filename, mmap_mode="r")

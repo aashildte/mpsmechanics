@@ -925,9 +925,6 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
 
     if use_new_algorithm:
         disp_data = calc_disp_lk(mps_data)
-        import IPython; IPython.embed()
-        exit()
-
     else:
         if len(param_list) > 1:
             motion = MotionTracking(mps_data, **(param_list[0]))

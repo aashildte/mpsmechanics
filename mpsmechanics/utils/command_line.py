@@ -119,7 +119,7 @@ def add_parameters_parser_arguments(parser, level):
                             help="Use new implementation",
                             action="store_true")
 
-        l0_keys = ["use_new_algorithm"]
+        l0_keys = ["use_lucas_kanade"]
         all_keys.append(l0_keys)
 
     if level >= 1:

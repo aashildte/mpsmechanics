@@ -96,8 +96,7 @@ except ImportError:
     logger.warning(msg)
 
 
-from .lucas_kanade import calc_disp_lc 
-
+from .lucas_kanade import calc_disp_lk
 
 def block_matching_map(args):
     """Helper function for running block maching algorithm in paralell

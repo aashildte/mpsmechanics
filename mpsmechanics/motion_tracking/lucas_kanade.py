@@ -2,7 +2,7 @@
 
 from scipy.integrate import cumtrapz
 import numpy as np
-
+import dask.array as da
 
 def lucas_kanade_np(im1, im2, win=2):
     assert im1.shape == im2.shape
@@ -72,12 +72,12 @@ def lucas_kanade(mps_data, block_size=9):
 
 def calc_disp_lk(mps_data):
 
-    vel_ = lucas_kanade(mps_data)
-
+    vel_ = da.from_array(lucas_kanade(mps_data))
+    
     # Subtract mean velocity
     vel = vel_ - np.mean(vel_, axis=0)
 
     # Integrate velocity to get displacement
     disp = cumtrapz(vel, axis=0)
-
+    
     return disp

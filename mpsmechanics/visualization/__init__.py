@@ -26,6 +26,7 @@ from .vectorfield import (
 
 from .animate_over_movie import (
     animate_mesh_over_movie,
+    animate_mesh_over_movie_params,
 )
 
 from .setup_plots import (

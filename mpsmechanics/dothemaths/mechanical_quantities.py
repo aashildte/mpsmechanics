@@ -100,3 +100,33 @@ def calc_principal_strain(gl_strain_tensor):
             *eigenvectors[:, :, :, 1]
 
     return np.where(eigen_filter[:, :, :, None], eigen1, eigen2)
+
+
+def calc_principal_strain_from_disp(displacement_data, dx):
+    """
+    Computes the principal strain defined to be the largest eigenvector
+    (eigenvector corresponding to largest eigenvalue, scaled) of the
+    Cauchy-Green tensor, for each point (t, x, y).
+
+    Args:
+        displacement_data - numpy array of dimensions T x X x Y x 2
+        dx - float; spatial difference between two points/blocks
+
+    Returns:
+        numpy array of dimension T x X x Y x 2
+
+    """
+
+    def_tensor = calc_deformation_tensor(displacement_data, dx)
+    gl_strain_tensor = calc_gl_strain_tensor(def_tensor)
+
+    eigenvalues, eigenvectors = np.linalg.eig(gl_strain_tensor)
+
+    eigen_filter = np.abs(eigenvalues[:, :, :, 0]) \
+            > np.abs(eigenvalues[:, :, :, 1])
+    eigen1 = eigenvalues[:, :, :, 0][:, :, :, None]\
+            *eigenvectors[:, :, :, 0]
+    eigen2 = eigenvalues[:, :, :, 1][:, :, :, None]\
+            *eigenvectors[:, :, :, 1]
+
+    return np.where(eigen_filter[:, :, :, None], eigen1, eigen2)

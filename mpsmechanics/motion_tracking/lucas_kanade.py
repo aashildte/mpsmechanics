@@ -61,11 +61,11 @@ def lucas_kanade(mps_data, block_size=9):
 
     vel = np.zeros((num_time_steps - 1, im1.shape[0], im1.shape[1], 2))
     for i in range(1, num_time_steps):
+        im1 = images[i-1]
         im2 = images[i]
         V = lucas_kanade_np(im1, im2, win=block_size)
-
+        
         vel[i - 1, :, :, :] = V
-        im1 = im2.copy()
 
     return vel
 
@@ -75,9 +75,11 @@ def calc_disp_lk(mps_data):
     vel_ = da.from_array(lucas_kanade(mps_data))
     
     # Subtract mean velocity
-    vel = vel_ - np.mean(vel_, axis=0)
+    vel = vel_ - np.mean(vel_, axis=0).compute()
 
     # Integrate velocity to get displacement
-    disp = cumtrapz(vel, axis=0)
-    
+    disp = np.cumsum(vel, axis=0)
+
+    print("Done lucas kanade")
+
     return disp

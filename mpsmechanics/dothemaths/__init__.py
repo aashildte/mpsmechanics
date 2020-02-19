@@ -32,4 +32,5 @@ from .mechanical_quantities import (
     calc_deformation_tensor,
     calc_gl_strain_tensor,
     calc_principal_strain,
+    calc_principal_strain_from_disp,
 )

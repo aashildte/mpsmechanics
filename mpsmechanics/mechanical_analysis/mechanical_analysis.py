@@ -56,6 +56,17 @@ def _swap_dict_keys(dict_org):
     return dict_swapped
 
 
+def downsample(org_data, downsampling_factor):
+
+    print("orgiginal shape: ", org_data.shape)
+    
+    downsampled_data = np.array(org_data[:,::downsampling_factor,::downsampling_factor])
+
+    print("new shape: ", downsampled_data.shape)
+
+    return downsampled_data
+
+
 def _calc_mechanical_quantities(mps_data, mt_data, output_folder, \
         type_filter="gaussian", sigma=3):
     time = mps_data.time_stamps
@@ -65,21 +76,22 @@ def _calc_mechanical_quantities(mps_data, mt_data, output_folder, \
     um_per_pixel = mps_data.info["um_per_pixel"]
 
     angle = mt_data["angle"]
-    dx = um_per_pixel*mt_data["block_size"]
+    downsampling_factor=8
+    dx = um_per_pixel*mt_data["block_size"]/downsampling_factor
 
-    disp_data = um_per_pixel*apply_filter(\
-            mt_data["displacement_vectors"], type_filter, sigma)
-    disp_data_folded = calc_norm_over_time(disp_data)
-    maxima = calc_beat_maxima(disp_data_folded)
-    intervals = calc_beat_intervals(disp_data_folded)
+    #disp_data = um_per_pixel*apply_filter(\
+    #        mt_data["displacement_vectors"], type_filter, sigma)
+    disp_data = downsample(org_data = mt_data["displacement_vectors"], \
+                           downsampling_factor = downsampling_factor)
+    disp_over_time = np.array(calc_norm_over_time(disp_data))
 
-    # delete from memory
-
-    disp_data = write2read(disp_data, output_folder, "displacement_org")
-    disp_data_folded = write2read(disp_data, output_folder, "displacement_folded")
+    maxima = calc_beat_maxima(disp_over_time)
+    intervals = calc_beat_intervals(disp_over_time)
 
     spatial = calc_spatial_metrics(disp_data, time, dx, angle, \
                                    intervals, output_folder)
+    
+
     # TODO include beatrate again??
     # beatrate = calc_beatrate_metric(disp_data, time, maxima, \
     #                                intervals)

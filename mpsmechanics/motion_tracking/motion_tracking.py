@@ -889,7 +889,7 @@ class MotionTracking(object):
         )
 
 
-def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
+def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=False):
     """
 
     Args:

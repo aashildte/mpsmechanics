@@ -270,6 +270,46 @@ def _read_input_data(f_in, param_list, overwrite_all):
     return animation_config, spatial_data, time
 
 
+def animate_mesh_over_movie_params(images, displacement, principal_strain, \
+                                    time, framerate, filename_plot, filename_movie, \
+                                    xcoord=100, ycoord=100, width=100, step=1):
+    """
+    
+    Args:
+        images : T x X x Y numpy array
+        displacement : T x X x Y x 2 numpy array
+        principal_strain : T x X x Y x 2 numpy array
+        time : T numpy array
+        framerate : framerate for movie, usually get this from mps * a scaling factor
+            (mps_data.framerate*0.2 might work for example)
+        filename_plot : save plot at peak here (.png file or similar)
+        filename_movie : save movie here (.mp4 file)
+        xcoord - midpoint in movie which is made, in terms of coordinates in the original image
+        ycoord - midpoint in movie which is made, in terms of coordinates in the original image
+        width - zooming factor; width of selected frame
+        step : plot every [step] coordinate in each direction; if width is set larger you probably
+            want this to be larger as well
+
+    """
+
+
+    spatial_data = {"images" : images,
+                    "displacement" : displacement,
+                    "principal_strain" : principal_strain}
+    
+    user_params = {"xcoord" : xcoord,
+                   "ycoord" : ycoord,
+                   "width" : width,
+                   "step" : step}
+
+    animation_config = {"framerate" : framerate,
+                        "num_frames" : displacement.shape[0]}
+
+    _plot_at_peak(spatial_data, user_params, time, filename_plot)
+    _make_animation(spatial_data, user_params, time, filename_movie, animation_config)
+
+
+
 def animate_mesh_over_movie(f_in, overwrite, overwrite_all, param_list):
     """
 

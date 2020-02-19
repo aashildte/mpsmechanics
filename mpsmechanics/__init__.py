@@ -17,6 +17,7 @@ from .dothemaths import (
     calc_magnitude,
     calc_norm_over_time,
     calc_principal_strain,
+    calc_principal_strain_from_disp,
     calc_projection,
     calc_projection_fraction,
     flip_values,
@@ -73,6 +74,7 @@ from .utils import (
 
 from .visualization import (
     animate_mesh_over_movie,
+    animate_mesh_over_movie_params,
     make_pretty_label,
     plot_distributions,
     visualize_calcium_spatial,

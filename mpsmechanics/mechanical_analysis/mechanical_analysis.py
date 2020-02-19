@@ -13,7 +13,7 @@ import numpy as np
 import mps
 
 from mpsmechanics.utils.data_layer import read_prev_layer, \
-        generate_filename, save_dictionary, write2read
+        generate_filename, save_dictionary
 from mpsmechanics.dothemaths.heartbeat import \
         calc_beat_intervals, calc_beat_maxima
 from mpsmechanics.dothemaths.operations import calc_norm_over_time
@@ -67,8 +67,7 @@ def downsample(org_data, downsampling_factor):
     return downsampled_data
 
 
-def _calc_mechanical_quantities(mps_data, mt_data, output_folder, \
-        type_filter="gaussian", sigma=3):
+def _calc_mechanical_quantities(mps_data, mt_data):
     time = mps_data.time_stamps
     # trunkate:
     time = time[:mt_data["displacement_vectors"].shape[0]]
@@ -79,8 +78,6 @@ def _calc_mechanical_quantities(mps_data, mt_data, output_folder, \
     downsampling_factor=8
     dx = um_per_pixel*mt_data["block_size"]/downsampling_factor
 
-    #disp_data = um_per_pixel*apply_filter(\
-    #        mt_data["displacement_vectors"], type_filter, sigma)
     disp_data = downsample(org_data = mt_data["displacement_vectors"], \
                            downsampling_factor = downsampling_factor)
     disp_over_time = np.array(calc_norm_over_time(disp_data))
@@ -88,16 +85,8 @@ def _calc_mechanical_quantities(mps_data, mt_data, output_folder, \
     maxima = calc_beat_maxima(disp_over_time)
     intervals = calc_beat_intervals(disp_over_time)
 
-    spatial = calc_spatial_metrics(disp_data, time, dx, angle, \
-                                   intervals, output_folder)
+    spatial = calc_spatial_metrics(disp_data, time, dx, angle, intervals)
     
-
-    # TODO include beatrate again??
-    # beatrate = calc_beatrate_metric(disp_data, time, maxima, \
-    #                                intervals)
-
-    #d_all = _swap_dict_keys({**spatial, **beatrate})
-
     d_all = _swap_dict_keys({**spatial})
 
     d_all["time"] = mps_data.time_stamps
@@ -129,7 +118,6 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
                                  "analyze_mechanics", \
                                  param_list, \
                                  ".npy")
-    output_folder = "test"
     print("filename: ", filename)
 
     if not overwrite_all and not overwrite and \
@@ -158,7 +146,6 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
     mechanical_quantities = \
                 _calc_mechanical_quantities(mps_data, \
                                             mt_data, \
-                                            output_folder, \
                                             **params)
 
     print(f"Done calculating mechanical quantities for {f_in}.")

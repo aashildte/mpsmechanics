@@ -278,7 +278,7 @@ def animate_mesh_over_movie_params(images, displacement, principal_strain, \
     Args:
         images : T x X x Y numpy array
         displacement : T x X x Y x 2 numpy array
-        principal_strain : T x X x Y x 2 numpy array
+        principal_strain : T x X x Y numpy array
         time : T numpy array
         framerate : framerate for movie, usually get this from mps * a scaling factor
             (mps_data.framerate*0.2 might work for example)

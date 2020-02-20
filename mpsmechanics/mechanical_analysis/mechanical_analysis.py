@@ -80,6 +80,7 @@ def _calc_mechanical_quantities(mps_data, mt_data):
 
     disp_data = downsample(org_data = mt_data["displacement_vectors"], \
                            downsampling_factor = downsampling_factor)
+    disp_data *= um_per_pixel         # in um
     disp_over_time = np.array(calc_norm_over_time(disp_data))
 
     maxima = calc_beat_maxima(disp_over_time)

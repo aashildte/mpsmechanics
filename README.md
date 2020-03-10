@@ -39,7 +39,7 @@ $ *analyze\_mechanics* [BF files/folders] [options]
 for which the output saved in [folder name]/mpsmechanics/analyze\_mechanics.npy, where [folder name] is a folder named the same as the input file (minus the .nd2 suffix). This can be run by itself. For any other script in which the values depends on the mechanical analysis, each will call this script for you if it's not already calculated. 
 
 Other scripts:
-* Metrics script: *calculate_metrics_summary*
+* Metrics script: *calculate_metrics*
 * Visualize each of the metrics, as movies or plots (at peak); decomposed (6 subplots): *visualize_mechanics*
 * Animation/plot of mesh over a (small) part of the chip: *visualize_mesh_over_movie*
 * Distribution plots, for each of the metrics: *plot_distributions*

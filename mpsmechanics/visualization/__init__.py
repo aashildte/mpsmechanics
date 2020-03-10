@@ -5,7 +5,7 @@
 """
 
 from .calcium_spatial import (
-    visualize_calcium_spatial,
+    visualize_calcium,
 )
 
 from .distributions import (
@@ -24,8 +24,8 @@ from .vectorfield import (
     visualize_vectorfield,
 )
 
-from .animate_over_movie import (
-    animate_mesh_over_movie,
+from .mesh_over_movie import (
+    visualize_mesh_over_movie,
 )
 
 from .setup_plots import (

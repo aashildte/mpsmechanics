@@ -73,21 +73,21 @@ def _plot_part_of_image(axis, images, time_step, user_params):
 def _calc_mesh_coords(spatial_data, start_indices, step):
     displacement = spatial_data["displacement"]
     images = spatial_data["images"]
-    block_size = images.shape[1] // displacement.shape[1]
+    block_size = int(np.ceil(images.shape[1] / displacement.shape[1]))
 
     disp_x_dim, disp_y_dim = displacement.shape[1:3]
 
     x_range = np.linspace(0, disp_x_dim*block_size, \
-                          disp_x_dim // step) \
+                          disp_x_dim) \
                           - start_indices[0] + block_size/2
     y_range = np.linspace(0, disp_y_dim*block_size, \
-                          disp_y_dim // step) \
+                          disp_y_dim) \
                           - start_indices[1] + block_size/2
 
     org_ycoords, org_xcoords = np.meshgrid(y_range, x_range)
 
-    all_xcoords = org_xcoords + displacement[:, ::step, ::step, 0]
-    all_ycoords = org_ycoords + displacement[:, ::step, ::step, 1]
+    all_xcoords = org_xcoords[::step, ::step] + displacement[:, ::step, ::step, 0]
+    all_ycoords = org_ycoords[::step, ::step] + displacement[:, ::step, ::step, 1]
 
     return all_xcoords, all_ycoords
 
@@ -270,7 +270,7 @@ def _read_input_data(f_in, param_list, overwrite_all):
     return animation_config, spatial_data, time
 
 
-def animate_mesh_over_movie(f_in, overwrite, overwrite_all, param_list):
+def visualize_mesh_over_movie(f_in, overwrite, overwrite_all, param_list):
     """
 
     "main function"

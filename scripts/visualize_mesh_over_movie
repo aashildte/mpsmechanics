@@ -31,5 +31,5 @@ def _cl_parser():
     return parser, channel, keys
 
 if __name__ == "__main__":
-    mc.run_script(mc.animate_mesh_over_movie, \
+    mc.run_script(mc.visualize_mesh_over_movie, \
             "movie / mesh animation", *_cl_parser())

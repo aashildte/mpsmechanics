@@ -23,7 +23,6 @@ from mpsmechanics.motion_tracking.restore_resolution import \
         apply_filter
 
 from .metrics_spatial import calc_spatial_metrics
-from .metrics_beatrate import calc_beatrate_metric
 
 def _swap_dict_keys(dict_org):
     """
@@ -72,10 +71,9 @@ def _calc_mechanical_quantities(mps_data, mt_data, \
 
     spatial = calc_spatial_metrics(disp_data, time, dx, angle, \
                                    intervals)
-    beatrate = calc_beatrate_metric(disp_data, time, maxima, \
-                                    intervals)
 
-    d_all = _swap_dict_keys({**spatial, **beatrate})
+    d_all = _swap_dict_keys({**spatial})
+
     d_all["time"] = mps_data.time_stamps
     d_all["maxima"] = maxima
     d_all["intervals"] = intervals

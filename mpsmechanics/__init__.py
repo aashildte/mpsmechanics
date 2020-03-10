@@ -71,10 +71,10 @@ from .utils import (
 )
 
 from .visualization import (
-    animate_mesh_over_movie,
+    visualize_mesh_over_movie,
     make_pretty_label,
     plot_distributions,
-    visualize_calcium_spatial,
+    visualize_calcium,
     visualize_mechanics,
     visualize_over_time,
     visualize_vectorfield,

@@ -9,7 +9,7 @@ import numpy as np
 
 from .folder_structure import get_input_properties
 
-def read_prev_layer(input_file, layer_fn, param_list, overwrite):
+def read_prev_layer(input_file, layer_fn, param_list = [{}], overwrite=False):
     """
 
     Reads data from a layer "up" in the hierarchy. If already
@@ -33,20 +33,17 @@ def read_prev_layer(input_file, layer_fn, param_list, overwrite):
     assert (ext == "nd2" or ext == "zip"), \
             "File must be an nd2 or zip file"
 
-    folder = os.path.join(path, filename, "mpsmechanics")
     filename = generate_filename(input_file, layer_fn.__name__, \
             param_list, ".npy")
-    data_path = os.path.join(folder, filename)
 
-    print('Looking for file: ', data_path)
+    print('Looking for file: ', filename)
 
     if not overwrite and os.path.isfile(filename):
         return np.load(filename, allow_pickle=True).item()
-    else:
-        return layer_fn(input_file, \
-                        overwrite=overwrite, \
-                        overwrite_all=overwrite, \
-                        param_list=param_list)
+    return layer_fn(input_file, \
+                    overwrite=overwrite, \
+                    overwrite_all=overwrite, \
+                    param_list=param_list)
 
 
 def get_full_filename(input_file, filename, subfolder=""):

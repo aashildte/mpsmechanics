@@ -34,7 +34,7 @@ def _walk_glob(argument_list):
 def get_input_files(argument_list, filetype="BF"):
     """
 
-    Reads in files and foldersfrom a list (like sys.argv), filters
+    Reads in files and folders from a list (like sys.argv), filters
     out those that are likely to be valid files.
 
     Assesses whether the script should be run in debug mode or not.

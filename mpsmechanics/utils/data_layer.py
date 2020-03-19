@@ -37,9 +37,13 @@ def read_prev_layer(input_file, layer_fn, param_list = [{}], overwrite=False):
             param_list, ".npy")
 
     print('Looking for file: ', filename)
+    print("overwrite", overwrite)
+    print("is file: ", os.path.isfile(filename))
+    print("not overwrite & is file: ", (not overwrite and os.path.isfile(filename)))
 
     if not overwrite and os.path.isfile(filename):
         return np.load(filename, allow_pickle=True).item()
+
     return layer_fn(input_file, \
                     overwrite=overwrite, \
                     overwrite_all=overwrite, \

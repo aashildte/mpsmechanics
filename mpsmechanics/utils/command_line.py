@@ -16,7 +16,7 @@ def _valid_input_file(input_file, filetype):
     if not filetype in input_file:
         return False
 
-    if not "nd2" in input_file:
+    if not ".nd2" in input_file:
         return False
 
     return True
@@ -107,7 +107,7 @@ def add_parameters_parser_arguments(parser, level):
         level - 0, 1 or higher
 
     Returns:
-        list of strings which identify the different 
+        list of strings which identify the different
             arguments added to the argument parser
 
     """
@@ -130,7 +130,7 @@ def add_animation_parser_arguments(parser):
         parser - argument parser
 
     Returns:
-        list of strings which identify the different 
+        list of strings which identify the different
             arguments added to the argument parser
 
     """

@@ -192,7 +192,7 @@ def add_metrics_arguments(parser):
 
     parser.add_argument("-m", "--metrics", \
                         default="displacement",
-                        help="Which metric to plot/make figures for.",
+                        help="Which metrics to plot/make figures for (one string, separate multiple ones by space).",
                         type=str)
 
     parser.add_argument("-r", "--range", \

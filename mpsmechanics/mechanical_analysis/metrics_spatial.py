@@ -40,11 +40,13 @@ def _calc_relevant_stats(values, intervals, tf_filter):
         metrics_max_std = np.max(intervals_std)
         metrics_avg_std = np.mean(intervals_std)
     else:
-        metrics_max_avg = np.nan
-        metrics_avg_avg = np.nan
-        metrics_max_std = np.nan
-        metrics_avg_std = np.nan
+        nointerval_avg = np.max(over_time_avg)
+        nointerval_std = np.max(over_time_std)
 
+        metrics_max_avg = nointerval_avg
+        metrics_avg_avg = nointerval_avg
+        metrics_max_std = nointerval_std
+        metrics_avg_std = nointerval_std
 
     return {"all_values" : values,
             "folded" : folded,

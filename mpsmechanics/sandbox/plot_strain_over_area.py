@@ -18,7 +18,7 @@ def plot_over_area(strain_data, im_data, time, M, N, label, title, output_pref):
     xlen, ylen = xshape // M, yshape // N
     area = xlen*ylen
 
-    fig, axes = plt.subplots(M, N, sharex=True, sharey=True, figsize=(12*M, 12*N))
+    fig, axes = plt.subplots(M, N, sharex=True, sharey=True, figsize=(6*M, 12*N))
 
     data_over_area = []
     

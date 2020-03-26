@@ -190,7 +190,7 @@ def add_metrics_arguments(parser):
 
     """
 
-    parser.add_argument("-m", "--metric", \
+    parser.add_argument("-m", "--metrics", \
                         default="displacement",
                         help="Which metric to plot/make figures for.",
                         type=str)
@@ -200,7 +200,7 @@ def add_metrics_arguments(parser):
                         help="Which range to use for plots (color bar); +- this value.",
                         type=float)
 
-    return ["metric", "range"]
+    return ["metrics", "range"]
 
 
 def split_parameter_dictionary(vargs, keys):

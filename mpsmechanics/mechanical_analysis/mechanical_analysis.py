@@ -134,7 +134,8 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
 
     print(f"Done calculating mechanical quantities for {f_in}.")
 
-    if save_data:
-        save_dictionary(filename, mechanical_quantities)
+    #import IPython; IPython.embed()
+    #if save_data:
+    #    save_dictionary(filename, mechanical_quantities)
 
     return mechanical_quantities

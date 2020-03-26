@@ -354,9 +354,9 @@ def _make_animation(spatial_data, time, metadata, fname, animation_config):
     make_animation(fig, _update, fname, **animation_config)
 
 
-def _make_filenames(f_in, key):
+def _make_filenames(f_in, metric):
     fname = generate_filename(f_in, \
-                              f"spatial_decomposition_{key}", \
+                              f"spatial_decomposition_{metric}", \
                               [],
                               "",        # mp3 or png
                               subfolder="visualize_mechanics")
@@ -385,28 +385,33 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
     animation_config = get_animation_configuration(param_list[-1], mps_data)
     animate = animation_config.pop("animate")
 
-    for key in mc_data["all_values"].keys():
-        print("Plots for " + key + " ...")
 
-        fname_png, fname_mp4 = _make_filenames(f_in, key)
-        metadata, spatial_data, time = setup_for_key(mps_data, mc_data, key)
+    metric = param_list[-1]["metric"]
 
-        metadata["shift_diagonal"] = (key == "deformation_tensor")
+    assert metric in mc_data["all_values"].keys(), \
+            f"Error: Metric expected to be in {mc_data['all_values'].keys()}"        
 
-        if overwrite or (not os.path.isfile(fname_png)):
-            _plot_at_peak(spatial_data, time, metadata, fname_png)
-            print("Plot at peak done; " + \
-                  f"image saved to {fname_png}")
+    print("Making plot for " + metric + " ...")
+
+    fname_png, fname_mp4 = _make_filenames(f_in, metric)
+    metadata, spatial_data, time = setup_for_key(mps_data, mc_data, metric)
+
+    metadata["shift_diagonal"] = (metric == "deformation_tensor")
+
+    if overwrite or (not os.path.isfile(fname_png)):
+        _plot_at_peak(spatial_data, time, metadata, fname_png)
+        print("Plot at peak done; " + \
+              f"image saved to {fname_png}")
+    else:
+        print(f"Image {fname_png} already exists")
+
+    if animate:
+        if (overwrite or (not os.path.isfile(fname_mp4))):
+            _make_animation(spatial_data, time, metadata, fname_mp4, \
+                            animation_config)
+            print("Animation movie produced; " + \
+                  f"movie saved to {fname_mp4}")
         else:
-            print(f"Image {fname_png} already exists")
-
-        if animate:
-            if (overwrite or (not os.path.isfile(fname_mp4))):
-                _make_animation(spatial_data, time, metadata, fname_mp4, \
-                                animation_config)
-                print("Animation movie produced; " + \
-                      f"movie saved to {fname_mp4}")
-            else:
-                print(f"Movie {fname_mp4} already exists")
+            print(f"Movie {fname_mp4} already exists")
 
     print("Visualization done, finishing ...")

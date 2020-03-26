@@ -171,8 +171,36 @@ def add_focus_parser_arguments(parser):
                         default=100,
                         help="Middle point; y direction (across chamber), in pixels.",
                         type=int)
+    
+    parser.add_argument("-st", "--step", \
+                        default=1,
+                        help="Plot every [step] line in mesh.",
+                        type=int)
 
-    return ["width", "xcoord", "ycoord"]
+    return ["width", "xcoord", "ycoord", "step"]
+
+
+def add_metrics_arguments(parser):
+    """
+
+    Adds arguments needed to chose selected metrics.
+
+    Args:
+        parser - argument parser
+
+    """
+
+    parser.add_argument("-m", "--metric", \
+                        default="displacement",
+                        help="Which metric to plot/make figures for.",
+                        type=str)
+
+    parser.add_argument("-r", "--range", \
+                        default=None,
+                        help="Which range to use for plots (color bar); +- this value.",
+                        type=float)
+
+    return ["metric", "range"]
 
 
 def split_parameter_dictionary(vargs, keys):

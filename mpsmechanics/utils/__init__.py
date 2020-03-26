@@ -14,6 +14,7 @@ from .command_line import (
     add_animation_parser_arguments,
     add_default_parser_arguments,
     add_focus_parser_arguments,
+    add_metrics_arguments,
     add_parameters_parser_arguments,
     get_input_files,
     split_parameter_dictionary,

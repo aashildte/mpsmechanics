@@ -59,6 +59,7 @@ from .utils import (
     add_animation_parser_arguments,
     add_default_parser_arguments,
     add_focus_parser_arguments,
+    add_metrics_arguments,
     add_parameters_parser_arguments,
     generate_filename,
     get_full_filename,

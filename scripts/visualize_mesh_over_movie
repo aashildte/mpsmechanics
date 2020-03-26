@@ -19,14 +19,7 @@ def _cl_parser():
     animation_keys = mc.add_animation_parser_arguments(parser)
     focus_keys = mc.add_focus_parser_arguments(parser)
 
-    # and this one is special for this kind of plots:
-
-    parser.add_argument("-st", "--step", \
-                        default=1,
-                        help="Plot every [step] line in mesh.",
-                        type=int)
-
-    keys.append(animation_keys + focus_keys + ["step"])
+    keys.append(animation_keys + focus_keys)
 
     return parser, channel, keys
 

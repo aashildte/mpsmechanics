@@ -83,23 +83,9 @@ def _calc_displacement_minmax(displacement, intervals, tf_filter):
     return {**statistical_qts, **metadata}
 
 
+def _calc_angular_motion(displacement, angle, intervals, tf_filter):
 
-def _calc_xmotion(displacement, angle, intervals, tf_filter):
-
-    xmotion = calc_projection_fraction(displacement, angle)
-    statistical_qts = _calc_relevant_stats(xmotion, intervals, \
-                                           tf_filter)
-
-    metadata = {"unit" : "-",
-                "range" : (0, 1),
-                "range_folded" : (0, 1)}
-
-    return {**statistical_qts, **metadata}
-
-
-def _calc_ymotion(displacement, angle, intervals, tf_filter):
-
-    ymotion = calc_projection_fraction(displacement, np.pi/2 + angle)
+    ymotion = calc_projection_fraction(displacement, angle)
     statistical_qts = _calc_relevant_stats(ymotion, intervals, \
                                            tf_filter)
     metadata = {"unit" : "-",
@@ -212,6 +198,10 @@ def calc_spatial_metrics(displacement, time, dx, angle, intervals):
                                    tf_filter_uniform)
     velocity_folded = velocity_dict["folded"]
 
+    principal_strain_dict = _calc_principal_strain(displacement, dx, \
+                                              intervals, tf_filter_constrd)
+    principal_strain = principal_strain_dict["all_values"]
+
     metr = {"displacement" : \
                  _calc_displacement(displacement, intervals, \
                                     tf_filter_uniform),
@@ -219,10 +209,10 @@ def calc_spatial_metrics(displacement, time, dx, angle, intervals):
                 _calc_displacement_minmax(displacement, intervals, \
                                           tf_filter_uniform),
             "xmotion": \
-                _calc_xmotion(displacement, angle, intervals, \
+                _calc_angular_motion(displacement, angle, intervals, \
                               tf_filter_timedep),
             "ymotion": \
-                _calc_ymotion(displacement, angle, intervals, \
+                _calc_angular_motion(displacement, np.pi/2 + angle, intervals, \
                               tf_filter_timedep),
             "velocity": \
                  velocity_dict,
@@ -237,8 +227,13 @@ def calc_spatial_metrics(displacement, time, dx, angle, intervals):
                 _calc_gl_strain_tensor(displacement, dx, \
                                        intervals, \
                                        tf_filter_constrd),
-            "principal_strain": \
-                 _calc_principal_strain(displacement, dx, \
-                                        intervals, \
-                                        tf_filter_constrd)}
+            "principal_strain": principal_strain_dict,
+            "xstrain" : \
+                _calc_angular_motion(principal_strain, angle, \
+                              intervals, tf_filter_timedep),
+            "ystrain" : \
+                _calc_angular_motion(principal_strain, np.pi/2 + angle, \
+                              intervals, tf_filter_timedep),
+                }
+
     return metr

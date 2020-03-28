@@ -20,6 +20,10 @@ from .overtime import (
     visualize_over_time,
 )
 
+from .mechanics_overtimeandarea import (
+    visualize_over_time_and_area,
+)
+
 from .vectorfield import (
     visualize_vectorfield,
 )

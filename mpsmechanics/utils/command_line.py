@@ -180,6 +180,29 @@ def add_focus_parser_arguments(parser):
     return ["width", "xcoord", "ycoord", "step"]
 
 
+def add_subdivision_arguments(parser):
+    """
+
+    Adds arguments needed to chose selected metrics.
+
+    Args:
+        parser - argument parser
+
+    """
+
+    parser.add_argument("-sx", "--sub_xdir", \
+                        default=5,
+                        help="Number of subdomains along the chamber.",
+                        type=int)
+
+    parser.add_argument("-sy", "--sub_ydir", \
+                        default=1,
+                        help="Number of subdomains across the chamber.",
+                        type=int)
+
+    return ["sub_xdir", "sub_ydir"]
+
+
 def add_metrics_arguments(parser):
     """
 

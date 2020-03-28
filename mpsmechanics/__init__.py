@@ -60,6 +60,7 @@ from .utils import (
     add_default_parser_arguments,
     add_focus_parser_arguments,
     add_metrics_arguments,
+    add_subdivision_arguments,
     add_parameters_parser_arguments,
     generate_filename,
     get_full_filename,
@@ -79,5 +80,6 @@ from .visualization import (
     visualize_mechanics,
     visualize_over_time,
     visualize_vectorfield,
+    visualize_over_time_and_area,
 )
 

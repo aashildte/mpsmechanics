@@ -20,7 +20,7 @@ def get_strain_avg(BF_file):
     chopped = mps.analysis.chop_data_with_pacing(strain_avg, \
             mps_ob.time_stamps, pacing)
 
-    min_len = min([len(chopped.data[i]) for i in range(len(chopped.data))])
+    min_len = min([len(chopped.data[i]) for i in range(len(chopped.data[:-1]))])
 
     chopped_equal = [_d[:min_len] for _d in chopped.data[:-1]]
     time_equal = [_t[:min_len] for _t in chopped.times[:-1]]
@@ -28,10 +28,6 @@ def get_strain_avg(BF_file):
     avg_per_beat = np.mean(chopped_equal, axis=0)
     avg_per_beat = avg_per_beat - np.min(avg_per_beat)
     avg_per_beat /= max(avg_per_beat)
-
-    plt.plot(time_equal[0], avg_per_beat)
-    plt.savefig("strain.png")
-    plt.clf()
 
     time_avg = time_equal[0] - time_equal[0][0]
 

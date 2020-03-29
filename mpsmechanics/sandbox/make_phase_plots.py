@@ -22,8 +22,8 @@ def get_strain_avg(BF_file):
 
     min_len = min([len(chopped.data[i]) for i in range(len(chopped.data))])
 
-    chopped_equal = [_d[:min_len] for _d in chopped.data]
-    time_equal = [_t[:min_len] for _t in chopped.times]
+    chopped_equal = [_d[:min_len] for _d in chopped.data[:-1]]
+    time_equal = [_t[:min_len] for _t in chopped.times[:-1]]
  
     avg_per_beat = np.mean(chopped_equal, axis=0)
     avg_per_beat = avg_per_beat - np.min(avg_per_beat)

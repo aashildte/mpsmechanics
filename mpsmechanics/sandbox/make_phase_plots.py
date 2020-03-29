@@ -137,9 +137,9 @@ Red_file = sys.argv[3]
 
 assert "BF" in BF_file, \
         f"Error: Expected BF file as first argument, not {BF_file}."
-assert "Cyan" in BF_file, \
-        f"Error: Expected Cyan file as first argument, not {Cyan_file}."
-assert "Red" in BF_file, \
-        f"Error: Expected Red file as first argument, not {Red_file}."
+assert "Cyan" in Cyan_file, \
+        f"Error: Expected Cyan file as second argument, not {Cyan_file}."
+assert "Red" in Red_file, \
+        f"Error: Expected Red file as third argument, not {Red_file}."
 
 make_strain_ca_ap_plots(BF_file, Cyan_file, Red_file)

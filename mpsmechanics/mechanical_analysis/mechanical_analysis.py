@@ -21,6 +21,8 @@ from mpsmechanics.motion_tracking.motion_tracking import \
         track_motion
 from mpsmechanics.motion_tracking.restore_resolution import \
         apply_filter
+from ..motion_tracking.ref_frame import convert_disp_data, \
+        calculate_minmax
 
 from .metrics_spatial import calc_spatial_metrics
 
@@ -63,14 +65,18 @@ def _calc_mechanical_quantities(mps_data, mt_data, \
     angle = mt_data["angle"]
     dx = um_per_pixel*mt_data["block_size"]
 
-    disp_data = um_per_pixel*apply_filter(\
-            mt_data["displacement_vectors"], type_filter, sigma)
-    disp_data_folded = calc_norm_over_time(disp_data)
+    displacement = mt_data["displacement_vectors"]
+    displacement = convert_disp_data(
+        displacement, calculate_minmax(displacement)
+    )
+    displacement = um_per_pixel*apply_filter(displacement, type_filter, sigma)
+
+    
+    disp_data_folded = calc_norm_over_time(displacement)
     maxima = calc_beat_maxima(disp_data_folded)
     intervals = calc_beat_intervals(disp_data_folded)
 
-    spatial = calc_spatial_metrics(disp_data, time, dx, angle, \
-                                   intervals)
+    spatial = calc_spatial_metrics(displacement, time, dx, angle, intervals)
 
     d_all = _swap_dict_keys({**spatial})
 

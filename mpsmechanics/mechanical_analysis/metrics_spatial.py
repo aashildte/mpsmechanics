@@ -205,9 +205,6 @@ def calc_spatial_metrics(displacement, time, dx, angle, intervals):
     metr = {"displacement" : \
                  _calc_displacement(displacement, intervals, \
                                     tf_filter_uniform),
-            "displacement_maximum_difference": \
-                _calc_displacement_minmax(displacement, intervals, \
-                                          tf_filter_uniform),
             "xmotion": \
                 _calc_angular_motion(displacement, angle, intervals, \
                               tf_filter_timedep),

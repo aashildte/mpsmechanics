@@ -240,7 +240,9 @@ def visualize_over_time_and_area(f_in, overwrite, overwrite_all, param_list):
 
     mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
 
-    metrics = param_list[-1]["metrics"].split(" ")
+    metrics = param_list[-1].pop("metrics")
+    metrics = metrics.split(" ")
+
     subdivisions_xdir = param_list[-1]["sub_xdir"]
     subdivisions_ydir = param_list[-1]["sub_ydir"]
 

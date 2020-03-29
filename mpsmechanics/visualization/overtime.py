@@ -5,10 +5,13 @@
 
 """
 
-
 import numpy as np
 import matplotlib.pyplot as plt
 
+import mps
+
+from ..utils.data_layer import generate_filename, read_prev_layer
+from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 from .setup_plots import make_pretty_label
 
 def get_minmax_values(avg_values, std_values, value_range):
@@ -47,7 +50,7 @@ def plot_intervals(axis, time, intervals):
         axis.axvline(x=time[intervals[-1][1]], c='g')
 
 
-def plot_over_time(axis, avg_values, std_values, time, value_range):
+def plot_over_time(axis, avg_values, std_values, pacing, time, value_range):
     """
 
     Args:
@@ -56,6 +59,7 @@ def plot_over_time(axis, avg_values, std_values, time, value_range):
             relevant values over time, uniformly
             distributed (same time step)
         std_values - same
+        pacing - same
         time - 1D numpy array for time steps
         value_range - minimum, maximum range
 
@@ -67,65 +71,61 @@ def plot_over_time(axis, avg_values, std_values, time, value_range):
     axis.fill_between(time, minvalues, \
             maxvalues, color='gray', alpha=0.5)
 
-
-def _plot_beatrate(axis, data, time):
-    intervals = data["intervals"]
-    maxima = data["maxima"]
-
-    for maximum in maxima:
-        axis.axvline(x=time[maximum], c='r')
-
-    shift = (maxima[1] - maxima[0])//2
-
-    if len(intervals) > 2:
-        x_vals = [time[ind] for ind in maxima[:-1] + shift]
-        avg = data["over_time_avg"]["beatrate"]
-        std = data["over_time_std"]["beatrate"]
-
-        axis.errorbar(x_vals, avg, std, ecolor='gray', fmt=".", capsize=3)
-        axis.set_ylabel("Beatrate")
+    pacing = 1/np.max(pacing)*pacing
+    pacing = np.max(maxvalues)*pacing
+    axis.plot(time, pacing)
 
 
-def visualize_over_time(data, filename, extension=".png"):
+def _make_filename(f_in, param_list):
+    fname = generate_filename(f_in, \
+                              f"analyze_mechanics", \
+                              param_list,
+                              ".png",
+                              subfolder="")
+    return fname
+
+
+
+def visualize_over_time(f_in, overwrite, overwrite_all, param_list):
     """
 
-    Average over time. We can add std too? anything else??
-
     Args:
-        input_file - input file; nd2 or npy file
+        input_file - input file; BF nd2 file
         filename - save as this
 
     """
 
+    mps_data = mps.MPS(f_in)
+    pacing = mps_data.pacing
+
+    data = read_prev_layer(f_in, analyze_mechanics)
+
+    metrics = list(data["all_values"].keys())
     time = data["time"]
-    # average over time
+    intervals = data["intervals"]
 
     keys = list(data["all_values"].keys())
-    keys.remove("beatrate")             # special case
-    num_subplots = len(keys) + 1
+    num_subplots = len(keys)
 
     _, axes = plt.subplots(num_subplots, 1, \
             figsize=(14, 3*num_subplots), sharex=True)
 
-    # special one for beatrate
+    for (metric, axis) in zip(metrics, axes):
+        avg_values = data["over_time_avg"][metric]
+        std_values = data["over_time_std"][metric]
+        value_range = data["range_folded"][metric]
 
-    _plot_beatrate(axes[0], data, time)
+        plot_over_time(axis, avg_values, std_values, pacing, time, value_range)
+        plot_intervals(axis, time, intervals)
 
-    # then every other quantity
-
-    for (axis, key) in zip(axes[1:], keys):
-        plot_over_time(axis, data["over_time_avg"][key], \
-                data["over_time_std"][key], data["time"], \
-                data["range_folded"][key])
-
-        plot_intervals(axis, data["time"], data["intervals"])
-
-        label = make_pretty_label(key, data["unit"][key])
+        label = make_pretty_label(metric, data["unit"][metric])
         axis.set_ylabel(label)
 
     axes[-1].set_xlabel(r"Time ($ms$)")
 
-    filename += extension
+    filename = _make_filename(f_in, param_list)
 
     plt.savefig(filename, dpi=500)
     plt.clf()
+
+    print(f"Plot for metrics over time saved to {filename}.")

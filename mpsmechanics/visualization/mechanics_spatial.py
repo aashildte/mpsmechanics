@@ -385,8 +385,8 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
     animation_config = get_animation_configuration(param_list[-1], mps_data)
     animate = animation_config.pop("animate")
 
-
-    metrics = param_list[-1]["metrics"].split(" ")
+    metrics = param_list[-1].pop("metrics")
+    metrics = metrics.split(" ")
 
     for metric in metrics:
         assert metric in mc_data["all_values"].keys(), \

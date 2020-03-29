@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+
+"""
+
+Åshild Telle / Simula Research Labratory / 2019
+
+"""
+
+from argparse import ArgumentParser
+import mpsmechanics as mc
+
+def _cl_parser():
+    parser = ArgumentParser()
+    channel = "BF"
+
+    mc.add_default_parser_arguments(parser, channel)
+    keys = mc.add_parameters_parser_arguments(parser, 2)
+
+    return parser, channel, keys
+
+if __name__ == "__main__":
+    mc.run_script(mc.visualize_over_time, \
+            "visualization of mechanical quantities over time", *_cl_parser())

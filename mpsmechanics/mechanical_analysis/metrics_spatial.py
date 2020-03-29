@@ -22,6 +22,21 @@ from ..motion_tracking.ref_frame import convert_disp_data, \
 from .filters import calc_avg_tf_filter, calc_std_tf_filter, \
         filter_time_dependent, filter_constrained, filter_uniform
 
+
+def _calc_max_over_avg_interval(intervals, original_trace):
+    
+    trace_per_interval = [original_trace[i1:i2] \
+            for (i1, i2) in intervals]
+    shortest_interval = min([len(trace) \
+            for trace in trace_per_interval])
+    equal_intervals = [trace[:shortest_interval] \
+            for trace in trace_per_interval]
+
+    avg_trace = np.mean(np.array(equal_intervals), axis=0)
+
+    return max(avg_trace)
+
+
 def _calc_relevant_stats(values, intervals, tf_filter):
 
     folded = calc_magnitude(values)
@@ -39,6 +54,10 @@ def _calc_relevant_stats(values, intervals, tf_filter):
         metrics_avg_avg = np.mean(intervals_avg)
         metrics_max_std = np.max(intervals_std)
         metrics_avg_std = np.mean(intervals_std)
+
+        metrics_int_avg = _calc_max_over_avg_interval(intervals, over_time_avg)
+        metrics_int_std = _calc_max_over_avg_interval(intervals, over_time_std)
+
     else:
         nointerval_avg = np.max(over_time_avg)
         nointerval_std = np.max(over_time_std)
@@ -48,6 +67,9 @@ def _calc_relevant_stats(values, intervals, tf_filter):
         metrics_max_std = nointerval_std
         metrics_avg_std = nointerval_std
 
+        metrics_int_avg = nointerval_avg
+        metrics_int_std = nointerval_std
+
     return {"all_values" : values,
             "folded" : folded,
             "over_time_avg" : over_time_avg,
@@ -55,7 +77,9 @@ def _calc_relevant_stats(values, intervals, tf_filter):
             "metrics_max_avg" : metrics_max_avg,
             "metrics_avg_avg" : metrics_avg_avg,
             "metrics_max_std" : metrics_max_std,
-            "metrics_avg_std" : metrics_avg_std}
+            "metrics_avg_std" : metrics_avg_std,
+            "metrics_int_avg" : metrics_int_avg,
+            "metrics_int_std" : metrics_int_std}
 
 
 def _calc_displacement(displacement, intervals, tf_filter):

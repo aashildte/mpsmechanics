@@ -201,10 +201,10 @@ def plot_2x2d_values(spatial_data, time, subdivisions_xdir, subdivisions_ydir, l
     plt.suptitle(label)
 
 
-def _make_filename(f_in, metric, subdivisions_x, subdivisions_y):
+def _make_filename(f_in, metric, subdivisions_x, subdivisions_y, params):
     fname = generate_filename(f_in, \
                               f"{metric}_over_time_and_area_{subdivisions_x}_{subdivisions_y}", \
-                              [],
+                              params,
                               "",        # png?
                               subfolder="mechanics_over_time_and_area")
     fname_png = f"{fname}.png"
@@ -250,7 +250,7 @@ def visualize_over_time_and_area(f_in, overwrite, overwrite_all, param_list):
 
         print("Making plot for " + metric + " ...")
 
-        fname_png = _make_filename(f_in, metric, subdivisions_xdir, subdivisions_ydir)
+        fname_png = _make_filename(f_in, metric, subdivisions_xdir, subdivisions_ydir, params)
         metadata, spatial_data, time = setup_for_key(mps_data, mc_data, metric)
         label = metadata["label"]
 

@@ -115,11 +115,22 @@ def add_parameters_parser_arguments(parser, level):
     all_keys = []
 
     if level >= 0:
-        pass
-    if level >= 1:
-        pass
+        parser.add_argument("-f", "--filter_kernel_size", \
+                            default=0,
+                            help="Filter_kernel_size",
+                            type=int)
 
-    return all_keys
+        l0_keys = ["filter_kernel_size"]
+
+    if level >= 1:
+        parser.add_argument("-si", "--sigma", \
+                            default=0,
+                            help="Filter parameter",
+                            type=float)
+
+        l1_keys = ["sigma"]
+
+    return [l0_keys, l1_keys]
 
 def add_animation_parser_arguments(parser):
     """

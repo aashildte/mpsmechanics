@@ -103,10 +103,10 @@ def _make_animation(spatial_data, time, metadata, fname, \
     make_animation(fig, _update, fname, **animation_config)
 
 
-def _make_filenames(f_in, key):
+def _make_filenames(f_in, key, param_list):
     fname = generate_filename(f_in, \
                               f"vectorfield_{key}", \
-                              [],
+                              param_list,
                               "",        # mp3 or png
                               subfolder="visualize_vectorfield")
     fname_png = fname + ".png"
@@ -134,13 +134,19 @@ def visualize_vectorfield(f_in, overwrite, overwrite_all, param_list):
     animation_config = get_animation_configuration(param_list[-1], mps_data)
     animate = animation_config.pop("animate")
 
-    for key in mc_data["all_values"].keys():
-        if mc_data["all_values"][key].shape[3:] != (2,):
-            continue
+    metrics = param_list[-1].pop("metrics")
+    metrics = metrics.split(" ")
+
+    for metric in metrics:
+        assert metric in mc_data["all_values"].keys(), \
+                f"Error: Metric expected to be in {mc_data['all_values'].keys()}"        
+
+        assert mc_data["all_values"][metric].shape[3:] == (2,), \
+                f"Error: Vectorfield only defined for vectors."
 
         print("Plots for " + key + " ...")
 
-        fname_png, fname_mp4 = _make_filenames(f_in, key)
+        fname_png, fname_mp4 = _make_filenames(f_in, key, param_list)
         metadata, spatial_data, time = setup_for_key(mps_data, mc_data, key)
 
         if overwrite or (not os.path.isfile(fname_png)):

@@ -104,18 +104,24 @@ def make_phase_plots(fig, outer_axis, strain_values, ca_values, ap_values):
     axis.plot(ca, strain)
     axis.set_xlabel("Calcium")
     axis.set_ylabel("Strain")
+    axis.set_xlim((-0.1, 1.1))
+    axis.set_ylim((-0.1, 1.1))
     fig.add_subplot(axis)
 
     axis = plt.Subplot(fig, inner[1, 0])
     axis.plot(ap, strain)
     axis.set_xlabel("AP")
     axis.set_ylabel("Strain")
+    axis.set_xlim((-0.1, 1.1))
+    axis.set_ylim((-0.1, 1.1))
     fig.add_subplot(axis)
     
     axis = plt.Subplot(fig, inner[1, 1])
     axis.plot(ca, ap)
     axis.set_xlabel("Ca")
     axis.set_ylabel("AP")
+    axis.set_xlim((-0.1, 1.1))
+    axis.set_ylim((-0.1, 1.1))
     fig.add_subplot(axis)
 
 

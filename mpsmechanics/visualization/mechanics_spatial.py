@@ -354,10 +354,10 @@ def _make_animation(spatial_data, time, metadata, fname, animation_config):
     make_animation(fig, _update, fname, **animation_config)
 
 
-def _make_filenames(f_in, metric):
+def _make_filenames(f_in, metric, param_list):
     fname = generate_filename(f_in, \
                               f"spatial_decomposition_{metric}", \
-                              {},
+                              param_list,
                               "",        # mp3 or png
                               subfolder="visualize_mechanics")
     fname_png = fname + ".png"
@@ -394,7 +394,7 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
 
         print("Making plot for " + metric + " ...")
 
-        fname_png, fname_mp4 = _make_filenames(f_in, metric)
+        fname_png, fname_mp4 = _make_filenames(f_in, metric, param_list)
         metadata, spatial_data, time = setup_for_key(mps_data, mc_data, metric)
 
         metadata["shift_diagonal"] = (metric == "deformation_tensor")

@@ -21,7 +21,7 @@ from .setup_plots import setup_frame, get_plot_fun, load_input_data, \
 
 
 def setup_frame_gridspec(subplots_x, subplots_y, subdivision_x, subdivision_y):
- 
+
     fig = plt.figure(figsize = (7*subplots_y, 18*subplots_x))
     outer = gridspec.GridSpec(subplots_x, subplots_y, wspace=0.2, hspace=0.2)
 
@@ -33,6 +33,7 @@ def setup_frame_gridspec(subplots_x, subplots_y, subdivision_x, subdivision_y):
     fig.add_subplot(im_ax)
 
     all_axes = [im_ax]
+    shareaxes = None
 
     for i in range(1, subplots_x*subplots_y):
         inner = gridspec.GridSpecFromSubplotSpec(subdivision_x, subdivision_y, \
@@ -43,12 +44,11 @@ def setup_frame_gridspec(subplots_x, subplots_y, subdivision_x, subdivision_y):
         for _x in range(subdivision_x):
             subplot_axes_x = []
             for _y in range(subdivision_y):
-                if _x == 0 and _y == 0:
+                if shareaxes is None:
                     ax = plt.Subplot(fig, inner[_x, _y])
-                elif _x == 0:
-                    ax = plt.Subplot(fig, inner[_x, _y], sharex=subplot_axes_x[0])
+                    shareaxes = ax
                 else:
-                    ax = plt.Subplot(fig, inner[_x, _y], sharex=subplot_axes[0][0], sharey=subplot_axes[0][0])
+                    ax = plt.Subplot(fig, inner[_x, _y], sharex=shareaxes, sharey=shareaxes)
 
                 if _x < (subdivision_x-1):
                     ax.get_xaxis().set_visible(False)
@@ -190,10 +190,10 @@ def plot_2x2d_values(spatial_data, time, subdivisions_xdir, subdivisions_ydir, l
             _get_2x2d_values(values)
 
     plot_image_subdivision(axes[0], image, sg_values, subdivisions_xdir, subdivisions_ydir)
-    
+
     for (axis, value) in zip(axes[1:], (xx_values, xy_values, sg_values, yx_values, yy_values)):
         plot_over_time(axis, value, time, subdivisions_xdir, subdivisions_ydir)
-    
+
     for i in range(1, 6):
         axes[i][subdivisions_xdir // 2][0].set_ylabel(f"{label}, {subtitles[i-1]}")
         axes[i][-1][subdivisions_ydir // 2].set_xlabel("Time (ms)")

@@ -357,7 +357,7 @@ def _make_animation(spatial_data, time, metadata, fname, animation_config):
 def _make_filenames(f_in, metric):
     fname = generate_filename(f_in, \
                               f"spatial_decomposition_{metric}", \
-                              [],
+                              {},
                               "",        # mp3 or png
                               subfolder="visualize_mechanics")
     fname_png = fname + ".png"

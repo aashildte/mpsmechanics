@@ -204,7 +204,7 @@ def plot_2x2d_values(spatial_data, time, subdivisions_xdir, subdivisions_ydir, l
 def _make_filename(f_in, metric, subdivisions_x, subdivisions_y):
     fname = generate_filename(f_in, \
                               f"{metric}_over_time_and_area_{subdivisions_x}_{subdivisions_y}", \
-                              [],
+                              {},
                               "",        # png?
                               subfolder="mechanics_over_time_and_area")
     fname_png = f"{fname}.png"

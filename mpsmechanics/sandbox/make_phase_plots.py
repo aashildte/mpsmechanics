@@ -26,6 +26,7 @@ def get_strain_avg(BF_file):
     time_equal = [_t[:min_len] for _t in chopped.times]
  
     avg_per_beat = np.mean(chopped_equal, axis=0)
+    avg_per_beat = avg_per_beat - np.min(avg_per_beat)
     avg_per_beat /= max(avg_per_beat)
 
     plt.plot(time_equal[0], avg_per_beat)
@@ -49,6 +50,7 @@ def get_fl_avg(input_file):
     avg_per_beat = data["chopped_data"]["trace_1std"]
     time_avg = data["chopped_data"]["time_1std"]
 
+    avg_per_beat = avg_per_beat - np.min(avg_per_beat)
     avg_per_beat /= max(avg_per_beat)
 
     return time_avg, avg_per_beat, time_all, trace_all, pacing

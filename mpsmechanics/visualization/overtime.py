@@ -10,8 +10,10 @@ import matplotlib.pyplot as plt
 
 import mps
 
-from ..utils.data_layer import generate_filename, read_prev_layer
-from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
+from ..utils.data_layer import \
+        generate_filename, read_prev_layer
+from ..mechanical_analysis.mechanical_analysis import \
+        analyze_mechanics
 from .setup_plots import make_pretty_label
 
 def get_minmax_values(avg_values, std_values, value_range):
@@ -71,9 +73,10 @@ def plot_over_time(axis, avg_values, std_values, pacing, time, value_range):
     axis.fill_between(time, minvalues, \
             maxvalues, color='gray', alpha=0.5)
 
-    pacing = 1/np.max(pacing)*pacing
-    pacing = np.max(maxvalues)*pacing
-    axis.plot(time, pacing)
+    if max(pacing > 0.1):                      # if chip is actually paced
+        pacing = 1/np.max(pacing)*pacing
+        pacing = np.max(maxvalues[~np.isnan(maxvalues)])*pacing
+        axis.plot(time, pacing)
 
 
 def _make_filename(f_in, param_list):

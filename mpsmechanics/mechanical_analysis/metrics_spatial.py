@@ -8,7 +8,7 @@ Computes mechanical quantities / metrics over space and time.
 """
 
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 from ..dothemaths.mechanical_quantities import \
         calc_principal_strain, calc_gl_strain_tensor, \
@@ -24,7 +24,7 @@ from .filters import calc_avg_tf_filter, calc_std_tf_filter, \
 
 
 def _calc_max_over_avg_interval(intervals, original_trace):
-    
+
     trace_per_interval = [original_trace[i1:i2] \
             for (i1, i2) in intervals]
     shortest_interval = min([len(trace) \
@@ -108,9 +108,8 @@ def _calc_displacement_minmax(displacement, intervals, tf_filter):
 
 
 def _calc_angular_motion(displacement, angle, intervals, tf_filter):
-
-    ymotion = calc_projection_fraction(displacement, angle)
-    statistical_qts = _calc_relevant_stats(ymotion, intervals, \
+    amotion = calc_projection_fraction(displacement, angle)
+    statistical_qts = _calc_relevant_stats(amotion, intervals, \
                                            tf_filter)
     metadata = {"unit" : "-",
                 "range" : (0, 1),

@@ -57,24 +57,47 @@ def _swap_dict_keys(dict_org):
     return dict_swapped
 
 
+def _calc_intervals_from_pacing(pacing):
+    
+    pacing = np.array(pacing, dtype=np.float)
+    indices = np.where(np.diff(pacing) > 1)[0]
+
+    intervals = []
+    for i in range(1, len(indices)):
+        intervals.append((indices[i-1], indices[i]))
+
+    return intervals
+
+
 def _calc_mechanical_quantities(mps_data, mt_data, \
-        type_filter="gaussian", sigma=3):
+        type_filter="gaussian", sigma=3, use_pacing=True):
+
     time = mps_data.time_stamps
-    um_per_pixel = mps_data.info["um_per_pixel"]
 
     angle = mt_data["angle"]
-    dx = um_per_pixel*mt_data["block_size"]
 
     displacement = mt_data["displacement_vectors"]
-    displacement = convert_disp_data(
-        displacement, calculate_minmax(displacement)
-    )
-    displacement = um_per_pixel*apply_filter(displacement, type_filter, sigma)
+    um_per_pixel = mps_data.info["um_per_pixel"]
+    dx = um_per_pixel*mt_data["block_size"]
 
+    if use_pacing and np.max(mps_data.pacing > 1):
+        pacing_step = np.where(mps_data.pacing == np.max(mps_data.pacing))[0][0] - 1
+        displacement = convert_disp_data(displacement, pacing_step)
+        displacement = um_per_pixel*apply_filter(displacement, type_filter, sigma)
+        
+        disp_data_folded = calc_norm_over_time(displacement)
+        maxima = calc_beat_maxima(disp_data_folded)
+        intervals = _calc_intervals_from_pacing(mps_data.pacing)
+        print(intervals)
+    else:
+        displacement = convert_disp_data(
+            displacement, calculate_minmax(displacement)
+        )
+        displacement = um_per_pixel*apply_filter(displacement, type_filter, sigma)
     
-    disp_data_folded = calc_norm_over_time(displacement)
-    maxima = calc_beat_maxima(disp_data_folded)
-    intervals = calc_beat_intervals(disp_data_folded)
+        disp_data_folded = calc_norm_over_time(displacement)
+        maxima = calc_beat_maxima(disp_data_folded)
+        intervals = calc_beat_intervals(disp_data_folded)
 
     spatial = calc_spatial_metrics(displacement, time, dx, angle, intervals)
 
@@ -144,3 +167,4 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
         save_dictionary(filename, mechanical_quantities)
 
     return mechanical_quantities
+

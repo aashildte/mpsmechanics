@@ -21,6 +21,8 @@ from mpsmechanics.motion_tracking.motion_tracking import \
         track_motion
 from mpsmechanics.motion_tracking.restore_resolution import \
         apply_filter
+from ..motion_tracking.ref_frame import convert_disp_data, \
+        calculate_minmax
 
 from .metrics_spatial import calc_spatial_metrics
 from .metrics_beatrate import calc_beatrate_metric
@@ -56,31 +58,24 @@ def _swap_dict_keys(dict_org):
     return dict_swapped
 
 
-def downsample(org_data, downsampling_factor):
 
-    print("orgiginal shape: ", org_data.shape)
-    
-    downsampled_data = np.array(org_data[:,::downsampling_factor,::downsampling_factor])
-
-    print("new shape: ", downsampled_data.shape)
-
-    return downsampled_data
-
-
-def _calc_mechanical_quantities(mps_data, mt_data):
+def _calc_mechanical_quantities(mps_data, mt_data, type_filter="gaussian", sigma=3):
     time = mps_data.time_stamps
-    # trunkate:
-    time = time[:mt_data["displacement_vectors"].shape[0]]
+    # truncate:
+    
+    disp_data = mt_data["displacement_vectors"]
+    time = time[:disp_data.shape[0]]
 
     um_per_pixel = mps_data.info["um_per_pixel"]
 
     angle = mt_data["angle"]
-    downsampling_factor=8
-    dx = um_per_pixel*mt_data["block_size"]/downsampling_factor
+    dx = um_per_pixel*mt_data["block_size"]
 
-    disp_data = downsample(org_data = mt_data["displacement_vectors"], \
-                           downsampling_factor = downsampling_factor)
-    disp_data *= um_per_pixel         # in um
+    disp_data = convert_disp_data(
+        disp_data, calculate_minmax(disp_data)
+    )
+    disp_data = um_per_pixel*apply_filter(disp_data, type_filter, sigma)
+
     disp_over_time = np.array(calc_norm_over_time(disp_data))
 
     maxima = calc_beat_maxima(disp_over_time)

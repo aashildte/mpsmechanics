@@ -888,8 +888,18 @@ class MotionTracking(object):
             ),
         )
 
+def downsample(org_data, downsampling_factor):
 
-def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=False):
+    print("orgiginal shape, downsampling: ", org_data.shape)
+    
+    downsampled_data = np.array(org_data[:,::downsampling_factor,::downsampling_factor])
+
+    print("new shape: ", downsampled_data.shape)
+
+    return downsampled_data
+
+
+def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
     """
 
     Args:
@@ -919,17 +929,19 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=False):
     assert mps_data.num_frames != 1, "Error: Single frame used as input"
     
     
-    
     use_new_algorithm = param_list[0].pop("use_lucas_kanade")
 
     if use_new_algorithm:
         disp_data = calc_disp_lk(mps_data)
+        block_size = 8
+        disp_data = downsample(disp_data, block_size)
     else:
         if len(param_list) > 1:
             motion = MotionTracking(mps_data, **(param_list[0]))
         else:
             motion = MotionTracking(mps_data)
 
+        block_size = motion.block_size
         # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
         disp_data = np.swapaxes(
             np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3
@@ -940,7 +952,7 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=False):
     d_all = {}
     d_all["displacement_vectors"] = disp_data
     d_all["angle"] = 0 # TODO motion.angle
-    d_all["block_size"] = 1 # TODO motion.block_size
+    d_all["block_size"] = block_size
 
     print("Motion tracking done.")
 

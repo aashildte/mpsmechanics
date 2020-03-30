@@ -123,7 +123,14 @@ def add_parameters_parser_arguments(parser, level):
         all_keys.append(l0_keys)
 
     if level >= 1:
-        all_keys.append([])
+        parser.add_argument("-si", "--sigma", \
+                            default=0,
+                            help="Filter parameter",
+                            type=float)
+
+        l1_keys = ["sigma"]
+
+        all_keys.append(l1_keys)
 
     return all_keys
 

@@ -60,8 +60,8 @@ def _calc_relevant_stats(values, intervals, tf_filter):
         metrics_int_std = _calc_max_over_avg_interval(intervals, over_time_std)
 
     else:
-        metrics_max_avg = metrix_avg_avg = metrix_int_avg = np.max(over_time_avg)
-        metrics_max_std = metrix_avg_std = metrix_int_std = np.max(over_time_avg)
+        metrics_max_avg = metrics_avg_avg = metrics_int_avg = np.max(over_time_avg)
+        metrics_max_std = metrics_avg_std = metrics_int_std = np.max(over_time_avg)
 
     return {
         "all_values": values,

@@ -192,11 +192,11 @@ def _calc_tensile_strain(gl_strain_tensor, intervals, tf_filter):
 
 def _calc_compressive_strain(gl_strain_tensor, intervals, tf_filter):
 
-    strain = -1*calc_principal_strain_scalars(gl_strain_tensor)  # note the -
-    strain[strain < 0] = 0
+    strain = calc_principal_strain_scalars(gl_strain_tensor)
+    strain[strain > 0] = 0
 
     statistical_qts = _calc_relevant_stats(strain, intervals, tf_filter)
-    metadata = {"unit": r"-", "range": (0, np.nan), "range_folded": (0, np.nan)}
+    metadata = {"unit": r"-", "range": (np.nan, 0), "range_folded": (0, np.nan)}
 
     return {**statistical_qts, **metadata}
 

@@ -12,19 +12,19 @@ from collections import defaultdict
 import numpy as np
 import mps
 
-from mpsmechanics.utils.data_layer import read_prev_layer, \
-        generate_filename, save_dictionary
-from mpsmechanics.dothemaths.heartbeat import \
-        calc_beat_intervals, calc_beat_maxima
+from mpsmechanics.utils.data_layer import (
+    read_prev_layer,
+    generate_filename,
+    save_dictionary,
+)
+from mpsmechanics.dothemaths.heartbeat import calc_beat_intervals, calc_beat_maxima
 from mpsmechanics.dothemaths.operations import calc_norm_over_time
-from mpsmechanics.motion_tracking.motion_tracking import \
-        track_motion
-from mpsmechanics.motion_tracking.restore_resolution import \
-        apply_filter
-from ..motion_tracking.ref_frame import convert_disp_data, \
-        calculate_minmax
+from mpsmechanics.motion_tracking.motion_tracking import track_motion
+from mpsmechanics.motion_tracking.restore_resolution import apply_filter
+from ..motion_tracking.ref_frame import convert_disp_data, calculate_minmax
 
 from .metrics_spatial import calc_spatial_metrics
+
 
 def _swap_dict_keys(dict_org):
     """
@@ -44,9 +44,10 @@ def _swap_dict_keys(dict_org):
     def_key_set = list(dict_org.values())[0].keys()
 
     for dictionary in dict_org.values():
-        assert dictionary.keys() == def_key_set, \
-                "Error: Inconsistent set of keys in nested" + \
-                f"dictionary: {dictionary.keys()}, {def_key_set}."
+        assert dictionary.keys() == def_key_set, (
+            "Error: Inconsistent set of keys in nested"
+            + f"dictionary: {dictionary.keys()}, {def_key_set}."
+        )
 
     dict_swapped = defaultdict(dict)
     for key_l1 in dict_org.keys():
@@ -58,19 +59,20 @@ def _swap_dict_keys(dict_org):
 
 
 def _calc_intervals_from_pacing(pacing):
-    
+
     pacing = np.array(pacing, dtype=np.float)
     indices = np.where(np.diff(pacing) > 1)[0]
 
     intervals = []
     for i in range(1, len(indices)):
-        intervals.append((indices[i-1], indices[i]))
+        intervals.append((indices[i - 1], indices[i]))
 
     return intervals
 
 
-def _calc_mechanical_quantities(mps_data, mt_data, \
-        type_filter="gaussian", sigma=3, use_pacing=True):
+def _calc_mechanical_quantities(
+    mps_data, mt_data, type_filter="gaussian", sigma=3, use_pacing=True
+):
 
     time = mps_data.time_stamps
 
@@ -78,27 +80,25 @@ def _calc_mechanical_quantities(mps_data, mt_data, \
 
     displacement = mt_data["displacement_vectors"]
     um_per_pixel = mps_data.info["um_per_pixel"]
-    dx = um_per_pixel*mt_data["block_size"]
+    dx = um_per_pixel * mt_data["block_size"]
 
     if use_pacing and np.max(mps_data.pacing > 1):
         pacing_step = np.where(mps_data.pacing == np.max(mps_data.pacing))[0][0] - 1
         displacement = convert_disp_data(displacement, pacing_step)
-        displacement = um_per_pixel*apply_filter(displacement, type_filter, sigma)
-        
+        displacement = um_per_pixel * apply_filter(displacement, type_filter, sigma)
+
         disp_data_folded = calc_norm_over_time(displacement)
         maxima = calc_beat_maxima(disp_data_folded)
         intervals = _calc_intervals_from_pacing(mps_data.pacing)
-        print(intervals)
     else:
-        displacement = convert_disp_data(
-            displacement, calculate_minmax(displacement)
-        )
-        displacement = um_per_pixel*apply_filter(displacement, type_filter, sigma)
-    
+        displacement = convert_disp_data(displacement, calculate_minmax(displacement))
+        displacement = um_per_pixel * apply_filter(displacement, type_filter, sigma)
+
         disp_data_folded = calc_norm_over_time(displacement)
         maxima = calc_beat_maxima(disp_data_folded)
         intervals = calc_beat_intervals(disp_data_folded)
 
+    np.seterr(all="ignore")
     spatial = calc_spatial_metrics(displacement, time, dx, angle, intervals)
 
     d_all = _swap_dict_keys({**spatial})
@@ -110,9 +110,7 @@ def _calc_mechanical_quantities(mps_data, mt_data, \
     return d_all
 
 
-
-def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
-        save_data=True):
+def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, save_data=True):
     """
 
     Args:
@@ -128,38 +126,28 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
 
     """
 
-    filename = generate_filename(f_in, \
-                                 "analyze_mechanics", \
-                                 param_list, \
-                                 ".npy")
+    filename = generate_filename(f_in, "analyze_mechanics", param_list, ".npy")
     print("filename: ", filename)
 
-    if not overwrite_all and not overwrite and \
-            os.path.isfile(filename):
-        print("Previous data exist. Use flag --overwrite / -o " + \
-                "to recalculate this layer.")
-        print("Use flag --overwrite_all / -oa " + \
-                "to recalculate data for all layers.")
+    if not overwrite_all and not overwrite and os.path.isfile(filename):
+        print(
+            "Previous data exist. Use flag --overwrite / -o "
+            + "to recalculate this layer."
+        )
+        print("Use flag --overwrite_all / -oa " + "to recalculate data for all layers.")
         return np.load(filename, allow_pickle=True).item()
 
     mps_data = mps.MPS(f_in)
-    mt_data = read_prev_layer(
-        f_in,
-        track_motion,
-        param_list[:-1],
-        overwrite_all
-    )
+    mt_data = read_prev_layer(f_in, track_motion, param_list[:-1], overwrite_all)
 
     print(f"Calculating mechanical quantities for {f_in}")
 
     if len(param_list) > 1:
-        mechanical_quantities = \
-                _calc_mechanical_quantities(mps_data, \
-                                            mt_data, \
-                                            **param_list[1])
+        mechanical_quantities = _calc_mechanical_quantities(
+            mps_data, mt_data, **param_list[1]
+        )
     else:
-        mechanical_quantities = \
-                _calc_mechanical_quantities(mps_data, mt_data)
+        mechanical_quantities = _calc_mechanical_quantities(mps_data, mt_data)
 
     print(f"Done calculating mechanical quantities for {f_in}.")
 
@@ -167,4 +155,3 @@ def analyze_mechanics(f_in, overwrite, overwrite_all, param_list, \
         save_dictionary(filename, mechanical_quantities)
 
     return mechanical_quantities
-

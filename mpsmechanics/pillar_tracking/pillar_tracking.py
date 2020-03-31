@@ -67,7 +67,7 @@ def _define_pillars(pillar_positions, radius, no_tracking_pts=200):
             random_xpos = np.random.uniform(x_pos, x_pos + radius)
             random_ypos = np.random.uniform(y_pos, y_pos + radius)
 
-            while random_x_pos ** 2 + random_y_pos ** 2 > radius ** 2:
+            while random_xpos ** 2 + random_ypos ** 2 > radius ** 2:
                 random_xpos = np.random.uniform(x_pos, x_pos + radius)
                 random_ypos = np.random.uniform(y_pos, y_pos + radius)
 
@@ -227,4 +227,4 @@ def track_pillars(f_in, overwrite, overwrite_all, param_list, save_data=True):
     if save_data:
         save_dictionary(f_in, "track_pillars", values)
 
-    return d_all
+    return values

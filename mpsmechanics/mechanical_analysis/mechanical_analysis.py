@@ -77,12 +77,13 @@ def _calc_mechanical_quantities(
     time = mps_data.time_stamps
 
     angle = mt_data["angle"]
+    pacing = mps_data.pacing
 
     displacement = mt_data["displacement_vectors"]
     um_per_pixel = mps_data.info["um_per_pixel"]
     dx = um_per_pixel * mt_data["block_size"]
 
-    if use_pacing and np.max(mps_data.pacing > 1):
+    if use_pacing and np.max(pacing > 1):
         indices = np.where(np.diff(pacing[1:]) > 1)[0] + 1
         pacing_step = indices[0] - 1
         print("pacing_step", pacing_step)
@@ -92,7 +93,7 @@ def _calc_mechanical_quantities(
 
         disp_data_folded = calc_norm_over_time(displacement)
         maxima = calc_beat_maxima(disp_data_folded)
-        intervals = _calc_intervals_from_pacing(mps_data.pacing)
+        intervals = _calc_intervals_from_pacing(pacing)
     else:
         displacement = convert_disp_data(displacement, calculate_minmax(displacement))
         displacement = um_per_pixel * apply_filter(displacement, type_filter, sigma)

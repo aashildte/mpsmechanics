@@ -45,7 +45,7 @@ def _define_pillars(pillar_positions, radius, no_tracking_pts=200):
 
     assert no_tracking_pts > 0, "no_tracking_pts must be greater than 0"
 
-    expected_keys = ["positions_transverse", "positions_longitudinal", "radii"]
+    expected_keys = ["positions_transverse", "positions_longitudinal"]
     error_msg = (
         "Error: Expected pillar positions to be given as a dictionary with "
         + f"{expected_keys} as keys."

@@ -83,7 +83,8 @@ def _calc_mechanical_quantities(
     dx = um_per_pixel * mt_data["block_size"]
 
     if use_pacing and np.max(mps_data.pacing > 1):
-        pacing_step = np.where(mps_data.pacing == np.max(mps_data.pacing))[0][0] - 1
+        pacing_step = np.where(mps_data.pacing[1:] == np.max(mps_data.pacing))[0][0] - 2
+        print("pacing_step", pacing_step)
         displacement = convert_disp_data(displacement, pacing_step)
         displacement = um_per_pixel * apply_filter(displacement, type_filter, sigma)
 

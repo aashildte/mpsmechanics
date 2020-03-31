@@ -18,7 +18,7 @@ from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 from ..dothemaths.interpolation import interpolate_values_xy
 
 from ..utils.folder_structure import get_input_properties
-from ..utils.data_layer import read_prev_layer, save_dictionary
+from ..utils.data_layer import read_prev_layer, save_dictionary, generate_filename
 
 from .forcetransformation import displacement_to_force, displacement_to_force_area
 
@@ -67,14 +67,14 @@ def _define_pillars(pillar_positions, radius, no_tracking_pts=200):
             random_xpos = np.random.uniform(x_pos, x_pos + radius)
             random_ypos = np.random.uniform(y_pos, y_pos + radius)
 
-            while random_xpos ** 2 + random_ypos ** 2 > radius ** 2:
+            while (random_xpos - x_pos) ** 2 + (random_ypos - y_pos) ** 2 > radius ** 2:
                 random_xpos = np.random.uniform(x_pos, x_pos + radius)
                 random_ypos = np.random.uniform(y_pos, y_pos + radius)
 
             pillars[i, j, 0] = random_xpos
             pillars[i, j, 1] = random_ypos
 
-    return np.avg(pillars, axis=1)
+    return pillars
 
 
 def _calculate_current_timestep(x_coords, y_coords, disp_data, pillars):
@@ -150,10 +150,10 @@ def _track_pillars_over_time(
             x_coords, y_coords, disp_data[t], pillars
         )
 
-    return rel_values
+    return np.mean(rel_values, axis=2)
 
 
-def displacement_to_force(displacement, L=50e-6, R=10e-60, E=2.63e6):
+def disp_to_force_data(displacement, L=50e-6, R=10e-60, E=2.63e6):
     area = L * R * np.pi * 1e6  # area in mm^2 half cylinder area
     values_m = 1e-6 * displacement  # um -> m
 
@@ -166,7 +166,7 @@ def displacement_to_force(displacement, L=50e-6, R=10e-60, E=2.63e6):
 def read_pillar_positions(f_in):
 
     path, filename, _ = get_input_properties(f_in)
-    pos_file = os.path.join(path, filename, "mpsmechanics", "pillar_positions.csv")
+    pos_file = os.path.join(path, filename, "mpsmechanics", "pillar_tracking", "pillar_positions.csv")
 
     assert os.path.isfile(
         pos_file
@@ -213,18 +213,19 @@ def track_pillars(f_in, overwrite, overwrite_all, param_list, save_data=True):
         disp_data, pillar_positions, radius, mps_data.size_x, mps_data.size_y
     )
 
-    force, force_per_area = displacement_to_force(disp_over_time, R=radius * 1e-6)
+    force, force_per_area = disp_to_force_data(disp_over_time, R=radius * 1e-6)
 
     values = {
-        **positions,
+        **pillar_positions,
         "displacement_um": disp_over_time,
         "force": force,
-        "force_per_area": forceperarea,
+        "force_per_area": force_per_area,
     }
 
     print(f"Pillar tracking for {f_in} finished")
 
     if save_data:
-        save_dictionary(f_in, "track_pillars", values)
+        filename = generate_filename(f_in, "track_pillars", param_list, ".npy", subfolder="pillar_tracking")
+        save_dictionary(filename, values)
 
     return values

@@ -61,9 +61,10 @@ def calc_projection_fraction(data, alpha):
     data_full = calc_magnitude(data)
     data_proj = np.abs(calc_projection(data, alpha))
 
-    return np.divide(data_proj, data_full, \
+    frac = np.divide(data_proj, data_full, \
             out=np.zeros_like(data_full), where=(data_full != 0))
 
+    return frac
 
 def flip_values(data):
     """

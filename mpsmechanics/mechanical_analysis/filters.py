@@ -29,8 +29,11 @@ def calc_std_tf_filter(values_folded, tf_filter):
     std = np.zeros(num_time_steps)
 
     for _t in range(num_time_steps):
-        filtered_values = np.extract(tf_filter[_t], values_folded[_t])
-        std[_t] = np.std(filtered_values)
+        if np.any(values_folded[_t]):
+            filtered_values = np.extract(tf_filter[_t], values_folded[_t])
+            std[_t] = np.std(filtered_values)
+        else:
+            std[_t] = 0
 
     return std
 
@@ -57,8 +60,11 @@ def calc_avg_tf_filter(values_folded, tf_filter):
     avg = np.zeros(num_time_steps)
 
     for _t in range(num_time_steps):
-        filtered_values = np.extract(tf_filter[_t], values_folded[_t])
-        avg[_t] = np.mean(filtered_values)
+        if np.any(values_folded[_t]):
+            filtered_values = np.extract(tf_filter[_t], values_folded[_t])
+            avg[_t] = np.mean(filtered_values)
+        else:
+            avg[_t] = 0
 
     return avg
 

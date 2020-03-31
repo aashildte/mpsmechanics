@@ -196,7 +196,7 @@ def _calc_compressive_strain(gl_strain_tensor, intervals, tf_filter):
     strain[strain > 0] = 0
 
     statistical_qts = _calc_relevant_stats(strain, intervals, tf_filter)
-    metadata = {"unit": r"-", "range": (np.nan, 0), "range_folded": (0, np.nan)}
+    metadata = {"unit": r"-", "range": (-np.nan, 0), "range_folded": (0, np.nan)}
 
     return {**statistical_qts, **metadata}
 

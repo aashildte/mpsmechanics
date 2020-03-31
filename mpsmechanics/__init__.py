@@ -49,7 +49,6 @@ from .motion_tracking import (
 
 from .pillar_tracking.pillar_tracking import (
     track_pillars,
-    track_pillars_sgvalue,
 )
 
 from .statistical_analysis import (

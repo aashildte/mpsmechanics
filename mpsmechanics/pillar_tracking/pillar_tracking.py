@@ -10,27 +10,32 @@ Point tracking related functions
 import os
 import numpy as np
 import mps
+import pandas
 
-#from pillar_detection.utility import perform_pillar_detection
+# from pillar_detection.utility import perform_pillar_detection
 
-from ..motion_tracking.motion_tracking import track_motion
-
+from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
 from ..dothemaths.interpolation import interpolate_values_xy
 
-from ..utils.folder_structure import get_input_properties 
+from ..utils.folder_structure import get_input_properties
 from ..utils.data_layer import read_prev_layer, save_dictionary
 
-from .forcetransformation import displacement_to_force, \
-        displacement_to_force_area
+from .forcetransformation import displacement_to_force, displacement_to_force_area
 
-def _define_pillars(pillar_positions, tracking_type = 'large_radius', no_tracking_pts=200):
+
+def _define_pillars(pillar_positions, radius, no_tracking_pts=200):
     """
 
     Defines circle to mark the pillar's circumference, based on
     information about the pillar's initial middle position.
 
+    For each pillar, we generate random points on a square around the pillar.
+    If the points are not within the given radius we do it again. That way we
+    get no_tracking_pts points within the radius, uniformly distributed.
+
     Args:
         pillar_positions - dictionary with information about pillar positions
+        radius
         no_tracking_pts - number of mesh points used
 
     Returns:
@@ -39,42 +44,37 @@ def _define_pillars(pillar_positions, tracking_type = 'large_radius', no_trackin
     """
 
     assert no_tracking_pts > 0, "no_tracking_pts must be greater than 0"
-    
+
     expected_keys = ["positions_transverse", "positions_longitudinal", "radii"]
-    error_msg = "Error: Expected pillar positions to be given as a dictionary with " + \
-            "{} as keys.".format(expected_keys)
+    error_msg = (
+        "Error: Expected pillar positions to be given as a dictionary with "
+        + f"{expected_keys} as keys."
+    )
 
     for e_k in expected_keys:
         assert e_k in pillar_positions.keys(), error_msg
 
     x_positions = pillar_positions["positions_longitudinal"]
     y_positions = pillar_positions["positions_transverse"]
-    radii = pillar_positions["radii"]
 
     no_pillars = len(x_positions)
     pillars = np.zeros((no_pillars, no_tracking_pts, 2))
-    angles = np.linspace(0, 2*np.pi, no_tracking_pts)
 
     for i in range(no_pillars):
-        x_pos, y_pos, radius = x_positions[i], y_positions[i], radii[i]
+        x_pos, y_pos = x_positions[i], y_positions[i]
 
-        if tracking_type == "large_radius":
-            for j in range(no_tracking_pts):
-                pillars[i, j, 0] = x_pos + radius*np.cos(angles[j])
-                pillars[i, j, 1] = y_pos + radius*np.sin(angles[j])
+        for j in range(no_tracking_pts):
+            random_xpos = np.random.uniform(x_pos, x_pos + radius)
+            random_ypos = np.random.uniform(y_pos, y_pos + radius)
 
-        elif tracking_type == "small_radius":
-            small_radius = radius - 9
-            for j in range(no_tracking_pts):
-                pillars[i, j, 0] = x_pos + small_radius*np.cos(angles[j])
-                pillars[i, j, 1] = y_pos + small_radius*np.sin(angles[j])
-        else:
-            for j in range(no_tracking_pts):
-                random_radius = np.random.uniform(0, radius)
-                pillars[i, j, 0] = x_pos + random_radius*np.cos(angles[j])
-                pillars[i, j, 1] = y_pos + random_radius*np.sin(angles[j])
+            while random_x_pos ** 2 + random_y_pos ** 2 > radius ** 2:
+                random_xpos = np.random.uniform(x_pos, x_pos + radius)
+                random_ypos = np.random.uniform(y_pos, y_pos + radius)
 
-    return pillars
+            pillars[i, j, 0] = random_xpos
+            pillars[i, j, 1] = random_ypos
+
+    return np.avg(pillars, axis=1)
 
 
 def _calculate_current_timestep(x_coords, y_coords, disp_data, pillars):
@@ -82,9 +82,6 @@ def _calculate_current_timestep(x_coords, y_coords, disp_data, pillars):
 
     Calculates values at given tracking points (defined by pillars)
     based on interpolation.
-    
-    # TODO can we make this step faster by only interpolating in
-    # the relevant region?
 
     Args:
         x_coords - x coordinates, dimension X
@@ -103,16 +100,17 @@ def _calculate_current_timestep(x_coords, y_coords, disp_data, pillars):
     no_pillars, no_tracking_pts, no_dims = pillars.shape
 
     disp_values = np.zeros((no_pillars, no_tracking_pts, no_dims))
-    
+
     for p in range(no_pillars):
         for n in range(no_tracking_pts):
             disp_values[p, n] = fn_rel(*pillars[p, n])
-    
+
     return disp_values
 
 
-def _track_pillars_over_time(disp_data, pillar_positions, size_x, size_y,
-                             tracking_type, no_tracking_pts=200):
+def _track_pillars_over_time(
+    disp_data, pillar_positions, radius, size_x, size_y, no_tracking_pts=200
+):
     """
 
     Tracks position of mesh poinds defined for pillars over time, based
@@ -121,20 +119,21 @@ def _track_pillars_over_time(disp_data, pillar_positions, size_x, size_y,
     Args:
         disp_data - displacement data, numpy array of size T x X x Y x 2
         pillar_positions - coordinates + radii of each pillar
+        radius
         size_x - length (in pixels) of picture
         size_y - width (in pixels) of picture
+        no tracking points
 
     Returns:
-        numpy array of dimensions T x no_tracking_pts x no_pillars (no_tracking_pts default value);
+        numpy array of dimensions T x no_tracking_pts x no_pillars
+            (no_tracking_pts default value);
             gives absolute displacement of circumfence points
 
     """
 
     # define pillars by their circumference
 
-    pillars = _define_pillars(pillar_positions, \
-                              tracking_type=tracking_type, \
-                              no_tracking_pts=no_tracking_pts)
+    pillars = _define_pillars(pillar_positions, radius, no_tracking_pts)
 
     # some general values
     T, x_dim, y_dim = disp_data.shape[:3]
@@ -146,100 +145,86 @@ def _track_pillars_over_time(disp_data, pillar_positions, size_x, size_y,
     # store data - as an average of all meshpoints
     rel_values = np.zeros((T, no_pillars, no_tracking_pts, 2))
 
-    # TODO should be done in parallel, using threads
     for t in range(T):
-        rel_values[t] = \
-                _calculate_current_timestep(x_coords, y_coords, \
-                                            disp_data[t], pillars)
+        rel_values[t] = _calculate_current_timestep(
+            x_coords, y_coords, disp_data[t], pillars
+        )
 
-    # absolute values: add relative to first positions
-    abs_values = rel_values + pillars[None, :, :, :]
-
-    return rel_values, abs_values
+    return rel_values
 
 
-def track_pillars(input_file, pillar_positions, L=50E-6, R=10E-6, E=2.63E6, \
-                    tracking_type='large_radius', no_tracking_pts=200, save_data=True):
+def displacement_to_force(displacement, L=50e-6, R=10e-60, E=2.63e6):
+    area = L * R * np.pi * 1e6  # area in mm^2 half cylinder area
+    values_m = 1e-6 * displacement  # um -> m
+
+    force = displacement_to_force(values_m, E, L, R)
+    force_per_area = displacement_to_force_area(values_m, E, L, R, area)
+
+    return force, force_per_area
+
+
+def read_pillar_positions(f_in):
+
+    path, filename, _ = get_input_properties(f_in)
+    pos_file = os.path.join(path, filename, "mpsmechanics", "pillar_positions.csv")
+
+    assert os.path.isfile(
+        pos_file
+    ), f"Error: Expected pillar position file located in {pos_file}."
+
+    positions = pandas.read_csv(pos_file).to_dict("list")
+
+    positions_flipped = {}
+    positions_flipped["positions_longitudinal"] = positions["Y"]
+    positions_flipped["positions_transverse"] = positions["X"]
+
+    return positions_flipped
+
+
+def track_pillars(f_in, overwrite, overwrite_all, param_list, save_data=True):
     """
 
     Tracks points corresponding to "pillars" over time.
 
     Arguments:
-        input_file - filename for displacement data
+        f_in - filename for displacement data
         pillar_positions - dictionary describing pillar positions + radii 
-        L - ??
-        R - ??
-        E - ??
-        tracking_type - ??
-        no_tracking_pts - ??
 
     Returns:
         dictionary with calculated values
 
     """
 
-    E = 2.63E6   # TODO must be mistake in pillar tracking script??
-
     # displacement data and positions of pillars
-    mt_data = read_prev_layer(input_file, "track_motion", track_motion, \
-                    save_data=True)         # TODO figure out code flow for saving data
 
-    mps_data = mps.MPS(input_file)
-    disp_data = mt_data["displacement vectors"]
-    scaling_factor = mt_data["block size"]*mps_data.info["um_per_pixel"]
+    mps_data = mps.MPS(f_in)
+    um_per_pixel = mps_data.info["um_per_pixel"]
 
-    print("Tracking pillars for data set: ", input_file)
-    rel_values_px, abs_values_px = \
-            _track_pillars_over_time(disp_data, \
-            pillar_positions, mps_data.size_x, mps_data.size_y, \
-            no_tracking_pts=no_tracking_pts, tracking_type=tracking_type)
-    
-    # then do a couple of transformations ..
-    rel_values_um = 1/scaling_factor*rel_values_px
-    abs_values_um = 1/scaling_factor*abs_values_px
+    mt_data = read_prev_layer(f_in, analyze_mechanics)
+    disp_data = mt_data["all_values"]["displacement"] / um_per_pixel  # in pixels
 
-    area = L*R*np.pi*1E6               # area in mm^2 half cylinder area
-    values_m = 1e-6*rel_values_um
+    pillar_positions = read_pillar_positions(f_in)  # in pixels
 
-    force = displacement_to_force(values_m, E, L, R)
-    forceperarea = displacement_to_force_area(values_m, E, \
-            L, R, area)
+    print(f"Tracking pillars for {f_in}")
 
-    values = {"absolute_displacement_px" : abs_values_px,
-              "absolute_displacement_um" : abs_values_um,
-              "relative_displacement_px" : rel_values_px,
-              "relative_displacement_um" : rel_values_um,
-              "force" : force,
-              "force_per_area" : forceperarea}
+    radius = 10
 
-    d_all = {}
-    d_all["all_values"] = values
+    disp_over_time = um_per_pixel * _track_pillars_over_time(
+        disp_data, pillar_positions, radius, mps_data.size_x, mps_data.size_y
+    )
 
-    print(f"Pillar tracking for {input_file} finished")
-    
+    force, force_per_area = displacement_to_force(disp_over_time, R=radius * 1e-6)
+
+    values = {
+        **positions,
+        "displacement_um": disp_over_time,
+        "force": force,
+        "force_per_area": forceperarea,
+    }
+
+    print(f"Pillar tracking for {f_in} finished")
+
     if save_data:
-        save_dictionary(input_file, "track_pillars", d_all)
+        save_dictionary(f_in, "track_pillars", values)
 
     return d_all
-
-
-
-def track_pillars_sgvalue(input_file, save_data=True):
-    path, filename, _ = get_input_properties(input_file)
- 
-    # tmp solution; let's get values from pillar_tracking/track_pillars
-
-    f_in = os.path.join(path, filename, "pillar_tracking", "track_pillars.npy")
-    data_all = np.load(f_in, allow_pickle=True).item()
-
-    # one value per pillar
-
-    data_pillars = {"values" : {}, "units" : {}}
-
-    for k in data_all["all_values"].keys():
-        data_pillars["values"][k] = np.mean(data_all["all_values"][k], axis=-2)
-
-    if save_data:
-        save_dictionary(input_file, "track_pillars_sgvalue" , data_pillars)
-
-    return data_pillars

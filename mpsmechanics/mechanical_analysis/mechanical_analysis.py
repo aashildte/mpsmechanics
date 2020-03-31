@@ -61,7 +61,7 @@ def _swap_dict_keys(dict_org):
 def _calc_intervals_from_pacing(pacing):
 
     pacing = np.array(pacing, dtype=np.float)
-    indices = np.where(np.diff(pacing) > 1)[0]
+    indices = np.where(np.diff(pacing[1:]) > 1)[0] + 1
 
     intervals = []
     for i in range(1, len(indices)):

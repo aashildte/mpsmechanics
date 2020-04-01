@@ -146,7 +146,7 @@ def _track_pillars_over_time(
 
 def disp_to_force_data(displacement, L, R, E):
 
-    R_um = R*1e-6
+    R_um = R * 1e-6
     area = L * R * np.pi * 1e6  # area in mm^2 half cylinder area
     values_m = 1e-6 * displacement  # um -> m
 
@@ -159,7 +159,9 @@ def disp_to_force_data(displacement, L, R, E):
 def read_pillar_positions(f_in):
 
     path, filename, _ = get_input_properties(f_in)
-    pos_file = os.path.join(path, filename, "mpsmechanics", "pillar_tracking", "pillar_positions.csv")
+    pos_file = os.path.join(
+        path, filename, "mpsmechanics", "pillar_tracking", "pillar_positions.csv"
+    )
 
     assert os.path.isfile(
         pos_file
@@ -171,8 +173,8 @@ def read_pillar_positions(f_in):
 
     positions = np.zeros((num_pillars, 2))
 
-    positions[:, 0] = positions_dict["Y"]            # flipped: trans.
-    positions[:, 1] = positions_dict["X"]            # flipped: long. 
+    positions[:, 0] = positions_dict["Y"]  # flipped: trans.
+    positions[:, 1] = positions_dict["X"]  # flipped: long.
 
     return positions
 
@@ -197,30 +199,30 @@ def track_pillars(f_in, overwrite, overwrite_all, param_list, save_data=True):
     um_per_pixel = mps_data.info["um_per_pixel"]
 
     mt_data = read_prev_layer(f_in, analyze_mechanics, param_list)
-    disp_data = (1/um_per_pixel)*mt_data["all_values"]["displacement"]     # in pixels
-    pillar_positions = read_pillar_positions(f_in)                         # in pixels
+    disp_data = (1 / um_per_pixel) * mt_data["all_values"]["displacement"]  # in pixels
+    pillar_positions = read_pillar_positions(f_in)  # in pixels
 
     print(f"Tracking pillars for {f_in}")
 
-    R=10         # um
-    L=50e-6
-    E=2.63e6
+    R = 10  # um
+    L = 50e-6
+    E = 2.63e6
 
     over_time_pixels = _track_pillars_over_time(
         disp_data, pillar_positions, R, mps_data.size_x, mps_data.size_y
     )
 
-    over_time_um = um_per_pixel*over_time_pixels
+    over_time_um = um_per_pixel * over_time_pixels
 
     force, force_per_area = disp_to_force_data(over_time_um, L=L, R=R, E=E)
 
     values = {
-        "initial_positions" : pillar_positions,
-        "displacement_pixels" : over_time_pixels,
+        "initial_positions": pillar_positions,
+        "displacement_pixels": over_time_pixels,
         "displacement_um": over_time_um,
         "force": force,
         "force_per_area": force_per_area,
-        "material_parameters" : {"R" : R, "E" : E, "L" : L},
+        "material_parameters": {"R": R, "E": E, "L": L},
     }
 
     print(f"Pillar tracking for {f_in} finished")

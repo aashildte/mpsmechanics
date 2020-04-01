@@ -121,6 +121,7 @@ def add_parameters_parser_arguments(parser, level):
 
     return all_keys
 
+
 def add_animation_parser_arguments(parser):
     """
 
@@ -144,7 +145,12 @@ def add_animation_parser_arguments(parser):
                         help="Scaling factor for fps; 1 = real time, 0.5 half speed",
                         type=float)
 
-    return ["animate", "scaling_factor"]
+    parser.add_argument("-t", "--time_step",
+                        default=None,                # = "peak"
+                        help="Which time step to plot heat maps for; default is at peak.",
+                        type=int)
+
+    return ["animate", "scaling_factor", "time_step"]
 
 
 def add_focus_parser_arguments(parser):
@@ -218,12 +224,17 @@ def add_metrics_arguments(parser):
                         help="Which metrics to plot/make figures for (one string, separate multiple ones by space).",
                         type=str)
 
-    parser.add_argument("-r", "--range", \
+    parser.add_argument("-rmax", "--range_max", \
                         default=None,
-                        help="Which range to use for plots (color bar); +- this value.",
+                        help="Which range to use for plots (color bar); gives upper bound.",
+                        type=float)
+    
+    parser.add_argument("-rmin", "--range_min", \
+                        default=None,
+                        help="Which range to use for plots (color bar); gives upper bound.",
                         type=float)
 
-    return ["metrics", "range"]
+    return ["metrics", "range_max", "range_min"]
 
 
 def split_parameter_dictionary(vargs, keys):

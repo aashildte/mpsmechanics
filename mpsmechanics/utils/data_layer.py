@@ -98,7 +98,8 @@ def generate_filename(input_file, script_name, param_list, extention, subfolder=
 
         for key in key_list:
             value = param_dict[key]
-            param_name += f"__{key}_{value}"
+            if value is not None:                      # None = default, not needed in filename
+                param_name += f"__{key}_{value}"
     
     param_name = param_name.replace(".", "p") + extention
 

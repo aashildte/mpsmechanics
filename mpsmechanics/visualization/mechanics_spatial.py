@@ -78,13 +78,21 @@ def _get_1d_values(images, values):
     return all_components, subtitles
 
 
-def _init_subplots_1d(all_components, time_step):
+def _init_subplots_1d(all_components, time_step, cb_range):
     axes, fig = setup_frame(1, 2, False, False)
     subplots = []
     images, magnitude = all_components
 
     vmin = np.min(magnitude)
     vmax = np.max(magnitude)
+
+    #overwrite if given by user:
+
+    if cb_range[0] is not None:
+        vmin = cb_range[0]
+    
+    if cb_range[1] is not None:
+        vmax = cb_range[1]
 
     if np.isclose(vmin, 0):
         colormap = "viridis"
@@ -115,7 +123,7 @@ def _make_1d_plot_pretty(fig, axes, subplots, subtitles, metadata):
     _set_ax_units(axes[1], blocksize * pixels2um, blocksize // 2)
 
 
-def plot_1d_values(spatial_data, time, time_step, metadata):
+def plot_1d_values(spatial_data, time, time_step, cb_range, metadata):
     """
 
     Plots original image and magnitude.
@@ -134,7 +142,7 @@ def plot_1d_values(spatial_data, time, time_step, metadata):
     values = spatial_data["derived_quantity"]
 
     all_components, subtitles = _get_1d_values(images, values)
-    axes, fig, subplots = _init_subplots_1d(all_components, time_step)
+    axes, fig, subplots = _init_subplots_1d(all_components, time_step, cb_range)
     _make_1d_plot_pretty(fig, axes, subplots, subtitles, metadata)
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
 
@@ -174,7 +182,7 @@ def _find_xy_coords(images, values):
     return np.asarray([x_coords, y_coords])
 
 
-def _init_subplots_2d(all_components, time_step):
+def _init_subplots_2d(all_components, time_step, cb_range):
     axes, fig = setup_frame(2, 3, False, False)
 
     images, values, normalized, magnitude, x_values, y_values = all_components
@@ -184,6 +192,16 @@ def _init_subplots_2d(all_components, time_step):
     coords = _find_xy_coords(images, values)
 
     vmax_mag = np.max(magnitude)
+
+    #overwrite if given by user:
+
+    if cb_range[0] is not None:
+        vmin = cb_range[0]
+    
+    if cb_range[1] is not None:
+        vmax = cb_range[1]
+        vmax_mag = cb_range[1]
+
     subplots = [
         axes[0].imshow(images[time_step], cmap="gray"),
         make_quiver_plot(
@@ -219,7 +237,7 @@ def _make_2d_plot_pretty(fig, axes, subplots, subtitles, metadata):
         _set_ax_units(axis, blocksize * pixels2um, blocksize // 2)
 
 
-def plot_2d_values(spatial_data, time, time_step, metadata):
+def plot_2d_values(spatial_data, time, time_step, cb_range, metadata):
     """
 
     Plots original image, vector field, normalized vector field,
@@ -240,7 +258,7 @@ def plot_2d_values(spatial_data, time, time_step, metadata):
 
     quiver_step = 3
     all_components, subtitles = _get_2d_values(images, values, quiver_step)
-    axes, fig, subplots = _init_subplots_2d(all_components, time_step)
+    axes, fig, subplots = _init_subplots_2d(all_components, time_step, cb_range)
     _make_2d_plot_pretty(fig, axes, subplots, subtitles, metadata)
 
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
@@ -287,14 +305,22 @@ def _get_2x2d_values(images, values):
     return all_components, subtitles
 
 
-def _init_subplots_2x2d(all_components, time_step, shift):
+def _init_subplots_2x2d(all_components, time_step, cb_range, shift):
     axes, fig = setup_frame(2, 3, False, False)
 
     images, ux_values, uy_values, sg_values, vx_values, vy_values = all_components
 
     val_range = _get_value_range([ux_values, uy_values, vx_values, vy_values])
-
     sg_range = np.min(sg_values), np.max(sg_values)
+
+    #overwrite if given by user:
+
+    if cb_range[0] is not None:
+        val_range[0] = cb_range[0]
+    
+    if cb_range[1] is not None:
+        val_range[1] = cb_range[1]
+        sg_range[1] = cb_range[1]
 
     subplots = [
         axes[0].imshow(images[time_step], cmap="gray"),
@@ -344,7 +370,7 @@ def _make_2x2d_plot_pretty(fig, axes, subplots, subtitles, metadata):
         _set_ax_units(axis, blocksize * pixels2um, blocksize // 2)
 
 
-def plot_2x2d_values(spatial_data, time, time_step, metadata):
+def plot_2x2d_values(spatial_data, time, time_step, cb_range, metadata):
     """
 
     Plots original image, eigenvalues (max.) and four components of
@@ -356,6 +382,7 @@ def plot_2x2d_values(spatial_data, time, time_step, metadata):
             - derived_quantity : T x X x Y x 2 x 2 numpy array
         time - corresponding time units
         time_step - integer value; time step of interest, typically peak or 0
+        cb_range - tuple with (min, max) for colorbar range
         metadata - dictionary with information about labels, units
 
     """
@@ -365,7 +392,7 @@ def plot_2x2d_values(spatial_data, time, time_step, metadata):
 
     all_components, subtitles = _get_2x2d_values(images, values)
     axes, fig, subplots = _init_subplots_2x2d(
-        all_components, time_step, metadata["shift_diagonal"]
+        all_components, time_step, cb_range, metadata["shift_diagonal"]
     )
     _make_2x2d_plot_pretty(fig, axes, subplots, subtitles, metadata)
     plt.suptitle("Time: {} ms".format(int(time[time_step])))
@@ -379,24 +406,25 @@ def plot_2x2d_values(spatial_data, time, time_step, metadata):
     return fig, _update
 
 
-def _plot_at_peak(spatial_data, time, metadata, fname):
+def _plot_at_time_step(spatial_data, time, time_step, metadata, fname, cb_range):
 
     values = spatial_data["derived_quantity"]
 
-    peak = np.argmax(calc_norm_over_time(values))
+    if time_step is None:
+        time_step = np.argmax(calc_norm_over_time(values))
     plot_fn = get_plot_fun(values, [plot_1d_values, plot_2d_values, plot_2x2d_values])
-    plot_fn(spatial_data, time, peak, metadata)
+    plot_fn(spatial_data, time, time_step, cb_range, metadata)
 
     plt.savefig(fname)
     plt.close("all")
 
 
-def _make_animation(spatial_data, time, metadata, fname, animation_config):
+def _make_animation(spatial_data, time, metadata, fname, cb_range, animation_config):
     plot_fn = get_plot_fun(
         spatial_data["derived_quantity"],
         [plot_1d_values, plot_2d_values, plot_2x2d_values],
     )
-    fig, _update = plot_fn(spatial_data, time, 0, metadata)
+    fig, _update = plot_fn(spatial_data, time, 0, cb_range, metadata)
 
     make_animation(fig, _update, fname, **animation_config)
 
@@ -432,10 +460,13 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
 
     mps_data, mc_data = load_input_data(f_in, param_list, overwrite_all)
     animation_config = get_animation_configuration(param_list[-1], mps_data)
-    animate = animation_config.pop("animate")
 
+    animate = animation_config["animate"]
     metrics = param_list[-1].pop("metrics")
     metrics = metrics.split(" ")
+
+    cb_range = (param_list[-1]["range_min"], param_list[-1]["range_max"])
+    time_step = param_list[-1]["time_step"]
 
     for metric in metrics:
         assert (
@@ -450,7 +481,7 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
         metadata["shift_diagonal"] = metric == "deformation_tensor"
 
         if overwrite or (not os.path.isfile(fname_png)):
-            _plot_at_peak(spatial_data, time, metadata, fname_png)
+            _plot_at_time_step(spatial_data, time, time_step, metadata, fname_png, cb_range)
             print("Plot at peak done; " + f"image saved to {fname_png}")
         else:
             print(f"Image {fname_png} already exists")
@@ -458,7 +489,7 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
         if animate:
             if overwrite or (not os.path.isfile(fname_mp4)):
                 _make_animation(
-                    spatial_data, time, metadata, fname_mp4, animation_config
+                    spatial_data, time, metadata, fname_mp4, cb_range, animation_config
                 )
                 print("Animation movie produced; " + f"movie saved to {fname_mp4}")
             else:

@@ -151,11 +151,6 @@ def _make_colorbars(fig, axes, clm, norm):
     cax = divider.append_axes("right", size="5%", pad=0.1)
     cbar = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=clm), cax=cax)
 
-    # for cases where we use a cut-off value:
-    #cbar = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=clm), \
-    #        ticks=[0, 0.25, 0.5, 0.75, 0.1], cax=cax)
-    #cbar.ax.set_yticklabels(['0', '0.25', '0.5', '0.75', '> 0.1'])
-
     cbar.set_label("Principal strain (magnitude)")
 
 
@@ -220,10 +215,13 @@ def _plot_mesh_over_image(spatial_data, user_params, time, time_step):
     return fig, _update
 
 
-def _plot_at_peak(spatial_data, user_params, time, filename):
+def _plot_at_time_step(spatial_data, user_params, time, time_step, filename):
     displacement = spatial_data["displacement"]
-    peak = np.argmax(calc_norm_over_time(displacement))
-    _plot_mesh_over_image(spatial_data, user_params, time, peak)
+    
+    if time_step is None:
+        time_step= np.argmax(calc_norm_over_time(displacement))
+
+    _plot_mesh_over_image(spatial_data, user_params, time, time_step)
 
     plt.savefig(filename)
     plt.close('all')
@@ -292,9 +290,10 @@ def visualize_mesh_over_movie(f_in, overwrite, overwrite_all, param_list):
     fname_p = _generate_param_filename(f_in, user_params)
     fname_png = fname_p + ".png"
     fname_mp4 = fname_p + ".mp4"
+    time_step = param_list[-1]["time_step"]
 
     if overwrite or not os.path.isfile(fname_png):
-        _plot_at_peak(spatial_data, user_params, time, fname_png)
+        _plot_at_time_step(spatial_data, user_params, time, time_step, fname_png)
         print("Plots of mesh over image at peak done; " + \
               f"image saved to {fname_png}")
     else:

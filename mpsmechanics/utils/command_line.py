@@ -115,11 +115,15 @@ def add_parameters_parser_arguments(parser, level):
     all_keys = []
 
     if level >= 0:
-        pass
+        l0_keys = []
     if level >= 1:
-        pass
+        parser.add_argument("-ms", "--motion_scaling_factor", \
+                        default=1,
+                        help="Scaling factor for motion; 1 = original.",
+                        type=float)
+        l1_keys = ["motion_scaling_factor"]
 
-    return all_keys
+    return [l0_keys, l1_keys]
 
 
 def add_animation_parser_arguments(parser):

@@ -45,17 +45,8 @@ def _define_pillars(pillar_positions, radius, no_tracking_pts=200):
 
     assert no_tracking_pts > 0, "no_tracking_pts must be greater than 0"
 
-    expected_keys = ["positions_transverse", "positions_longitudinal"]
-    error_msg = (
-        "Error: Expected pillar positions to be given as a dictionary with "
-        + f"{expected_keys} as keys."
-    )
-
-    for e_k in expected_keys:
-        assert e_k in pillar_positions.keys(), error_msg
-
-    x_positions = pillar_positions["positions_longitudinal"]
-    y_positions = pillar_positions["positions_transverse"]
+    x_positions = pillar_positions[:, 0]
+    y_positions = pillar_positions[:, 1]
 
     no_pillars = len(x_positions)
     pillars = np.zeros((no_pillars, no_tracking_pts, 2))
@@ -153,7 +144,9 @@ def _track_pillars_over_time(
     return np.mean(rel_values, axis=2)
 
 
-def disp_to_force_data(displacement, L=50e-6, R=10e-60, E=2.63e6):
+def disp_to_force_data(displacement, L, R, E):
+
+    R_um = R*1e-6
     area = L * R * np.pi * 1e6  # area in mm^2 half cylinder area
     values_m = 1e-6 * displacement  # um -> m
 
@@ -172,13 +165,16 @@ def read_pillar_positions(f_in):
         pos_file
     ), f"Error: Expected pillar position file located in {pos_file}."
 
-    positions = pandas.read_csv(pos_file).to_dict("list")
+    positions_dict = pandas.read_csv(pos_file).to_dict("list")
 
-    positions_flipped = {}
-    positions_flipped["positions_longitudinal"] = positions["Y"]
-    positions_flipped["positions_transverse"] = positions["X"]
+    num_pillars = len(positions_dict["X"])
 
-    return positions_flipped
+    positions = np.zeros((num_pillars, 2))
+
+    positions[:, 0] = positions_dict["Y"]            # flipped: trans.
+    positions[:, 1] = positions_dict["X"]            # flipped: long. 
+
+    return positions
 
 
 def track_pillars(f_in, overwrite, overwrite_all, param_list, save_data=True):
@@ -200,32 +196,37 @@ def track_pillars(f_in, overwrite, overwrite_all, param_list, save_data=True):
     mps_data = mps.MPS(f_in)
     um_per_pixel = mps_data.info["um_per_pixel"]
 
-    mt_data = read_prev_layer(f_in, analyze_mechanics)
-    disp_data = mt_data["all_values"]["displacement"] / um_per_pixel  # in pixels
-
-    pillar_positions = read_pillar_positions(f_in)  # in pixels
+    mt_data = read_prev_layer(f_in, analyze_mechanics, param_list)
+    disp_data = (1/um_per_pixel)*mt_data["all_values"]["displacement"]     # in pixels
+    pillar_positions = read_pillar_positions(f_in)                         # in pixels
 
     print(f"Tracking pillars for {f_in}")
 
-    radius = 10
+    R=10         # um
+    L=50e-6
+    E=2.63e6
 
-    disp_over_time = um_per_pixel * _track_pillars_over_time(
-        disp_data, pillar_positions, radius, mps_data.size_x, mps_data.size_y
+    over_time_pixels = _track_pillars_over_time(
+        disp_data, pillar_positions, R, mps_data.size_x, mps_data.size_y
     )
 
-    force, force_per_area = disp_to_force_data(disp_over_time, R=radius * 1e-6)
+    over_time_um = um_per_pixel*over_time_pixels
+
+    force, force_per_area = disp_to_force_data(over_time_um, L=L, R=R, E=E)
 
     values = {
-        **pillar_positions,
-        "displacement_um": disp_over_time,
+        "initial_positions" : pillar_positions,
+        "displacement_pixels" : over_time_pixels,
+        "displacement_um": over_time_um,
         "force": force,
         "force_per_area": force_per_area,
+        "material_parameters" : {"R" : R, "E" : E, "L" : L},
     }
 
     print(f"Pillar tracking for {f_in} finished")
 
     if save_data:
-        filename = generate_filename(f_in, "track_pillars", param_list, ".npy", subfolder="pillar_tracking")
+        filename = generate_filename(f_in, "track_pillars", param_list, ".npy")
         save_dictionary(filename, values)
 
     return values

@@ -41,9 +41,9 @@ def interpolate_values_xy(x_coords, y_coords, org_data):
 
 
     fn_x = interpolate.interp2d(x_coords, y_coords, \
-            org_data[:, :, 0].transpose(), kind='cubic')
+            org_data[:, :, 0].transpose(), kind='linear')
     fn_y = interpolate.interp2d(x_coords, y_coords, \
-            org_data[:, :, 1].transpose(), kind='cubic')
+            org_data[:, :, 1].transpose(), kind='linear')
 
     fn_rel = lambda x, y: np.array([float(fn_x(x, y)), float(fn_y(x, y))])
 

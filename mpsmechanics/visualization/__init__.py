@@ -24,14 +24,19 @@ from .mechanics_overtimeandarea import (
     visualize_over_time_and_area,
 )
 
-from .vectorfield import (
-    visualize_vectorfield,
-)
-
 from .mesh_over_movie import (
     visualize_mesh_over_movie,
+)
+
+from .pillar_tracking import (
+    visualize_pillar_tracking,
 )
 
 from .setup_plots import (
     make_pretty_label,
 )
+
+from .vectorfield import (
+    visualize_vectorfield,
+)
+

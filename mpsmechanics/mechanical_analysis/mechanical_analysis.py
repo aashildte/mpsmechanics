@@ -71,14 +71,17 @@ def _calc_intervals_from_pacing(pacing):
 
 
 def _calc_mechanical_quantities(mps_data, mt_data, \
-        type_filter="gaussian", sigma=3, use_pacing=True):
+        type_filter="gaussian", sigma=3, \
+        motion_scaling_factor = 1, use_pacing=True):
 
     time = mps_data.time_stamps
 
     angle = mt_data["angle"]
     pacing = mps_data.pacing
 
-    displacement = mt_data["displacement_vectors"]
+    print("motion scaling factor: ", motion_scaling_factor)
+
+    displacement = motion_scaling_factor*mt_data["displacement_vectors"]
     um_per_pixel = mps_data.info["um_per_pixel"]
     dx = um_per_pixel * mt_data["block_size"]
 

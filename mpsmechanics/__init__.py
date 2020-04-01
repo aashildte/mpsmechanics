@@ -81,5 +81,5 @@ from .visualization import (
     visualize_over_time,
     visualize_vectorfield,
     visualize_over_time_and_area,
+    visualize_pillar_tracking,
 )
-

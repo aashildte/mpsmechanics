@@ -70,9 +70,8 @@ def _calc_intervals_from_pacing(pacing):
     return intervals
 
 
-def _calc_mechanical_quantities(
-    mps_data, mt_data, type_filter="gaussian", sigma=3, use_pacing=True
-):
+def _calc_mechanical_quantities(mps_data, mt_data, \
+        type_filter="gaussian", sigma=3, use_pacing=True):
 
     time = mps_data.time_stamps
 
@@ -86,7 +85,6 @@ def _calc_mechanical_quantities(
     if use_pacing and np.max(pacing > 1):
         indices = np.where(np.diff(pacing[1:]) > 1)[0] + 1
         pacing_step = indices[0] - 1
-        print("pacing_step", pacing_step)
 
         displacement = convert_disp_data(displacement, pacing_step)
         displacement = um_per_pixel * apply_filter(displacement, type_filter, sigma)
@@ -102,7 +100,6 @@ def _calc_mechanical_quantities(
         maxima = calc_beat_maxima(disp_data_folded)
         intervals = calc_beat_intervals(disp_data_folded)
 
-    np.seterr(all="ignore")
     spatial = calc_spatial_metrics(displacement, time, dx, angle, intervals)
 
     d_all = _swap_dict_keys({**spatial})

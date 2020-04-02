@@ -1,4 +1,3 @@
-
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,19 +11,24 @@ from scipy.interpolate import interp1d
 
 def get_strain_avg(BF_file):
     mps_ob = mps.MPS(BF_file)
-    data = mc.read_prev_layer(BF_file, mc.analyze_mechanics, [], False)
+    data = mc.read_prev_layer(
+        BF_file, mc.analyze_mechanics, [], False
+    )
     strain_avg = data["over_time_avg"]["principal_strain"]
 
     pacing = mps_ob.pacing.copy()
-    
-    chopped = mps.analysis.chop_data_with_pacing(strain_avg, \
-            mps_ob.time_stamps, pacing)
 
-    min_len = min([len(chopped.data[i]) for i in range(len(chopped.data[:-1]))])
+    chopped = mps.analysis.chop_data_with_pacing(
+        strain_avg, mps_ob.time_stamps, pacing
+    )
+
+    min_len = min(
+        [len(chopped.data[i]) for i in range(len(chopped.data[:-1]))]
+    )
 
     chopped_equal = [_d[:min_len] for _d in chopped.data[:-1]]
     time_equal = [_t[:min_len] for _t in chopped.times[:-1]]
- 
+
     avg_per_beat = np.mean(chopped_equal, axis=0)
     avg_per_beat = avg_per_beat - np.min(avg_per_beat)
     avg_per_beat /= max(avg_per_beat)
@@ -36,9 +40,9 @@ def get_strain_avg(BF_file):
 
 def get_fl_avg(input_file):
     mps_ob = mps.MPS(input_file)
-    
+
     data = mps.analysis.analyze_mps_func(mps_ob)
-    
+
     trace_all = data["unchopped_data"]["trace"]
     time_all = data["unchopped_data"]["time"]
     pacing = data["unchopped_data"]["pacing"]
@@ -51,16 +55,23 @@ def get_fl_avg(input_file):
 
     return time_avg, avg_per_beat, time_all, trace_all, pacing
 
-def make_plots_over_time(fig, outer_axis, strain_values, ca_values, ap_values):
-    inner = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=outer_axis)
+
+def make_plots_over_time(
+    fig, outer_axis, strain_values, ca_values, ap_values
+):
+    inner = gridspec.GridSpecFromSubplotSpec(
+        3, 1, subplot_spec=outer_axis
+    )
 
     axes = []
 
-    for (i, values) in enumerate((strain_values, ca_values, ap_values)):
+    for (i, values) in enumerate(
+        (strain_values, ca_values, ap_values)
+    ):
         time = values[2]
         trace = values[3]
         pacing = values[4]
-        pacing = (max(trace)/5)*pacing
+        pacing = (max(trace) / 5) * pacing
 
         axis = plt.Subplot(fig, inner[i, 0])
         axis.plot(time, trace)
@@ -76,18 +87,23 @@ def make_plots_over_time(fig, outer_axis, strain_values, ca_values, ap_values):
     axes[2].set_xlabel("Time")
 
 
-def make_phase_plots(fig, outer_axis, strain_values, ca_values, ap_values):
-    strain_fun, ca_fun, ap_fun = \
-            [interp1d(values[0], values[1], fill_value="extrapolate") \
-                for values in (strain_values, ca_values, ap_values)]
+def make_phase_plots(
+    fig, outer_axis, strain_values, ca_values, ap_values
+):
+    strain_fun, ca_fun, ap_fun = [
+        interp1d(values[0], values[1], fill_value="extrapolate")
+        for values in (strain_values, ca_values, ap_values)
+    ]
 
     time = np.linspace(0, 1000, 1000)
-    
+
     strain = strain_fun(time)
     ca = ca_fun(time)
     ap = ap_fun(time)
 
-    inner = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=outer_axis)
+    inner = gridspec.GridSpecFromSubplotSpec(
+        2, 2, subplot_spec=outer_axis
+    )
 
     axis = plt.Subplot(fig, inner[0, 0])
     axis.plot(time, ap, time, ca, time, strain)
@@ -111,7 +127,7 @@ def make_phase_plots(fig, outer_axis, strain_values, ca_values, ap_values):
     axis.set_xlim((-0.1, 1.1))
     axis.set_ylim((-0.1, 1.1))
     fig.add_subplot(axis)
-    
+
     axis = plt.Subplot(fig, inner[1, 1])
     axis.plot(ca, ap)
     axis.set_xlabel("Ca")
@@ -126,24 +142,32 @@ def make_strain_ca_ap_plots(BF_file, Cyan_file, Red_file):
     strain_values = get_strain_avg(BF_file)
     ca_values = get_fl_avg(Cyan_file)
     ap_values = get_fl_avg(Red_file)
-    
+
     fig = plt.figure(figsize=(20, 10))
     outer = gridspec.GridSpec(1, 2)
 
-    make_plots_over_time(fig, outer[0], strain_values, ca_values, ap_values)
-    make_phase_plots(fig, outer[1], strain_values, ca_values, ap_values)
+    make_plots_over_time(
+        fig, outer[0], strain_values, ca_values, ap_values
+    )
+    make_phase_plots(
+        fig, outer[1], strain_values, ca_values, ap_values
+    )
 
     plt.savefig("strain_ca_ap.png")
+
 
 BF_file = sys.argv[1]
 Cyan_file = sys.argv[2]
 Red_file = sys.argv[3]
 
-assert "BF" in BF_file, \
-        f"Error: Expected BF file as first argument, not {BF_file}."
-assert "Cyan" in Cyan_file, \
-        f"Error: Expected Cyan file as second argument, not {Cyan_file}."
-assert "Red" in Red_file, \
-        f"Error: Expected Red file as third argument, not {Red_file}."
+assert (
+    "BF" in BF_file
+), f"Error: Expected BF file as first argument, not {BF_file}."
+assert (
+    "Cyan" in Cyan_file
+), f"Error: Expected Cyan file as second argument, not {Cyan_file}."
+assert (
+    "Red" in Red_file
+), f"Error: Expected Red file as third argument, not {Red_file}."
 
 make_strain_ca_ap_plots(BF_file, Cyan_file, Red_file)

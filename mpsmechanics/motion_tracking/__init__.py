@@ -1,9 +1,8 @@
-
 from .motion_tracking import (
-        block_matching,
-        template_matching,
-        track_motion,
-        MotionTracking,
+    block_matching,
+    template_matching,
+    track_motion,
+    MotionTracking,
 )
 
 from .ref_frame import (
@@ -11,6 +10,4 @@ from .ref_frame import (
     calculate_minmax,
 )
 
-from .restore_resolution import (
-        apply_filter
-)
+from .restore_resolution import apply_filter

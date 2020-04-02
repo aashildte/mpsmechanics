@@ -24,9 +24,12 @@ def get_animation_configuration(params, mps_data):
 
     """
 
-    return {"animate" : params.pop("animate"),
-            "framerate" : mps_data.framerate*params.pop("scaling_factor"),
-            "num_frames" : mps_data.frames.shape[-1]}
+    return {
+        "animate": params.pop("animate"),
+        "framerate": mps_data.framerate
+        * params.pop("scaling_factor"),
+        "num_frames": mps_data.frames.shape[-1],
+    }
 
 
 def make_animation(fig, update, fname, num_frames, framerate):
@@ -45,7 +48,9 @@ def make_animation(fig, update, fname, num_frames, framerate):
 
     extension = fname.split(".")[-1]
     extensions = ["gif", "mp4"]
-    msg = "Invalid extension {}. Expected one of {}".format(extension, extensions)
+    msg = "Invalid extension {}. Expected one of {}".format(
+        extension, extensions
+    )
     assert extension in extensions, msg
 
     # Set up formatting for the movie files
@@ -58,4 +63,4 @@ def make_animation(fig, update, fname, num_frames, framerate):
 
     fname = os.path.splitext(fname)[0]
     anim.save("{}.{}".format(fname, extension), writer=writer)
-    plt.close('all')
+    plt.close("all")

@@ -22,8 +22,11 @@ def calc_norm_over_time(data):
         Sum array - numpy array of dimension T
 
     """
-    assert data.shape[3:] in ((2, 2), (2,), ()), \
-            "Error: Shape of input data not recognized."
+    assert data.shape[3:] in (
+        (2, 2),
+        (2,),
+        (),
+    ), "Error: Shape of input data not recognized."
 
     return np.sum(calc_magnitude(data), axis=(1, 2))
 
@@ -41,8 +44,11 @@ def calc_magnitude(data):
 
     """
 
-    assert data.shape[3:] in ((2, 2), (2,), ()), \
-            "Error: Shape of input data not recognized."
+    assert data.shape[3:] in (
+        (2, 2),
+        (2,),
+        (),
+    ), "Error: Shape of input data not recognized."
 
     if data.shape[3:] == (2, 2):
         magnitude = np.linalg.norm(data, axis=(3, 4), ord=2)
@@ -67,8 +73,15 @@ def normalize_values(data):
 
     """
 
-    assert data.shape[3:] in ((2, 2), (2,), ()), \
-            "Error: Shape of input data not recognized."
+    assert data.shape[3:] in (
+        (2, 2),
+        (2,),
+        (),
+    ), "Error: Shape of input data not recognized."
 
-    return np.divide(data, calc_magnitude(data)[:, :, :, None], \
-            out=np.zeros_like(data), where=data != 0)
+    return np.divide(
+        data,
+        calc_magnitude(data)[:, :, :, None],
+        out=np.zeros_like(data),
+        where=data != 0,
+    )

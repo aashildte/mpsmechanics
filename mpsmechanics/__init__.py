@@ -47,13 +47,9 @@ from .motion_tracking import (
     MotionTracking,
 )
 
-from .pillar_tracking.pillar_tracking import (
-    track_pillars,
-)
+from .pillar_tracking.pillar_tracking import track_pillars
 
-from .statistical_analysis import (
-    calculate_metrics,
-)
+from .statistical_analysis import calculate_metrics
 
 from .utils import (
     add_animation_parser_arguments,

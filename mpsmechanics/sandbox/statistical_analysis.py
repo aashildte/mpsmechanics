@@ -13,8 +13,9 @@ import matplotlib.pyplot as plt
 
 from mpsmechanics.utils.data_layer import read_prev_layer
 from mpsmechanics.utils.command_line import get_input_files
-from mpsmechanics.mechanical_analysis.mechanical_analysis import \
-        analyze_mechanics
+from mpsmechanics.mechanical_analysis.mechanical_analysis import (
+    analyze_mechanics,
+)
 
 
 def get_file_info(f_in: str, average_across: dict):
@@ -60,13 +61,21 @@ def read_metric_data(f_in: str, metrics: list, type_metric: str):
 
     """
 
-    exp_type_metrics = ["metrics_max_avg", "metrics_avg_avg", "metrics_max_std", "metrics_max_std"]
-    assert type_metric in exp_type_metrics, \
-            f"Error: type_metric expected to be in {exp_type_metrics}, " + \
-                    f"but argument {type_metric} given."
+    exp_type_metrics = [
+        "metrics_max_avg",
+        "metrics_avg_avg",
+        "metrics_max_std",
+        "metrics_max_std",
+    ]
+    assert type_metric in exp_type_metrics, (
+        f"Error: type_metric expected to be in {exp_type_metrics}, "
+        + f"but argument {type_metric} given."
+    )
 
     metric_information = {}
-    analyze_mechanics_results = read_prev_layer(f_in, analyze_mechanics)
+    analyze_mechanics_results = read_prev_layer(
+        f_in, analyze_mechanics
+    )
 
     all_metrics = analyze_mechanics_results[type_metric]
 
@@ -76,11 +85,12 @@ def read_metric_data(f_in: str, metrics: list, type_metric: str):
     return metric_information
 
 
-
-def get_metrics_across_experiments(input_files: list,
-                                   average_across: dict,
-                                   metrics: list,
-                                   type_metric: str):
+def get_metrics_across_experiments(
+    input_files: list,
+    average_across: dict,
+    metrics: list,
+    type_metric: str,
+):
     """
 
     Extract the information we need; make it into statisitcs.
@@ -105,11 +115,17 @@ def get_metrics_across_experiments(input_files: list,
     metric_data = defaultdict(lambda: defaultdict(list))
 
     for f_in in input_files:
-        str_information = get_file_info(f_in, average_across)           # e.g. "dose1_1Hz"
-        metric_information = read_metric_data(f_in, metrics, type_metric)        # e.g. {"velocity" : 2}
+        str_information = get_file_info(
+            f_in, average_across
+        )  # e.g. "dose1_1Hz"
+        metric_information = read_metric_data(
+            f_in, metrics, type_metric
+        )  # e.g. {"velocity" : 2}
 
         for metric in metrics:
-            metric_data[str_information][metric].append(metric_information[metric])
+            metric_data[str_information][metric].append(
+                metric_information[metric]
+            )
 
     stats = calc_stats(metric_data)
 
@@ -144,10 +160,18 @@ def calc_stats(metric_data):
 
     for str_info in metric_data.keys():
         for metric in metric_data[str_info].keys():
-            mean[str_info][metric] = np.mean(metric_data[str_info][metric])
-            std[str_info][metric] = np.std(metric_data[str_info][metric])
-            num_samples[str_info][metric] = len(metric_data[str_info][metric])
-            sem[str_info][metric] = std[str_info][metric]/np.sqrt(num_samples[str_info][metric])
+            mean[str_info][metric] = np.mean(
+                metric_data[str_info][metric]
+            )
+            std[str_info][metric] = np.std(
+                metric_data[str_info][metric]
+            )
+            num_samples[str_info][metric] = len(
+                metric_data[str_info][metric]
+            )
+            sem[str_info][metric] = std[str_info][metric] / np.sqrt(
+                num_samples[str_info][metric]
+            )
 
     return mean, std, num_samples, sem
 
@@ -166,7 +190,7 @@ def save_data_to_csv(stats: list):
     """
 
     mean, std, num_samples, sem = stats
-    
+
     output_file = os.path.join(output_folder, "metrics_stats.csv")
 
     # assume here all stats dictionaries have the same keys
@@ -175,17 +199,24 @@ def save_data_to_csv(stats: list):
     for str_info in mean.keys():
         for metric in mean[str_info].keys():
 
-            metrics_data[f"{str_info}_{metric}"]["mean"] = mean[str_info][metric]
-            metrics_data[f"{str_info}_{metric}"]["sem"] = sem[str_info][metric]
-            metrics_data[f"{str_info}_{metric}"]["n"] = num_samples[str_info][metric]
-
+            metrics_data[f"{str_info}_{metric}"]["mean"] = mean[
+                str_info
+            ][metric]
+            metrics_data[f"{str_info}_{metric}"]["sem"] = sem[
+                str_info
+            ][metric]
+            metrics_data[f"{str_info}_{metric}"]["n"] = num_samples[
+                str_info
+            ][metric]
 
     dataframe = pd.DataFrame(metrics_data)
     dataframe.to_csv(output_file)
     print(f"Data saved to {output_file}.")
 
 
-def plot_all_metrics(stats: list, metrics: list, units: list, output_folder: str):
+def plot_all_metrics(
+    stats: list, metrics: list, units: list, output_folder: str
+):
     """
 
     This isn't as pretty as Prism plot but give a quick overview.
@@ -206,39 +237,53 @@ def plot_all_metrics(stats: list, metrics: list, units: list, output_folder: str
 
     for (metric, unit, axis) in zip(metrics, units, axes):
         for (index, info_str) in enumerate(all_info_str):
-            axis.errorbar([index], mean[info_str][metric], yerr=sem[info_str][metric], fmt='o')
+            axis.errorbar(
+                [index],
+                mean[info_str][metric],
+                yerr=sem[info_str][metric],
+                fmt="o",
+            )
 
         ylabel = f"{metric} ({unit})"
         ylabel = ylabel.replace("_", " ")
         ylabel = ylabel.capitalize()
-        
+
         axis.set_ylabel(ylabel)
 
     num_labels = len(all_info_str)
-    axes[-1].set_xlim(-0.5, num_labels-0.5)    # just making it pretty
+    axes[-1].set_xlim(
+        -0.5, num_labels - 0.5
+    )  # just making it pretty
     axes[-1].set_xticks(range(num_labels))
     axes[-1].set_xticklabels(all_info_str)
- 
+
     plt.tight_layout()
     plt.savefig(os.path.join(output_folder, "metrics.png"))
-    plt.show()      # comment this one out if it's annoying
+    plt.show()  # comment this one out if it's annoying
 
 
 if __name__ == "__main__":
 
-    input_files = get_input_files(sys.argv[1:], "BF")        # all files/folders given on the command line 
+    input_files = get_input_files(
+        sys.argv[1:], "BF"
+    )  # all files/folders given on the command line
 
-    average_across = OrderedDict({"design" : ["design1", "design2"]})
+    average_across = OrderedDict({"design": ["design1", "design2"]})
     metrics = ["velocity", "principal_strain"]
 
-    stats = get_metrics_across_experiments(input_files, average_across, metrics, "metrics_avg_avg")
+    stats = get_metrics_across_experiments(
+        input_files, average_across, metrics, "metrics_avg_avg"
+    )
 
-    output_folder = "output"                                 # you might want to change this
+    output_folder = "output"  # you might want to change this
     os.makedirs(output_folder, exist_ok=True)
 
     save_data_to_csv(stats)
 
-    units = ["um/s", "-"]               # you *can* get these from the analyze_mechanics but probably just easier
-                                        # to give them manually. Keep updated with metrics.
+    units = [
+        "um/s",
+        "-",
+    ]  # you *can* get these from the analyze_mechanics but probably just easier
+    # to give them manually. Keep updated with metrics.
 
     plot_all_metrics(stats, metrics, units, output_folder)

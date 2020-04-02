@@ -26,8 +26,10 @@ def apply_filter(motion_data, type_filter, sigma):
 
     """
 
-    assert type_filter in ("gaussian", "downsampling"), \
-            "Error_ Type filter not recognized."
+    assert type_filter in (
+        "gaussian",
+        "downsampling",
+    ), "Error_ Type filter not recognized."
 
     if type_filter == "gaussian":
         return gaussian_filter(motion_data, [0, sigma, sigma, 0])
@@ -44,9 +46,14 @@ def apply_filter(motion_data, type_filter, sigma):
         for _x in range(x_dim_d):
             for _y in range(y_dim_d):
                 for _d in range(val_dim):
-                    avg = np.mean(motion_data[_t, \
-                            (sigma*_x):(sigma*(_x+1)), \
-                            (sigma*_y):(sigma*(_y+1)), _d])
+                    avg = np.mean(
+                        motion_data[
+                            _t,
+                            (sigma * _x) : (sigma * (_x + 1)),
+                            (sigma * _y) : (sigma * (_y + 1)),
+                            _d,
+                        ]
+                    )
 
                     new_data[_t, _x, _y, _d] = avg
 

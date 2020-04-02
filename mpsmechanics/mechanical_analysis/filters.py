@@ -21,8 +21,9 @@ def calc_std_tf_filter(values_folded, tf_filter):
 
     """
 
-    assert values_folded.shape == tf_filter.shape, \
-            "Error: Shape mismatch: {values_folded.shape}, {tf_filter.shape}"
+    assert (
+        values_folded.shape == tf_filter.shape
+    ), "Error: Shape mismatch: {values_folded.shape}, {tf_filter.shape}"
 
     num_time_steps = len(values_folded)
 
@@ -30,7 +31,9 @@ def calc_std_tf_filter(values_folded, tf_filter):
 
     for _t in range(num_time_steps):
         if np.any(values_folded[_t]):
-            filtered_values = np.extract(tf_filter[_t], values_folded[_t])
+            filtered_values = np.extract(
+                tf_filter[_t], values_folded[_t]
+            )
             std[_t] = np.std(filtered_values)
         else:
             std[_t] = 0
@@ -52,8 +55,9 @@ def calc_avg_tf_filter(values_folded, tf_filter):
 
     """
 
-    assert values_folded.shape == tf_filter.shape, \
-            "Error: Shape mismatch: {values_folded.shape}, {tf_filter.shape}"
+    assert (
+        values_folded.shape == tf_filter.shape
+    ), "Error: Shape mismatch: {values_folded.shape}, {tf_filter.shape}"
 
     num_time_steps = len(values_folded)
 
@@ -61,7 +65,9 @@ def calc_avg_tf_filter(values_folded, tf_filter):
 
     for _t in range(num_time_steps):
         if np.any(values_folded[_t]):
-            filtered_values = np.extract(tf_filter[_t], values_folded[_t])
+            filtered_values = np.extract(
+                tf_filter[_t], values_folded[_t]
+            )
             avg[_t] = np.mean(filtered_values)
         else:
             avg[_t] = 0
@@ -96,11 +102,11 @@ def filter_constrained(values, size):
         for _y in range(dim_y):
             if not filter_org[_x, _y]:
                 xm2 = _x - size if _x > size else 0
-                xp2 = _x + size if (_x+size) < dim_x else dim_x-1
+                xp2 = _x + size if (_x + size) < dim_x else dim_x - 1
 
                 ym2 = _y - size if _y > size else 0
-                yp2 = _y + size if (_y+size) < dim_y else dim_y-1
-                filter_new[xm2:xp2+1, ym2:yp2+1] *= False
+                yp2 = _y + size if (_y + size) < dim_y else dim_y - 1
+                filter_new[xm2 : xp2 + 1, ym2 : yp2 + 1] *= False
 
     return np.broadcast_to(filter_new, values.shape[:3])
 
@@ -137,6 +143,6 @@ def filter_uniform(values):
 
     """
 
-    return np.broadcast_to(np.any((values != 0),
-                                  axis=(0, -1)),
-                           values.shape[:3])
+    return np.broadcast_to(
+        np.any((values != 0), axis=(0, -1)), values.shape[:3]
+    )

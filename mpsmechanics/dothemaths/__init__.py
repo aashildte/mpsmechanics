@@ -17,9 +17,7 @@ from .heartbeat import (
     calc_beatrate,
 )
 
-from .interpolation import (
-    interpolate_values_xy,
-)
+from .interpolation import interpolate_values_xy
 
 from .operations import (
     calc_magnitude,

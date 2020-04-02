@@ -9,7 +9,10 @@ import numpy as np
 
 from .folder_structure import get_input_properties
 
-def read_prev_layer(input_file, layer_fn, param_list = [{}], overwrite=False):
+
+def read_prev_layer(
+    input_file, layer_fn, param_list=[{}], overwrite=False
+):
     """
 
     Reads data from a layer "up" in the hierarchy. If already
@@ -30,21 +33,25 @@ def read_prev_layer(input_file, layer_fn, param_list = [{}], overwrite=False):
 
     path, filename, ext = get_input_properties(input_file)
 
-    assert (ext == "nd2" or ext == "zip"), \
-            "File must be an nd2 or zip file"
+    assert (
+        ext == "nd2" or ext == "zip"
+    ), "File must be an nd2 or zip file"
 
-    filename = generate_filename(input_file, layer_fn.__name__, \
-            param_list, ".npy")
+    filename = generate_filename(
+        input_file, layer_fn.__name__, param_list, ".npy"
+    )
 
-    print('Looking for file: ', filename)
+    print("Looking for file: ", filename)
 
     if not overwrite and os.path.isfile(filename):
         return np.load(filename, allow_pickle=True).item()
 
-    return layer_fn(input_file, \
-                    overwrite=overwrite, \
-                    overwrite_all=overwrite, \
-                    param_list=param_list)
+    return layer_fn(
+        input_file,
+        overwrite=overwrite,
+        overwrite_all=overwrite,
+        param_list=param_list,
+    )
 
 
 def get_full_filename(input_file, filename, subfolder=""):
@@ -64,13 +71,17 @@ def get_full_filename(input_file, filename, subfolder=""):
 
     """
     path, infix, _ = get_input_properties(input_file)
-    output_path = os.path.join(path, infix, "mpsmechanics", subfolder)
+    output_path = os.path.join(
+        path, infix, "mpsmechanics", subfolder
+    )
     os.makedirs(output_path, exist_ok=True)
-    
+
     return os.path.join(output_path, filename)
 
 
-def generate_filename(input_file, script_name, param_list, extention, subfolder=""):
+def generate_filename(
+    input_file, script_name, param_list, extention, subfolder=""
+):
     """
 
     Generates filename based on given input parameters.
@@ -98,12 +109,16 @@ def generate_filename(input_file, script_name, param_list, extention, subfolder=
 
         for key in key_list:
             value = param_dict[key]
-            if value is not None:                      # None = default, not needed in filename
+            if (
+                value is not None
+            ):  # None = default, not needed in filename
                 param_name += f"__{key}_{value}"
-    
+
     param_name = param_name.replace(".", "p") + extention
 
-    return get_full_filename(input_file, param_name, subfolder=subfolder)
+    return get_full_filename(
+        input_file, param_name, subfolder=subfolder
+    )
 
 
 def save_dictionary(filename, dictionary):
@@ -118,7 +133,7 @@ def save_dictionary(filename, dictionary):
 
     """
 
-    #TODO do we need to make dirs here?
+    # TODO do we need to make dirs here?
 
     output_path = os.path.split(filename)[0]
     os.makedirs(output_path, exist_ok=True)

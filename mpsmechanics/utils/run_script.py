@@ -13,7 +13,6 @@ def run_script(function, description, parser, channel, keys):
     Runs a script in a "default" way, which should work across all levels.
 
     """
-    
 
     vargs = vars(parser.parse_args())
 
@@ -31,6 +30,8 @@ def run_script(function, description, parser, channel, keys):
             try:
                 function(f_in, overwrite, overwrite_all, param_list)
             except Exception as exp:
-                print(f"Could not run {description}; error msg: {exp}")
+                print(
+                    f"Could not run {description}; error msg: {exp}"
+                )
                 if f_in is not input_files[-1]:
                     print("Launching script for next file ...")

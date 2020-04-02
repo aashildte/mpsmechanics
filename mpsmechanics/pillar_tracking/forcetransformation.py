@@ -2,63 +2,58 @@
 
 Calculate force from displacement.
 
-TODO
-1) remove magical numbers
-2) more descriptive names maybe? Eg F -> force
-
-Åshild Telle / Simula Research Labratory / 2019
+Åshild Telle / Simula Research Labratory / 2020
 
 """
-
 
 import numpy as np
 
 
-def displacement_to_force_area(delta_max, E, L, R, area):
+def displacement_to_force(
+    displacement: np.ndarray,
+    elastic_modulus: float,
+    height: float,
+    radius: float,
+):
     """
-    all inputs in meters
-    F_area #in mN/mm^2
+
+    Calculates force at each pillar, in N.
 
     Args:
-        delta_max - displacement, distance
-        E - ?
-        L - ?
-        R - ?
-        area - ? ; in mm^2
+        displacement - how much the pillar has moved, in um; numpy array
+            of dimension num_time_steps x num_pillars x 2
+        elastic_modulus - given by material properties; in ???
+        height - height of pillar, in um
+        radius - radius of pillar, in um
 
     Returns:
-        Force per area
+        force calculated for each entry in the array; numpy array of dimensions
+            num_time_steps x num_pillars x 2, in N
+
     """
 
-    # I = 0.25 * np.pi * np.power(R, 4)
-    # F = delta_max * (8*E*I) / (np.power(L, 3))
-    return  displacement_to_force(delta_max, E, L, R) * 1000 / (area)
+    I = 0.25 * np.pi * radius ** 4
+
+    return displacement * (8 * elastic_modulus * I) / height ** 3
 
 
-def displacement_to_force(delta_max, E, L, R):
+def displacement_to_force_area(
+    force: np.ndarray, height: float, radius: float
+):
     """
-    all inputs in meters; returns force in N
+
+    Calculates force per area at each pillar, in mN / mm^2.
 
     Args:
-        ?
+        force - force calculated for pillar, in N
+        height - height of pillar, in um
+        radius - radius of pillar, in um
 
     Returns:
-        ?
-
+        force per area, in mN / mm^2
     """
 
-    I = 0.25 * np.pi * np.power(R, 4)
-    return delta_max * (8*E*I) / (np.power(L, 3))
+    area = height * radius * np.pi * 1e6  # mm^2
+    force_mN = 1000 * force
 
-
-def pxl_to_meters(x, scale):
-    """
-
-    Args:
-        ?
-
-    Returns:
-        ?
-    """
-
-    return x * scale * 1e-6
+    return force_mN / area

@@ -6,8 +6,10 @@
 
 import numpy as np
 
-from mpsmechanics.dothemaths.heartbeat import \
-        calc_beat_maxima, calc_beat_intervals
+from mpsmechanics.dothemaths.heartbeat import (
+    calc_beat_maxima,
+    calc_beat_intervals,
+)
 from mpsmechanics.dothemaths.operations import calc_magnitude
 
 
@@ -42,8 +44,9 @@ def fun_mean(org_values, filter_x):
     all_values = np.zeros(org_values.shape[0])
 
     for time_step in range(org_values.shape[0]):
-        values = np.extract(filter_x[time_step], \
-                            org_values[time_step])
+        values = np.extract(
+            filter_x[time_step], org_values[time_step]
+        )
         all_values[time_step] = np.mean(values)
 
     return all_values
@@ -56,8 +59,9 @@ def fun_std(org_values, filter_x):
     all_values = np.zeros(org_values.shape[0])
 
     for time_step in range(org_values.shape[0]):
-        values = np.extract(filter_x[time_step],
-                            org_values[time_step])
+        values = np.extract(
+            filter_x[time_step], org_values[time_step]
+        )
         all_values[time_step] = np.std(values)
 
     return all_values
@@ -66,10 +70,8 @@ def fun_std(org_values, filter_x):
 def calc_xmotion_metrics(avg, std, intervals):
     metr = {}
 
-    intervals_avg = [np.mean(avg[i1:i2]) \
-            for (i1, i2) in intervals]
-    intervals_std = [np.mean(std[i1:i2]) \
-            for (i1, i2) in intervals]
+    intervals_avg = [np.mean(avg[i1:i2]) for (i1, i2) in intervals]
+    intervals_std = [np.mean(std[i1:i2]) for (i1, i2) in intervals]
 
     metr["metrics_max_avg"] = np.max(intervals_avg)
     metr["metrics_avg_avg"] = np.mean(intervals_avg)
@@ -80,7 +82,7 @@ def calc_xmotion_metrics(avg, std, intervals):
 
 
 def fun_folded(x, f):
-    return calc_magnitude(x) 
+    return calc_magnitude(x)
 
 
 def filter_fun(x, f):
@@ -121,66 +123,78 @@ def chip_statistics(data):
         d_all[all_key] = {}
         for d_key in d_keys:
             d_all[all_key][d_key] = data[d_key][i]
-    
-    time_filter = d_all["filters"]      # TODO consider if we need to save filter for all time steps
-    
+
+    time_filter = d_all[
+        "filters"
+    ]  # TODO consider if we need to save filter for all time steps
+
     # TODO we don't need filter for other fns anymore
-    
+
     for key in d_keys:
         filter_fun(d_all["all_values"][key], d_all["filters"][key])
-     
+
     quantities = d_all["all_values"]
-    
-    
-    d_all["folded"] = \
-            calc_for_each_key(quantities, fun_folded, time_filter)
 
-    d_all["over_time_avg"] = \
-            calc_for_each_key(d_all["folded"], fun_mean, time_filter)
-    d_all["over_time_std"] = \
-            calc_for_each_key(d_all["folded"], fun_std, time_filter)
+    d_all["folded"] = calc_for_each_key(
+        quantities, fun_folded, time_filter
+    )
 
+    d_all["over_time_avg"] = calc_for_each_key(
+        d_all["folded"], fun_mean, time_filter
+    )
+    d_all["over_time_std"] = calc_for_each_key(
+        d_all["folded"], fun_std, time_filter
+    )
 
     # general variables
     max_diff_key = "displacement_maximum_difference"
 
-    d_all["maxima"] = \
-        calc_beat_maxima(d_all["over_time_avg"][max_diff_key])
-    d_all["intervals"] = \
-        calc_beat_intervals(d_all["over_time_avg"][max_diff_key])
+    d_all["maxima"] = calc_beat_maxima(
+        d_all["over_time_avg"][max_diff_key]
+    )
+    d_all["intervals"] = calc_beat_intervals(
+        d_all["over_time_avg"][max_diff_key]
+    )
 
-    fun_meanmax = lambda x, _: np.mean([max(x[i1:i2]) \
-            for (i1, i2) in d_all["intervals"]])
- 
+    fun_meanmax = lambda x, _: np.mean(
+        [max(x[i1:i2]) for (i1, i2) in d_all["intervals"]]
+    )
+
     # metrics
     if len(d_all["intervals"]) > 1:
-        d_all["metrics_max_avg"] = \
-                calc_for_each_key(d_all["over_time_avg"], \
-                fun_max, time_filter)
-        d_all["metrics_avg_avg"] = \
-                calc_for_each_key(d_all["over_time_avg"], \
-                fun_meanmax, time_filter)
-        d_all["metrics_max_std"] = \
-                calc_for_each_key(d_all["over_time_std"], \
-                fun_max, time_filter)
-        d_all["metrics_avg_std"] = \
-                calc_for_each_key(d_all["over_time_std"], \
-                fun_meanmax, time_filter)
-    
+        d_all["metrics_max_avg"] = calc_for_each_key(
+            d_all["over_time_avg"], fun_max, time_filter
+        )
+        d_all["metrics_avg_avg"] = calc_for_each_key(
+            d_all["over_time_avg"], fun_meanmax, time_filter
+        )
+        d_all["metrics_max_std"] = calc_for_each_key(
+            d_all["over_time_std"], fun_max, time_filter
+        )
+        d_all["metrics_avg_std"] = calc_for_each_key(
+            d_all["over_time_std"], fun_meanmax, time_filter
+        )
+
         # special case for xmotion
 
-        xmotion_metrics = calc_xmotion_metrics(d_all["over_time_avg"]["xmotion"],
-                                               d_all["over_time_std"]["xmotion"],
-                                               d_all["intervals"])
+        xmotion_metrics = calc_xmotion_metrics(
+            d_all["over_time_avg"]["xmotion"],
+            d_all["over_time_std"]["xmotion"],
+            d_all["intervals"],
+        )
 
         for key in xmotion_metrics.keys():
             d_all[key]["xmotion"] = xmotion_metrics[key]
 
     else:
-        for st_metric in ["metrics_max_avg", "metrics_avg_avg", \
-                          "metrics_max_std", "metrics_avg_std"]:
+        for st_metric in [
+            "metrics_max_avg",
+            "metrics_avg_avg",
+            "metrics_max_std",
+            "metrics_avg_std",
+        ]:
             for k in quantities.keys():
                 d_all[st_metric] = {}
                 d_all[st_metric][k] = np.nan
-    
+
     return d_all

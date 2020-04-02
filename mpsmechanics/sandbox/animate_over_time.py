@@ -1,4 +1,3 @@
-
 import os
 import sys
 import matplotlib.pyplot as plt
@@ -22,9 +21,10 @@ def get_filename(input_file, quantity):
 def values_BF(f_in):
 
     fname = get_filename(f_in, "displacement")
-    data = mc.read_prev_layer(f_in, \
-                "analyze_mechanics", mc.analyze_mechanics)
-    
+    data = mc.read_prev_layer(
+        f_in, "analyze_mechanics", mc.analyze_mechanics
+    )
+
     time = data["time"]
     disp = data["over_time_avg"]["displacement"]
 
@@ -33,9 +33,11 @@ def values_BF(f_in):
 
 def values_MPS(f_in):
 
-    data = np.load(os.path.join(f_in[:-4], "data.npy"), allow_pickle=True).item()
+    data = np.load(
+        os.path.join(f_in[:-4], "data.npy"), allow_pickle=True
+    ).item()
     values = data["unchopped_data"]["trace"]
-    time = data["unchopped_data"]["time"] 
+    time = data["unchopped_data"]["time"]
     ylabel = "Fluorescence"
 
     if "Cyan" in f_in:
@@ -57,20 +59,19 @@ def animate_over_time(f_in):
     mps_data = mps.MPS(f_in)
     framerate = mps_data.framerate
 
-
     fig, axis = plt.subplots(figsize=(7, 2))
     plt.xlim(0, time[-1])
-    plt.ylim(-0.1*max(values), 1.2*max(values))
+    plt.ylim(-0.1 * max(values), 1.2 * max(values))
     plt.xlabel("Time (ms)")
     plt.ylabel(ylabel)
-    line, = axis.plot(time[0], values[0])
-    
+    (line,) = axis.plot(time[0], values[0])
+
     def update(index):
         line.set_xdata(time[:index])
         line.set_ydata(values[:index])
-    
+
     fig.tight_layout()
-    
+
     writer = animation.writers["ffmpeg"](fps=framerate)
     anim = animation.FuncAnimation(fig, update, len(time))
 
@@ -81,7 +82,7 @@ def animate_over_time(f_in):
 
     fig, axis = plt.subplots(figsize=(7, 2))
     plt.xlim(0, time[-1])
-    plt.ylim(-0.1*max(values), 1.2*max(values))
+    plt.ylim(-0.1 * max(values), 1.2 * max(values))
     plt.xlabel("Time (ms)")
     plt.ylabel(ylabel)
     axis.plot(time, values)

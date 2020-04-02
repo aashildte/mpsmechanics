@@ -26,9 +26,15 @@ def calc_projection(data, alpha):
         T x X x Y x 2 numpy array with parallel components
 
     """
-    e_alpha = np.dot(np.array(((np.cos(alpha), -np.sin(alpha)),\
-                               (np.sin(alpha), np.cos(alpha)))),\
-                     np.array((1, 0)))
+    e_alpha = np.dot(
+        np.array(
+            (
+                (np.cos(alpha), -np.sin(alpha)),
+                (np.sin(alpha), np.cos(alpha)),
+            )
+        ),
+        np.array((1, 0)),
+    )
     f_dot = lambda x, _: np.dot(x, e_alpha)
     f_proj = lambda x, axis: np.apply_over_axes(f_dot, x, axis)
 
@@ -55,16 +61,22 @@ def calc_projection_fraction(data, alpha):
 
     """
 
-    assert len(data.shape) == 4, \
-            "Error: Shape of input data not recognized."
+    assert (
+        len(data.shape) == 4
+    ), "Error: Shape of input data not recognized."
 
     data_full = calc_magnitude(data)
     data_proj = np.abs(calc_projection(data, alpha))
 
-    frac = np.divide(data_proj, data_full, \
-            out=np.zeros_like(data_full), where=(data_full != 0))
+    frac = np.divide(
+        data_proj,
+        data_full,
+        out=np.zeros_like(data_full),
+        where=(data_full != 0),
+    )
 
     return frac
+
 
 def flip_values(data):
     """
@@ -79,8 +91,10 @@ def flip_values(data):
 
     """
 
-    assert len(data.shape) == 4, \
-            "Error: Shape of input data not recognized."
+    assert (
+        len(data.shape) == 4
+    ), "Error: Shape of input data not recognized."
 
-    return np.where((data[:, :, :, 1] > 0)[:, :, :, None],
-                    data, -data)
+    return np.where(
+        (data[:, :, :, 1] > 0)[:, :, :, None], data, -data
+    )

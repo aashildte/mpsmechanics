@@ -62,7 +62,9 @@ contraction_data_keys = [
     for key2 in ["max", "mean", "min", "std"]
     for key1 in ["x", "y", "amp", "angle"]
 ]
-ContractionData = namedtuple("ContractionData", contraction_data_keys)
+ContractionData = namedtuple(
+    "ContractionData", contraction_data_keys
+)
 
 
 try:
@@ -108,8 +110,12 @@ def block_matching_map(args):
     vectors = block_matching(*args[:-1])
 
     if args[-1] > 0:
-        vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], args[-1])
-        vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], args[-1])
+        vectors[:, :, 0] = ndimage.median_filter(
+            vectors[:, :, 0], args[-1]
+        )
+        vectors[:, :, 1] = ndimage.median_filter(
+            vectors[:, :, 1], args[-1]
+        )
     return vectors
 
 
@@ -125,8 +131,12 @@ def template_matching_map(args):
     vectors = template_matching(*args[:-1])
 
     if args[-1] > 0:
-        vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], args[-1])
-        vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], args[-1])
+        vectors[:, :, 0] = ndimage.median_filter(
+            vectors[:, :, 0], args[-1]
+        )
+        vectors[:, :, 1] = ndimage.median_filter(
+            vectors[:, :, 1], args[-1]
+        )
     return vectors
 
 
@@ -166,11 +176,15 @@ def block_matching(
     y_size, x_size = image.shape
     shape = (y_size // block_size, x_size // block_size)
     vectors = np.zeros((shape[0], shape[1], 2))
-    costs = np.ones((2 * max_block_movement + 1, 2 * max_block_movement + 1))
+    costs = np.ones(
+        (2 * max_block_movement + 1, 2 * max_block_movement + 1)
+    )
 
     # Need to copy images to float array
     # otherwise negative values will be converted to large 16-bit integers
-    ref_block = np.zeros((block_size, block_size))  # Block for reference image
+    ref_block = np.zeros(
+        (block_size, block_size)
+    )  # Block for reference image
     block = np.zeros((block_size, block_size))  # Block for image
 
     # Loop over each block
@@ -182,7 +196,8 @@ def block_matching(
             x_image = x_block * block_size
 
             block[:] = image[
-                y_image : y_image + block_size, x_image : x_image + block_size
+                y_image : y_image + block_size,
+                x_image : x_image + block_size,
             ]
 
             # Check if box has values
@@ -190,10 +205,15 @@ def block_matching(
 
                 # Loop over values around the block within the `max_block_movement` range
                 for i, y_block_ref in enumerate(
-                    range(-max_block_movement, max_block_movement + 1)
+                    range(
+                        -max_block_movement, max_block_movement + 1
+                    )
                 ):
                     for j, x_block_ref in enumerate(
-                        range(-max_block_movement, max_block_movement + 1)
+                        range(
+                            -max_block_movement,
+                            max_block_movement + 1,
+                        )
                     ):
 
                         y_image_ref = y_image + y_block_ref
@@ -209,8 +229,10 @@ def block_matching(
                             costs[i, j] = np.nan
                         else:
                             ref_block[:] = reference_image[
-                                y_image_ref : y_image_ref + block_size,
-                                x_image_ref : x_image_ref + block_size,
+                                y_image_ref : y_image_ref
+                                + block_size,
+                                x_image_ref : x_image_ref
+                                + block_size,
                             ]
                             # Could improve this cost function / template matching
                             costs[i, j] = np.sum(
@@ -224,8 +246,12 @@ def block_matching(
                     vectors[y_block, x_block, 0] = 0
                     vectors[y_block, x_block, 1] = 0
                 else:
-                    vectors[y_block, x_block, 0] = max_block_movement - dy[0]
-                    vectors[y_block, x_block, 1] = max_block_movement - dx[0]
+                    vectors[y_block, x_block, 0] = (
+                        max_block_movement - dy[0]
+                    )
+                    vectors[y_block, x_block, 1] = (
+                        max_block_movement - dx[0]
+                    )
             else:
                 # If no values in box set to no movement
                 vectors[y_block, x_block, :] = 0
@@ -260,7 +286,9 @@ def template_matching(
     y_size, x_size = image.shape
     shape = (y_size // block_size, x_size // block_size)
     vectors = np.zeros((shape[0], shape[1], 2))
-    costs = np.ones((2 * max_block_movement + 1, 2 * max_block_movement + 1))
+    costs = np.ones(
+        (2 * max_block_movement + 1, 2 * max_block_movement + 1)
+    )
 
     # Need to copy images to float array
     # otherwise negative values will be converted to large 16-bit integers
@@ -278,7 +306,8 @@ def template_matching(
             x_image = x_block * block_size
 
             block[:] = image[
-                y_image : y_image + block_size, x_image : x_image + block_size
+                y_image : y_image + block_size,
+                x_image : x_image + block_size,
             ]
 
             if np.all(block == 0):
@@ -287,29 +316,46 @@ def template_matching(
                 continue
 
             y_min = max(0, y_image - max_block_movement)
-            y_max = min(y_size, y_image + block_size + max_block_movement)
+            y_max = min(
+                y_size, y_image + block_size + max_block_movement
+            )
             x_min = max(0, x_image - max_block_movement)
-            x_max = min(x_size, x_image + block_size + max_block_movement)
+            x_max = min(
+                x_size, x_image + block_size + max_block_movement
+            )
 
             search_block[:] = np.nan
             y_ref_start = y_min - y_image + max_block_movement
-            y_ref_end = N - (y_image + block_size + max_block_movement - y_max)
+            y_ref_end = N - (
+                y_image + block_size + max_block_movement - y_max
+            )
             x_ref_start = x_min - x_image + max_block_movement
-            x_ref_end = N - (x_image + block_size + max_block_movement - x_max)
+            x_ref_end = N - (
+                x_image + block_size + max_block_movement - x_max
+            )
 
             search_block[
                 y_ref_start:y_ref_end, x_ref_start:x_ref_end
             ] = reference_image[y_min:y_max, x_min:x_max]
 
             result = match_template(search_block, block)
-            dy, dx = np.where(np.abs(result - np.nanmax(result)) < 1e-5)
+            dy, dx = np.where(
+                np.abs(result - np.nanmax(result)) < 1e-5
+            )
             # Select the case that has the smallest displacement
             idx = np.argmin(
-                np.linalg.norm(np.abs(max_block_movement - np.array([dx, dy])), axis=0)
+                np.linalg.norm(
+                    np.abs(max_block_movement - np.array([dx, dy])),
+                    axis=0,
+                )
             )
 
-            vectors[y_block, x_block, 0] = max_block_movement - dy[idx]
-            vectors[y_block, x_block, 1] = max_block_movement - dx[idx]
+            vectors[y_block, x_block, 0] = (
+                max_block_movement - dy[idx]
+            )
+            vectors[y_block, x_block, 1] = (
+                max_block_movement - dx[idx]
+            )
 
     return vectors
 
@@ -319,10 +365,16 @@ def mean_contraction(amplitude, vectors, um_per_pixel, factor=1.0):
     amplitude_map = np.sum(amplitude, 2)
     mask = amplitude_map < np.median(amplitude_map)
 
-    results = {k: np.zeros(amplitude.shape[:2]) for k in contraction_data_keys}
+    results = {
+        k: np.zeros(amplitude.shape[:2])
+        for k in contraction_data_keys
+    }
 
     mapper = dict(
-        amp=amplitude, x=vectors[:, :, 1, :], y=vectors[:, :, 0, :], angle=None
+        amp=amplitude,
+        x=vectors[:, :, 1, :],
+        y=vectors[:, :, 0, :],
+        angle=None,
     )
 
     for key in results.keys():
@@ -340,7 +392,10 @@ def mean_contraction(amplitude, vectors, um_per_pixel, factor=1.0):
 
 
 def contraction_data(
-    amplitude: np.ndarray, vectors: np.ndarray, um_per_pixel: float, factor=1.0
+    amplitude: np.ndarray,
+    vectors: np.ndarray,
+    um_per_pixel: float,
+    factor=1.0,
 ):
     """
     Compute a collection of features from amplide and vectors
@@ -362,7 +417,9 @@ def contraction_data(
     mask = amplitude_map < np.median(amplitude_map)
 
     num_frames = amplitude.shape[-1]
-    results = {k: np.zeros(num_frames) for k in contraction_data_keys}
+    results = {
+        k: np.zeros(num_frames) for k in contraction_data_keys
+    }
 
     data = dict(
         x=np.zeros_like(vectors[:, :, 0, 0]),
@@ -464,7 +521,9 @@ class MotionTracking(object):
         self.block_size_microns = block_size
         self.block_size = int(block_size / data.info["um_per_pixel"])
         self.max_block_movement_microns = max_block_movement
-        self.max_block_movement = int(max_block_movement / data.info["um_per_pixel"])
+        self.max_block_movement = int(
+            max_block_movement / data.info["um_per_pixel"]
+        )
         self.serial = serial
         self.reference_frame = reference_frame
         self.filter_kernel_size = filter_kernel_size
@@ -527,7 +586,9 @@ class MotionTracking(object):
 
     def _init_arrays(self):
 
-        self.computed = dict(angle=False, velocities=False, displacements=False)
+        self.computed = dict(
+            angle=False, velocities=False, displacements=False
+        )
 
     @property
     def _get_velocities_iter(self):
@@ -538,8 +599,14 @@ class MotionTracking(object):
         def gen():
             for i in range(self.N):
                 yield (
-                    self.data.frames[: self.shape[0], : self.shape[1], i],
-                    self.data.frames[: self.shape[0], : self.shape[1], i + self.delay],
+                    self.data.frames[
+                        : self.shape[0], : self.shape[1], i
+                    ],
+                    self.data.frames[
+                        : self.shape[0],
+                        : self.shape[1],
+                        i + self.delay,
+                    ],
                     self.block_size,
                     self.max_block_movement,
                     self.filter_kernel_size,
@@ -559,14 +626,22 @@ class MotionTracking(object):
 
         if check_int(self.reference_frame):
             idx = int(self.reference_frame)
-            reference = self.data.frames[: self.shape[0], : self.shape[1], idx]
+            reference = self.data.frames[
+                : self.shape[0], : self.shape[1], idx
+            ]
         elif self.reference_frame == "mean":
             reference = np.mean(
-                self.data.frames[: self.shape[0], : self.shape[1], :], 2
+                self.data.frames[
+                    : self.shape[0], : self.shape[1], :
+                ],
+                2,
             )
         elif self.reference_frame == "median":
             reference = np.median(
-                self.data.frames[: self.shape[0], : self.shape[1], :], 2
+                self.data.frames[
+                    : self.shape[0], : self.shape[1], :
+                ],
+                2,
             )
         else:
             msg = (
@@ -579,7 +654,9 @@ class MotionTracking(object):
             for i in range(self.data.num_frames):
                 yield (
                     reference,
-                    self.data.frames[: self.shape[0], : self.shape[1], i],
+                    self.data.frames[
+                        : self.shape[0], : self.shape[1], i
+                    ],
                     self.block_size,
                     self.max_block_movement,
                     self.filter_kernel_size,
@@ -604,21 +681,30 @@ class MotionTracking(object):
 
         else:
             with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, v in enumerate(executor.map(self.matching_map, iterable)):
+                for i, v in enumerate(
+                    executor.map(self.matching_map, iterable)
+                ):
 
                     if i % 50 == 0:
                         logger.info(f"Processing frame {i}/{self.N}")
                     self._velocity_vectors[:, :, :, i] = v
 
         t1 = time.time()
-        logger.info(f"Done getting velocities - Elapsed time = {t1-t0:.2f} seconds")
+        logger.info(
+            f"Done getting velocities - Elapsed time = {t1-t0:.2f} seconds"
+        )
         self.computed["velocities"] = True
 
     def _get_displacements(self):
 
         logger.info("Get displacements")
         self._displacement_vectors = np.zeros(
-            (self.macro_shape[0], self.macro_shape[1], 2, self.data.num_frames)
+            (
+                self.macro_shape[0],
+                self.macro_shape[1],
+                2,
+                self.data.num_frames,
+            )
         )
 
         iterable = self._get_displacements_iter()
@@ -626,18 +712,27 @@ class MotionTracking(object):
         if self.serial:
             for i, v in enumerate(map(self.matching_map, iterable)):
                 if i % 50 == 0:
-                    logger.info(f"Processing frame {i}/{self.data.num_frames - 1}")
+                    logger.info(
+                        f"Processing frame {i}/{self.data.num_frames - 1}"
+                    )
                     self._displacement_vectors[:, :, :, i] = v
         else:
             with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, v in enumerate(executor.map(self.matching_map, iterable)):
+                for i, v in enumerate(
+                    executor.map(self.matching_map, iterable)
+                ):
                     if i % 50 == 0:
-                        logger.info(f"Processing frame {i}/{self.data.num_frames - 1}")
+                        logger.info(
+                            f"Processing frame {i}/{self.data.num_frames - 1}"
+                        )
                     self._displacement_vectors[:, :, :, i] = v
 
         t1 = time.time()
         logger.info(
-            ("Done getting displacements " f" - Elapsed time = {t1-t0:.2f} seconds")
+            (
+                "Done getting displacements "
+                f" - Elapsed time = {t1-t0:.2f} seconds"
+            )
         )
         self.computed["displacements"] = True
 
@@ -828,7 +923,9 @@ class MotionTracking(object):
     def save_motion(self, fname=None):
         if fname is None:
             fname = self.outdir.joinpath("motion")
-        utils.frames2mp4(self.data.frames.T, fname, self.data.framerate)
+        utils.frames2mp4(
+            self.data.frames.T, fname, self.data.framerate
+        )
 
     def save_displacement(self, fname=None):
 
@@ -847,7 +944,13 @@ class MotionTracking(object):
         for t in range(d.shape[-1]):
             for y in range(d.shape[1]):
                 for x in range(d.shape[0]):
-                    res[i, :] = [t, x, y, d[x, y, 0, t], d[x, y, 1, t]]
+                    res[i, :] = [
+                        t,
+                        x,
+                        y,
+                        d[x, y, 0, t],
+                        d[x, y, 1, t],
+                    ]
                     i += 1
 
         utils.to_csv(res, fname, header)
@@ -881,13 +984,17 @@ class MotionTracking(object):
         np.save(
             fname,
             dict(
-                displacement=utils.namedtuple2dict(self.displacement_data),
+                displacement=utils.namedtuple2dict(
+                    self.displacement_data
+                ),
                 velocity=utils.namedtuple2dict(self.velocity_data),
             ),
         )
 
 
-def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
+def track_motion(
+    f_in, overwrite, overwrite_all, param_list, save_data=True
+):
     """
 
     Args:
@@ -904,16 +1011,22 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
 
     """
 
-    filename = generate_filename(f_in, "track_motion", param_list, ".npy")
+    filename = generate_filename(
+        f_in, "track_motion", param_list, ".npy"
+    )
 
     if not (overwrite or overwrite_all) and os.path.isfile(filename):
-        print("Previous data exist. Use flag --overwrite / -o to recalculate.")
+        print(
+            "Previous data exist. Use flag --overwrite / -o to recalculate."
+        )
         return np.load(filename, allow_pickle=True).item()
 
     np.seterr(invalid="ignore")
 
     mps_data = mps.MPS(f_in)
-    assert mps_data.num_frames != 1, "Error: Single frame used as input"
+    assert (
+        mps_data.num_frames != 1
+    ), "Error: Single frame used as input"
 
     if len(param_list) > 1:
         motion = MotionTracking(mps_data, **(param_list[0]))
@@ -922,7 +1035,11 @@ def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
 
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
     disp_data = np.swapaxes(
-        np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3
+        np.swapaxes(
+            np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2
+        ),
+        0,
+        3,
     )
 
     # save values

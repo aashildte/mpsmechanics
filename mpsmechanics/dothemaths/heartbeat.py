@@ -29,14 +29,15 @@ def calc_beat_intervals(data, disp_threshold=20):
 
     """
 
-    maxima = calc_beat_maxima(data,
-                              disp_threshold=disp_threshold)
+    maxima = calc_beat_maxima(data, disp_threshold=disp_threshold)
 
     if len(maxima) < 3:
         return []
 
-    midpoints = [int((maxima[i] + maxima[i+1])/2) \
-            for i in range(len(maxima)-1)]
+    midpoints = [
+        int((maxima[i] + maxima[i + 1]) / 2)
+        for i in range(len(maxima) - 1)
+    ]
 
     dist1 = midpoints[1] - midpoints[0]
     if dist1 < midpoints[0]:
@@ -46,8 +47,10 @@ def calc_beat_intervals(data, disp_threshold=20):
     if midpoints[-1] + dist2 < len(data):
         midpoints += [midpoints[-1] + dist2]
 
-    intervals = [(midpoints[i], midpoints[i+1]) \
-            for i in range(len(midpoints)-1)]
+    intervals = [
+        (midpoints[i], midpoints[i + 1])
+        for i in range(len(midpoints) - 1)
+    ]
 
     return intervals
 
@@ -68,9 +71,11 @@ def calc_beat_maxima(disp_over_time, disp_threshold=20):
 
     """
 
-    maxima, _ = find_peaks(disp_over_time, \
-                           height=max(disp_over_time)/2, \
-                           distance=disp_threshold)
+    maxima, _ = find_peaks(
+        disp_over_time,
+        height=max(disp_over_time) / 2,
+        distance=disp_threshold,
+    )
 
     return maxima
 
@@ -91,22 +96,26 @@ def _calc_spatial_max(maxima, intervals, disp_folded):
 
     """
 
-    assert len(disp_folded.shape) == 3, \
-            "Error: Unexpected shape for folded distribution."
+    assert (
+        len(disp_folded.shape) == 3
+    ), "Error: Unexpected shape for folded distribution."
 
     intervals_local = intervals[:]
 
     if maxima[0] < intervals[0][0]:
         intervals_local.append((0, intervals[0][0]))
     if maxima[-1] > intervals[-1][1]:
-        intervals_local.append((intervals[-1][1], disp_folded.shape[0]-1))
+        intervals_local.append(
+            (intervals[-1][1], disp_folded.shape[0] - 1)
+        )
 
     _, x_dim, y_dim = disp_folded.shape
     argmax_list = np.zeros((len(intervals_local), x_dim, y_dim))
 
     for (i, (start_in, stop_in)) in enumerate(intervals_local):
-        argmax_list[i] = (start_in + \
-                np.argmax(disp_folded[start_in:stop_in], axis=0))
+        argmax_list[i] = start_in + np.argmax(
+            disp_folded[start_in:stop_in], axis=0
+        )
 
     return argmax_list.astype(int)
 
@@ -135,15 +144,16 @@ def calc_beatrate(disp_folded, maxima, intervals, time):
     num_intervals = len(argmax)
     _, x_dim, y_dim = disp_folded.shape
 
-    beatrate_spatial = np.zeros((num_intervals-1, x_dim, y_dim))
+    beatrate_spatial = np.zeros((num_intervals - 1, x_dim, y_dim))
     unit_in_ms = 1e3
 
-    for i in range(num_intervals-1):
+    for i in range(num_intervals - 1):
         for _x in range(x_dim):
             for _y in range(y_dim):
                 start_in = argmax[i, _x, _y]
-                stop_in = argmax[i+1, _x, _y]
-                beatrate_spatial[i, _x, _y] = \
-                        unit_in_ms / (time[stop_in] - time[start_in])
+                stop_in = argmax[i + 1, _x, _y]
+                beatrate_spatial[i, _x, _y] = unit_in_ms / (
+                    time[stop_in] - time[start_in]
+                )
 
     return beatrate_spatial

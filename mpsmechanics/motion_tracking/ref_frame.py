@@ -12,6 +12,7 @@ import numpy as np
 
 from ..dothemaths.operations import calc_norm_over_time
 
+
 def convert_disp_data(frames, ref_index):
     """
 
@@ -26,13 +27,12 @@ def convert_disp_data(frames, ref_index):
 
     """
 
-    assert ref_index >= 0, \
-            "Invalid reference index."
+    assert ref_index >= 0, "Invalid reference index."
 
-    assert ref_index <= frames.shape[0], \
-            "Invalid reference index."
+    assert ref_index <= frames.shape[0], "Invalid reference index."
 
     return frames - frames[ref_index]
+
 
 def _find_longest_subinterval(diff_norm):
     """
@@ -48,10 +48,13 @@ def _find_longest_subinterval(diff_norm):
 
     """
 
-    threshold = max(diff_norm)/2       # because why not
+    threshold = max(diff_norm) / 2  # because why not
 
-    indices = list(filter(lambda i: diff_norm[i] < threshold, \
-            range(len(diff_norm))))
+    indices = list(
+        filter(
+            lambda i: diff_norm[i] < threshold, range(len(diff_norm))
+        )
+    )
 
     print("threshold: ", threshold)
 
@@ -66,7 +69,7 @@ def _find_longest_subinterval(diff_norm):
         else:
             if count > max_count:
                 max_count = count
-                start_ind = i-count
+                start_ind = i - count
             count = 0
         prev = i
 

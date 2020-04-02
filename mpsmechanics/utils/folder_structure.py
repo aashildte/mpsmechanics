@@ -6,6 +6,7 @@
 
 import os
 
+
 def get_input_properties(filename):
     """
 
@@ -44,8 +45,7 @@ def make_dir_layer_structure(f_in, layer):
     """
 
     path, filename, _ = get_input_properties(f_in)
-    output_folder = os.path.join(path, \
-            os.path.join(filename, layer))
+    output_folder = os.path.join(path, os.path.join(filename, layer))
     os.makedirs(output_folder, exist_ok=True)
 
     return output_folder

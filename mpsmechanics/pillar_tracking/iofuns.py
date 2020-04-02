@@ -9,7 +9,7 @@ IO functions related to track_pillar scripts
 
 import os
 
-from ..iofuns import command_line as cl 
+from ..iofuns import command_line as cl
 from ..iofuns import writetofile as wf
 from ..iofuns import folder_structure as fs
 
@@ -28,18 +28,24 @@ def pts_write_all_values(all_values, mpoints, path):
 
     P = len(mpoints)
 
-    assert(all_values.shape[1] == P), "Dimension mismatch?"
+    assert all_values.shape[1] == P, "Dimension mismatch?"
 
     for p in range(P):
         coords = mpoints[p]
-        f_suffix = "_".join(["pillar", str(int(coords[0])), \
-                str(int(coords[1]))]) + ".csv"
+        f_suffix = (
+            "_".join(
+                ["pillar", str(int(coords[0])), str(int(coords[1]))]
+            )
+            + ".csv"
+        )
 
         filename = os.path.join(path, f_suffix)
-        wf.write_position_values(all_values[:,p], filename)
+        wf.write_position_values(all_values[:, p], filename)
 
 
-def pts_write_max_values(mid_values, max_indices, coords, path, prop):
+def pts_write_max_values(
+    mid_values, max_indices, coords, path, prop
+):
     """
 
     Writes values at maximum displacement to a file.
@@ -52,24 +58,24 @@ def pts_write_max_values(mid_values, max_indices, coords, path, prop):
 
     """
 
-    assert(len(coords) == mid_values.shape[1]), "dimension mismatch?"
-    
+    assert len(coords) == mid_values.shape[1], "dimension mismatch?"
+
     filename = os.path.join(path, prop + "_at_maxima.csv")
 
     output_d = {}
 
     for p in range(len(coords)):
-        key = str(coords[p,0]) + " " + str(coords[p,1])
+        key = str(coords[p, 0]) + " " + str(coords[p, 1])
         output_d[key] = []
-        
+
         for m in max_indices:
-            output_d[key].append(mid_values[m,p])
+            output_d[key].append(mid_values[m, p])
 
     wf.write_max_values(max_indices, output_d, filename)
 
 
-def define_paths(f_disp, out_dir = 'track_pillars'):
-    '''
+def define_paths(f_disp, out_dir="track_pillars"):
+    """
     Define and create paths for output of track_pillar script.
 
     Folder structure:
@@ -92,20 +98,22 @@ def define_paths(f_disp, out_dir = 'track_pillars'):
         Dictionary with path structure; keys being "num_all", "num_max", \
             "plt_all", "plt_max"
         idt - string with last part of file name
-    '''
-
+    """
 
     path, idt, _ = fs.get_input_properties(f_disp)
 
-    path_num, path_plots = \
-            fs.make_default_structure(path, out_dir, idt)
+    path_num, path_plots = fs.make_default_structure(
+        path, out_dir, idt
+    )
 
     paths = []
 
     for p in [path_num, path_plots]:
-        for a in ["positions_all_time_step", \
-                "displacement_maxima", \
-                "force_maxima"]:
+        for a in [
+            "positions_all_time_step",
+            "displacement_maxima",
+            "force_maxima",
+        ]:
             pt = os.path.join(p, a)
             fs.make_dir_structure(pt)
             paths.append(pt)

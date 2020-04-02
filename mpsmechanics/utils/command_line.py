@@ -11,6 +11,7 @@ Functions related to command line arguments
 import os
 import glob
 
+
 def _valid_input_file(input_file, filetype):
 
     if not filetype in input_file:
@@ -76,21 +77,32 @@ def add_default_parser_arguments(parser, file_type):
 
     """
 
-    parser.add_argument("input_files", \
-                        help=f"{file_type} files to run the script for", \
-                        nargs="+")
+    parser.add_argument(
+        "input_files",
+        help=f"{file_type} files to run the script for",
+        nargs="+",
+    )
 
-    parser.add_argument("-o", "--overwrite", \
-                        help="Recalculate and overwrite previous data/plots, for specific script.",
-                        action="store_true")
+    parser.add_argument(
+        "-o",
+        "--overwrite",
+        help="Recalculate and overwrite previous data/plots, for specific script.",
+        action="store_true",
+    )
 
-    parser.add_argument("-oa", "--overwrite_all", \
-                        help="Recalculate and overwrite previous data/plots, for all layers/dependencies.",
-                        action="store_true")
+    parser.add_argument(
+        "-oa",
+        "--overwrite_all",
+        help="Recalculate and overwrite previous data/plots, for all layers/dependencies.",
+        action="store_true",
+    )
 
-    parser.add_argument("-d", "--debug_mode", \
-                        help="Run script in debug mode",
-                        action="store_true")
+    parser.add_argument(
+        "-d",
+        "--debug_mode",
+        help="Run script in debug mode",
+        action="store_true",
+    )
 
 
 def add_parameters_parser_arguments(parser, level):
@@ -117,10 +129,13 @@ def add_parameters_parser_arguments(parser, level):
     if level >= 0:
         l0_keys = []
     if level >= 1:
-        parser.add_argument("-ms", "--motion_scaling_factor", \
-                        default=1,
-                        help="Scaling factor for motion; 1 = original.",
-                        type=float)
+        parser.add_argument(
+            "-ms",
+            "--motion_scaling_factor",
+            default=1,
+            help="Scaling factor for motion; 1 = original.",
+            type=float,
+        )
         l1_keys = ["motion_scaling_factor"]
 
     return [l0_keys, l1_keys]
@@ -140,19 +155,28 @@ def add_animation_parser_arguments(parser):
 
     """
 
-    parser.add_argument("-a", "--animate", \
-                        help="Make animations or just peak plots.",
-                        action="store_true")
+    parser.add_argument(
+        "-a",
+        "--animate",
+        help="Make animations or just peak plots.",
+        action="store_true",
+    )
 
-    parser.add_argument("-s", "--scaling_factor", \
-                        default=1,
-                        help="Scaling factor for fps; 1 = real time, 0.5 half speed",
-                        type=float)
+    parser.add_argument(
+        "-s",
+        "--scaling_factor",
+        default=1,
+        help="Scaling factor for fps; 1 = real time, 0.5 half speed",
+        type=float,
+    )
 
-    parser.add_argument("-t", "--time_step",
-                        default=None,                # = "peak"
-                        help="Which time step to plot heat maps for; default is at peak.",
-                        type=int)
+    parser.add_argument(
+        "-t",
+        "--time_step",
+        default=None,  # = "peak"
+        help="Which time step to plot heat maps for; default is at peak.",
+        type=int,
+    )
 
     return ["animate", "scaling_factor", "time_step"]
 
@@ -167,25 +191,37 @@ def add_focus_parser_arguments(parser):
 
     """
 
-    parser.add_argument("-w", "--width", \
-                        default=100,
-                        help="Width (in pixels) for focus area.",
-                        type=int)
+    parser.add_argument(
+        "-w",
+        "--width",
+        default=100,
+        help="Width (in pixels) for focus area.",
+        type=int,
+    )
 
-    parser.add_argument("-x", "--xcoord", \
-                        default=100,
-                        help="Middle point; x direction (along chamber), in pixels.",
-                        type=int)
+    parser.add_argument(
+        "-x",
+        "--xcoord",
+        default=100,
+        help="Middle point; x direction (along chamber), in pixels.",
+        type=int,
+    )
 
-    parser.add_argument("-y", "--ycoord", \
-                        default=100,
-                        help="Middle point; y direction (across chamber), in pixels.",
-                        type=int)
-    
-    parser.add_argument("-st", "--step", \
-                        default=1,
-                        help="Plot every [step] line in mesh.",
-                        type=int)
+    parser.add_argument(
+        "-y",
+        "--ycoord",
+        default=100,
+        help="Middle point; y direction (across chamber), in pixels.",
+        type=int,
+    )
+
+    parser.add_argument(
+        "-st",
+        "--step",
+        default=1,
+        help="Plot every [step] line in mesh.",
+        type=int,
+    )
 
     return ["width", "xcoord", "ycoord", "step"]
 
@@ -200,15 +236,21 @@ def add_subdivision_arguments(parser):
 
     """
 
-    parser.add_argument("-sx", "--sub_xdir", \
-                        default=5,
-                        help="Number of subdomains along the chamber.",
-                        type=int)
+    parser.add_argument(
+        "-sx",
+        "--sub_xdir",
+        default=5,
+        help="Number of subdomains along the chamber.",
+        type=int,
+    )
 
-    parser.add_argument("-sy", "--sub_ydir", \
-                        default=1,
-                        help="Number of subdomains across the chamber.",
-                        type=int)
+    parser.add_argument(
+        "-sy",
+        "--sub_ydir",
+        default=1,
+        help="Number of subdomains across the chamber.",
+        type=int,
+    )
 
     return ["sub_xdir", "sub_ydir"]
 
@@ -223,20 +265,29 @@ def add_metrics_arguments(parser):
 
     """
 
-    parser.add_argument("-m", "--metrics", \
-                        default="displacement",
-                        help="Which metrics to plot/make figures for (one string, separate multiple ones by space).",
-                        type=str)
+    parser.add_argument(
+        "-m",
+        "--metrics",
+        default="displacement",
+        help="Which metrics to plot/make figures for (one string, separate multiple ones by space).",
+        type=str,
+    )
 
-    parser.add_argument("-rmax", "--range_max", \
-                        default=None,
-                        help="Which range to use for plots (color bar); gives upper bound.",
-                        type=float)
-    
-    parser.add_argument("-rmin", "--range_min", \
-                        default=None,
-                        help="Which range to use for plots (color bar); gives upper bound.",
-                        type=float)
+    parser.add_argument(
+        "-rmax",
+        "--range_max",
+        default=None,
+        help="Which range to use for plots (color bar); gives upper bound.",
+        type=float,
+    )
+
+    parser.add_argument(
+        "-rmin",
+        "--range_min",
+        default=None,
+        help="Which range to use for plots (color bar); gives upper bound.",
+        type=float,
+    )
 
     return ["metrics", "range_max", "range_min"]
 

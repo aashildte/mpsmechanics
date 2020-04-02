@@ -27,8 +27,9 @@ def calc_beatrate_metric(disp_data, time, maxima, intervals):
 
     """
     disp_folded = calc_magnitude(disp_data)
-    beatrate_spatial = \
-            calc_beatrate(disp_folded, maxima, intervals, time)
+    beatrate_spatial = calc_beatrate(
+        disp_folded, maxima, intervals, time
+    )
 
     over_time_avg = np.mean(beatrate_spatial, axis=(1, 2))
     over_time_std = np.std(beatrate_spatial, axis=(1, 2))
@@ -44,16 +45,18 @@ def calc_beatrate_metric(disp_data, time, maxima, intervals):
         metrics_max_std = np.nan
         metrics_avg_std = np.nan
 
-    info = {"all_values" : beatrate_spatial,
-            "folded" : beatrate_spatial,
-            "over_time_avg" : over_time_avg,
-            "over_time_std" : over_time_std,
-            "metrics_max_avg" : metrics_max_avg,
-            "metrics_avg_avg" : metrics_avg_avg,
-            "metrics_max_std" : metrics_max_std,
-            "metrics_avg_std" : metrics_avg_std,
-            "unit" : r"$\mu m / s$",
-            "range" : (0, np.nan),
-            "range_folded" : (0, np.nan)}
+    info = {
+        "all_values": beatrate_spatial,
+        "folded": beatrate_spatial,
+        "over_time_avg": over_time_avg,
+        "over_time_std": over_time_std,
+        "metrics_max_avg": metrics_max_avg,
+        "metrics_avg_avg": metrics_avg_avg,
+        "metrics_max_std": metrics_max_std,
+        "metrics_avg_std": metrics_avg_std,
+        "unit": r"$\mu m / s$",
+        "range": (0, np.nan),
+        "range_folded": (0, np.nan),
+    }
 
-    return {"beatrate" : info}
+    return {"beatrate": info}

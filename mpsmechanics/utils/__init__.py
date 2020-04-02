@@ -21,9 +21,7 @@ from .command_line import (
     split_parameter_dictionary,
 )
 
-from .run_script import (
-    run_script
-)
+from .run_script import run_script
 
 from .data_layer import (
     generate_filename,
@@ -31,4 +29,3 @@ from .data_layer import (
     read_prev_layer,
     save_dictionary,
 )
-

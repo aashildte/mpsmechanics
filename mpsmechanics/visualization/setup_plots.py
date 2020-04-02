@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 
 import mps
 from ..utils.data_layer import read_prev_layer
-from ..mechanical_analysis.mechanical_analysis import analyze_mechanics
+from ..mechanical_analysis.mechanical_analysis import (
+    analyze_mechanics,
+)
 
 
 def load_input_data(f_in, param_list, overwrite_all):
@@ -31,10 +33,7 @@ def load_input_data(f_in, param_list, overwrite_all):
     mps_data = mps.MPS(f_in)
 
     mc_data = read_prev_layer(
-        f_in,
-        analyze_mechanics,
-        param_list[:-1],
-        overwrite_all
+        f_in, analyze_mechanics, param_list[:-1], overwrite_all
     )
 
     return mps_data, mc_data
@@ -69,9 +68,15 @@ def setup_frame(num_rows, num_cols, sharex, sharey):
 
     figsize = (14, 12)
     dpi = 300
-    fig, axes = plt.subplots(num_rows, num_cols, \
-                             sharex=sharex, sharey=sharey, \
-                             figsize=figsize, dpi=dpi, squeeze=False)
+    fig, axes = plt.subplots(
+        num_rows,
+        num_cols,
+        sharex=sharex,
+        sharey=sharey,
+        figsize=figsize,
+        dpi=dpi,
+        squeeze=False,
+    )
 
     axes = axes.flatten()
     fig.align_ylabels(axes)
@@ -95,8 +100,11 @@ def get_plot_fun(values, corr_plots):
 
     num_dims = values.shape[3:]
 
-    assert num_dims in ((), (2,), (2, 2)), \
-        f"Error: shape of {num_dims} not recognized."
+    assert num_dims in (
+        (),
+        (2,),
+        (2, 2),
+    ), f"Error: shape of {num_dims} not recognized."
 
     plot_1d_values, plot_2d_values, plot_4d_values = corr_plots
 
@@ -116,8 +124,9 @@ def make_quiver_plot(axis, values, coords, color, scale):
 
     """
 
-    assert values.shape[2:] == (2,), \
-            f"Error: Given value shape ({values.shape[2:]}) do not corresponds to vector values."
+    assert values.shape[2:] == (
+        2,
+    ), f"Error: Given value shape ({values.shape[2:]}) do not corresponds to vector values."
 
     axis.invert_yaxis()
 
@@ -147,8 +156,7 @@ def make_heatmap_plot(axis, scalars, vmin, vmax, cmap):
 
     """
 
-    return axis.imshow(scalars, vmin=vmin, vmax=vmax, \
-            cmap=cmap)
+    return axis.imshow(scalars, vmin=vmin, vmax=vmax, cmap=cmap)
 
 
 def setup_for_key(mps_data, mc_data, key):
@@ -167,17 +175,18 @@ def setup_for_key(mps_data, mc_data, key):
         time - numpy array
 
     """
-    
+
     images = np.moveaxis(mps_data.frames, 2, 0)
     time = mc_data["time"]
 
     values = mc_data["all_values"][key]
 
-    metadata = {"label" : make_pretty_label(key, mc_data["unit"][key]),
-                "pixels2um" : mps_data.info["um_per_pixel"],
-                "blocksize" : images.shape[1] // values.shape[1]}
+    metadata = {
+        "label": make_pretty_label(key, mc_data["unit"][key]),
+        "pixels2um": mps_data.info["um_per_pixel"],
+        "blocksize": images.shape[1] // values.shape[1],
+    }
 
-    spatial_data = {"images" : images,
-                    "derived_quantity" : values}
+    spatial_data = {"images": images, "derived_quantity": values}
 
     return metadata, spatial_data, time

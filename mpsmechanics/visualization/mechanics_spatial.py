@@ -26,6 +26,7 @@ from .setup_plots import (
     make_quiver_plot,
     make_heatmap_plot,
     setup_for_key,
+    generate_filenames_pngmp4,
 )
 
 
@@ -81,6 +82,49 @@ def _get_1d_values(images, values):
     return all_components, subtitles
 
 
+
+def overlap_1d(all_components, time_step, cb_range):
+    axes, fig = setup_frame(1, 1, False, False)
+    subplots = []
+    images, magnitude = all_components
+
+    vmin = np.min(magnitude)
+    vmax = np.max(magnitude)
+
+    if not (np.isclose(vmin, 0) or np.isclose(vmax, 0)):
+        vmin = np.max(np.abs(magnitude))
+        vmin = -np.max(np.abs(magnitude))
+
+    # overwrite if given by user:
+
+    if cb_range[0] is not None:
+        vmin = cb_range[0]
+
+    if cb_range[1] is not None:
+        vmax = cb_range[1]
+
+    if np.isclose(vmin, 0):
+        colormap = "viridis"
+    elif np.isclose(vmax, 0):
+        colormap = "viridis_r"
+    else:
+        colormap = "bwr"
+
+    block_size = images.shape[1] // magnitude.shape[1]
+    magnitude_upsc = np.repeat(magnitude[:, :, :], block_size, axis=1)
+    magnitude_upsc = np.repeat(magnitude_upsc[:, :, :], block_size, axis=2)
+
+    subplots.append(axes[0].imshow(images[time_step], cmap="gray"))
+    subplots.append(
+        make_heatmap_plot(
+            axes[0], magnitude_upsc[time_step], vmin, vmax, colormap
+        )
+    )
+
+    return axes, fig, subplots
+
+
+
 def _init_subplots_1d(all_components, time_step, cb_range):
     axes, fig = setup_frame(1, 2, False, False)
     subplots = []
@@ -88,6 +132,10 @@ def _init_subplots_1d(all_components, time_step, cb_range):
 
     vmin = np.min(magnitude)
     vmax = np.max(magnitude)
+
+    if not (np.isclose(vmin, 0) or np.isclose(vmax, 0)):
+        vmin = np.max(np.abs(magnitude))
+        vmin = -np.max(np.abs(magnitude))
 
     # overwrite if given by user:
 
@@ -512,20 +560,6 @@ def _make_animation(
     make_animation(fig, _update, fname, **animation_config)
 
 
-def _make_filenames(f_in, metric, param_list):
-    fname = generate_filename(
-        f_in,
-        f"spatial_decomposition_{metric}",
-        param_list,
-        "",  # mp3 or png
-        subfolder="visualize_mechanics",
-    )
-    fname_png = fname + ".png"
-    fname_mp4 = fname + ".mp4"
-
-    return fname_png, fname_mp4
-
-
 def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
     """
 
@@ -565,8 +599,8 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
 
         print("Making plot for " + metric + " ...")
 
-        fname_png, fname_mp4 = _make_filenames(
-            f_in, metric, param_list
+        fname_png, fname_mp4 = generate_filenames_pngmp4(
+            f_in, "visualize_mechanics", f"spatial_decomposition_{metric}", param_list
         )
         metadata, spatial_data, time = setup_for_key(
             mps_data, mc_data, metric

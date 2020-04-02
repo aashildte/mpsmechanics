@@ -72,7 +72,7 @@ from .visualization import (
     visualize_mesh_over_movie,
     make_pretty_label,
     plot_distributions,
-    visualize_calcium,
+    visualize_fluorescence,
     visualize_mechanics,
     visualize_over_time,
     visualize_vectorfield,

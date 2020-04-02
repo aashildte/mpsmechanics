@@ -8,7 +8,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..utils.data_layer import generate_filename
 from ..dothemaths.operations import calc_norm_over_time
 from .animation_funs import (
     make_animation,
@@ -19,6 +18,7 @@ from .setup_plots import (
     load_input_data,
     make_quiver_plot,
     setup_for_key,
+    generate_filenames_pngmp4,
 )
 
 
@@ -121,20 +121,6 @@ def _make_animation(
     make_animation(fig, _update, fname, **animation_config)
 
 
-def _make_filenames(f_in, key, param_list):
-    fname = generate_filename(
-        f_in,
-        f"vectorfield_{key}",
-        param_list,
-        "",  # mp3 or png
-        subfolder="visualize_vectorfield",
-    )
-    fname_png = fname + ".png"
-    fname_mp4 = fname + ".mp4"
-
-    return fname_png, fname_mp4
-
-
 def visualize_vectorfield(
     f_in, overwrite, overwrite_all, param_list
 ):
@@ -174,9 +160,10 @@ def visualize_vectorfield(
 
         print("Plots for " + metric + " ...")
 
-        fname_png, fname_mp4 = _make_filenames(
-            f_in, metric, param_list
+        fname_png, fname_mp4 = generate_filenames_pngmp4(
+            f_in, f"vectorfield_{metric}", "visualize_vectorfield", param_list
         )
+
         metadata, spatial_data, time = setup_for_key(
             mps_data, mc_data, metric
         )
@@ -184,7 +171,7 @@ def visualize_vectorfield(
         if overwrite or (not os.path.isfile(fname_png)):
             _plot_at_peak(spatial_data, time, metadata, fname_png)
             print(
-                "Plot at peak done; " + f"image saved to {fname_png}"
+                f"Plot at peak done; image saved to {fname_png}"
             )
         else:
             print(f"Image {fname_png} already exists")
@@ -198,10 +185,7 @@ def visualize_vectorfield(
                     fname_mp4,
                     animation_config,
                 )
-                print(
-                    "Animation movie produced; "
-                    + f"movie saved to {fname_mp4}"
-                )
+                print("Animation movie produced; movie saved to {fname_mp4}")
             else:
                 print(f"Movie {fname_mp4} already exists")
 

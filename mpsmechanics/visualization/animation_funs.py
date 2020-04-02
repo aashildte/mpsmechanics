@@ -27,7 +27,7 @@ def get_animation_configuration(params, mps_data):
     return {
         "animate": params.pop("animate"),
         "framerate": mps_data.framerate
-        * params.pop("scaling_factor"),
+        * params["scaling_factor"],
         "num_frames": mps_data.frames.shape[-1],
     }
 

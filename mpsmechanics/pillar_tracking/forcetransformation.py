@@ -32,9 +32,9 @@ def displacement_to_force(
 
     """
 
-    I = 0.25 * np.pi * radius ** 4
+    interia_moment = 0.25 * np.pi * radius ** 4
 
-    return displacement * (8 * elastic_modulus * I) / height ** 3
+    return displacement * (8 * elastic_modulus * interia_moment) / height ** 3
 
 
 def displacement_to_force_area(

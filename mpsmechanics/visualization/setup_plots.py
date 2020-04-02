@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import mps
+
+from ..utils.data_layer import generate_filename
 from ..utils.data_layer import read_prev_layer
 from ..mechanical_analysis.mechanical_analysis import (
     analyze_mechanics,
@@ -156,7 +158,7 @@ def make_heatmap_plot(axis, scalars, vmin, vmax, cmap):
 
     """
 
-    return axis.imshow(scalars, vmin=vmin, vmax=vmax, cmap=cmap)
+    return axis.imshow(scalars, vmin=vmin, vmax=vmax, cmap=cmap, alpha=0.5)
 
 
 def setup_for_key(mps_data, mc_data, key):
@@ -190,3 +192,27 @@ def setup_for_key(mps_data, mc_data, key):
     spatial_data = {"images": images, "derived_quantity": values}
 
     return metadata, spatial_data, time
+
+
+def generate_filenames_pngmp4(f_in, subfolder, prefix, param_list):
+    scaling_factor = str(param_list[-1].pop("scaling_factor"))
+    scaling_factor = scaling_factor.replace(".", "p")
+
+    time_step = param_list[-1].pop("time_step") 
+
+    fname = generate_filename(
+        f_in,
+        prefix,
+        param_list,
+        "",                   # mp3 or png
+        subfolder=subfolder,
+    )
+
+    if time_step is not None:
+        fname_png = f"{fname}__time_step_{time_step}.png"
+    else:
+        fname_png = f"{fname}_at_peak.png"
+
+    fname_mp4 = f"{fname}__animation_scaling_factor_{scaling_factor}.mp4"
+
+    return fname_png, fname_mp4

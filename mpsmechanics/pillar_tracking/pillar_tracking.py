@@ -250,9 +250,9 @@ def track_pillars(
 
     print(f"Tracking pillars for {f_in}")
 
-    radius = 10  # um
-    height = 50  # um
-    elastic_modulus = 2.63e6  # ???
+    radius = 10               # um
+    height = 50               # um
+    elastic_modulus = 2.63e6  # Pa
 
     over_time_pixels = _track_pillars_over_time(
         disp_data,

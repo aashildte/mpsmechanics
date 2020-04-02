@@ -14,11 +14,19 @@ def _cl_parser():
     channel = "Cyan"
 
     mc.add_default_parser_arguments(parser, channel)
-    keys = mc.add_parameters_parser_arguments(parser, 2)
-    keys.append(mc.add_animation_parser_arguments(parser))
+
+    parser.add_argument(
+        "-fl",
+        "--fl_intervals",
+        default=64,
+        help="Subdivision of domain in x direction, for fluorescence plot.",
+        type=int,
+    )
+
+    keys = [mc.add_animation_parser_arguments(parser) + ["fl_intervals"]]
 
     return parser, channel, keys
 
 if __name__ == "__main__":
-    mc.run_script(mc.visualize_calcium, \
+    mc.run_script(mc.visualize_fluorescence, \
             "visualization of corrected calcium", *_cl_parser())

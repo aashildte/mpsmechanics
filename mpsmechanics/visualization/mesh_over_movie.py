@@ -16,7 +16,7 @@ from .animation_funs import (
     get_animation_configuration,
     make_animation,
 )
-from .setup_plots import load_input_data
+from .setup_plots import load_input_data, generate_filenames_pngmp4
 
 
 def _calc_value_range(image_x_dim, image_y_dim, user_params):
@@ -296,17 +296,6 @@ def _get_image_configuration(params):
     }
 
 
-def _generate_param_filename(f_in, param_list):
-    fname = generate_filename(
-        f_in,
-        f"mesh_over_images",
-        param_list,
-        "",  # mp3 or png
-        subfolder="mesh_over_images",
-    )
-    return fname
-
-
 def _read_input_data(f_in, param_list, overwrite_all):
     mps_data, mc_data = load_input_data(
         f_in, param_list, overwrite_all
@@ -347,15 +336,17 @@ def visualize_mesh_over_movie(
 
     """
 
+    time_step = param_list[-1]["time_step"]
+
     animation_config, spatial_data, time = _read_input_data(
         f_in, param_list, overwrite_all
     )
 
-    fname_p = _generate_param_filename(f_in, param_list)
+    fname_png, fname_mp4 = generate_filenames_pngmp4(
+            f_in, "mesh_over_images", "mesh_over_images", param_list
+    )
+
     user_params = _get_image_configuration(param_list[-1])
-    fname_png = fname_p + ".png"
-    fname_mp4 = fname_p + ".mp4"
-    time_step = param_list[-1]["time_step"]
 
     if overwrite or not os.path.isfile(fname_png):
         _plot_at_time_step(

@@ -4,7 +4,7 @@
 
 """
 
-from .calcium_spatial import visualize_calcium
+from .fluorescence_spatial import visualize_fluorescence
 
 from .distributions import plot_distributions
 

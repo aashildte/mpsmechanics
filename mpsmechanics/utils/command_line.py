@@ -130,13 +130,21 @@ def add_parameters_parser_arguments(parser, level):
         l0_keys = []
     if level >= 1:
         parser.add_argument(
+            "-si",
+            "--sigma",
+            default=1,
+            help="Regularization filter parameter.",
+            type=float,
+        )
+
+        parser.add_argument(
             "-ms",
             "--motion_scaling_factor",
             default=1,
             help="Scaling factor for motion; 1 = original.",
             type=float,
         )
-        l1_keys = ["motion_scaling_factor"]
+        l1_keys = ["motion_scaling_factor", "sigma"]
 
     return [l0_keys, l1_keys]
 
@@ -177,9 +185,25 @@ def add_animation_parser_arguments(parser):
         help="Which time step to plot heat maps for; default is at peak.",
         type=int,
     )
+    
+    parser.add_argument(
+        "-rmax",
+        "--range_max",
+        default=None,
+        help="Which range to use for plots (color bar); gives upper bound.",
+        type=float,
+    )
 
-    return ["animate", "scaling_factor", "time_step"]
+    parser.add_argument(
+        "-rmin",
+        "--range_min",
+        default=None,
+        help="Which range to use for plots (color bar); gives upper bound.",
+        type=float,
+    )
 
+
+    return ["animate", "scaling_factor", "time_step", "range_max", "range_min"]
 
 def add_focus_parser_arguments(parser):
     """
@@ -273,24 +297,7 @@ def add_metrics_arguments(parser):
         type=str,
     )
 
-    parser.add_argument(
-        "-rmax",
-        "--range_max",
-        default=None,
-        help="Which range to use for plots (color bar); gives upper bound.",
-        type=float,
-    )
-
-    parser.add_argument(
-        "-rmin",
-        "--range_min",
-        default=None,
-        help="Which range to use for plots (color bar); gives upper bound.",
-        type=float,
-    )
-
-    return ["metrics", "range_max", "range_min"]
-
+    return ["metrics"]
 
 def split_parameter_dictionary(vargs, keys):
     """

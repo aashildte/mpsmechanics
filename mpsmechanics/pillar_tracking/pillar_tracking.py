@@ -261,7 +261,7 @@ def track_pillars(
     over_time_pixels = _track_pillars_over_time(
         disp_data,
         pillar_positions,
-        radius,
+        radius/um_per_pixel,
         mps_data.size_x,
         mps_data.size_y,
     )

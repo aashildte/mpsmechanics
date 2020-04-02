@@ -129,22 +129,14 @@ def add_parameters_parser_arguments(parser, level):
     if level >= 0:
         l0_keys = []
     if level >= 1:
-        parser.add_argument(
-            "-si",
-            "--sigma",
-            default=1,
-            help="Regularization filter parameter.",
-            type=float,
-        )
-
-        parser.add_argument(
-            "-ms",
-            "--motion_scaling_factor",
-            default=1,
-            help="Scaling factor for motion; 1 = original.",
-            type=float,
-        )
-        l1_keys = ["motion_scaling_factor", "sigma"]
+        #parser.add_argument(
+        #    "-si",
+        #    "--sigma",
+        #    default=1,
+        #    help="Regularization filter parameter.",
+        #    type=float,
+        #)
+        l1_keys = []
 
     return [l0_keys, l1_keys]
 

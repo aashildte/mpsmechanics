@@ -242,10 +242,14 @@ def track_pillars(
     mps_data = mps.MPS(f_in)
     um_per_pixel = mps_data.info["um_per_pixel"]
 
-    mt_data = read_prev_layer(f_in, analyze_mechanics, param_list)
+    mt_data = read_prev_layer(f_in, analyze_mechanics, param_list[:-1])
     disp_data = (1 / um_per_pixel) * mt_data["all_values"][
         "displacement"
     ]  # in pixels
+
+    motion_scaling_factor = param_list[-1]["motion_scaling_factor"]
+    disp_data *= motion_scaling_factor
+
     pillar_positions = read_pillar_positions(f_in)  # in pixels
 
     print(f"Tracking pillars for {f_in}")

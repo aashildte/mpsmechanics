@@ -173,7 +173,7 @@ def visualize_fluorescence(f_in, overwrite, overwrite_all, param_list):
     time = mps_data.time_stamps
     images = np.moveaxis(mps_data.frames, 2, 0)
 
-    fname_data = generate_filename(f_in, "visualize_fluorescence", param_list, ".npy")
+    fname_data = generate_filename(f_in, "plots_spatial", param_list, ".npy")
 
     print(fname_data)
 

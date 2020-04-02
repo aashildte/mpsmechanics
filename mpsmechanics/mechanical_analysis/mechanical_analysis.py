@@ -83,7 +83,6 @@ def _calc_mechanical_quantities(
     mt_data,
     type_filter="gaussian",
     sigma=3,
-    motion_scaling_factor=1,
     use_pacing=True,
 ):
 
@@ -92,11 +91,7 @@ def _calc_mechanical_quantities(
     angle = mt_data["angle"]
     pacing = mps_data.pacing
 
-    print("motion scaling factor: ", motion_scaling_factor)
-
-    displacement = (
-        motion_scaling_factor * mt_data["displacement_vectors"]
-    )
+    displacement = mt_data["displacement_vectors"]
     um_per_pixel = mps_data.info["um_per_pixel"]
     dx = um_per_pixel * mt_data["block_size"]
 

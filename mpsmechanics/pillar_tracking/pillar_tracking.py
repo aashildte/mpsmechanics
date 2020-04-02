@@ -178,7 +178,7 @@ def _track_pillars_over_time(
 
 def read_pillar_positions(f_in: str):
     """
-    
+
     Reads in pillar positions from csv file. Positions
     expected to be given in pixels.
 
@@ -197,7 +197,6 @@ def read_pillar_positions(f_in: str):
         path,
         filename,
         "mpsmechanics",
-        "pillar_tracking",
         "pillar_positions.csv",
     )
 
@@ -255,7 +254,7 @@ def track_pillars(
     print(f"Tracking pillars for {f_in}")
 
     radius = 10               # um
-    height = 50               # um
+    height = 55               # um
     elastic_modulus = 2.63e6  # Pa
 
     over_time_pixels = _track_pillars_over_time(

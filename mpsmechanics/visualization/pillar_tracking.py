@@ -6,12 +6,8 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-import matplotlib.colors as mcolors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import mps
-from ..dothemaths.operations import calc_norm_over_time
 from ..utils.data_layer import generate_filename, read_prev_layer
 from .animation_funs import (
     get_animation_configuration,
@@ -160,7 +156,6 @@ def _plot_mesh_over_image(
 def _plot_at_time_step(
     images, pillar_coords, radius, time, time_step, filename
 ):
-    displacement = pillar_coords
 
     if time_step is None:
         time_step = np.argmax(
@@ -210,7 +205,7 @@ def _read_input_data(f_in, param_list, overwrite_all):
         + pillar_disp["initial_positions"]
     )
     radius = (
-        pillar_disp["material_parameters"]["R"]
+        pillar_disp["material_parameters"]["radius"]
         / mps_data.info["um_per_pixel"]
     )
     images = np.moveaxis(mps_data.frames, 2, 0)
@@ -221,7 +216,7 @@ def _read_input_data(f_in, param_list, overwrite_all):
 
 
 def visualize_pillar_tracking(
-    f_in, overwrite, overwrite_all, param_list
+        f_in : str, overwrite : bool, overwrite_all : bool, param_list : list
 ):
     """
 

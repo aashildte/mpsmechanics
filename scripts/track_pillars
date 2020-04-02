@@ -16,14 +16,7 @@ def _cl_parser():
     mc.add_default_parser_arguments(parser, channel)
     keys = mc.add_parameters_parser_arguments(parser, 2)
 
-    parser.add_argument(
-        "-ms",
-        "--motion_scaling_factor",
-        default=1,
-        help="Scaling factor for motion; 1 = original.",
-        type=float,
-    )
-    keys.append(["motion_scaling_factor"])
+    keys.append(mc.add_pillar_tracking_arguments(parser))
 
     return parser, channel, keys
 

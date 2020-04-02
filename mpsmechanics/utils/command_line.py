@@ -141,6 +141,31 @@ def add_parameters_parser_arguments(parser, level):
     return [l0_keys, l1_keys]
 
 
+def add_pillar_tracking_arguments(parser):
+    """
+
+    Adds arguments needed for pillar tracking scripts.
+
+    Args:
+        parser - argument parser
+
+    Returns:
+        list of strings which identify the different
+            arguments added to the argument parser
+
+    """
+    
+    parser.add_argument(
+        "-ms",
+        "--motion_scaling_factor",
+        default=1,
+        help="Scaling factor for motion; 1 = original.",
+        type=float,
+    )
+
+    return ["motion_scaling_factor"]
+
+
 def add_animation_parser_arguments(parser):
     """
 

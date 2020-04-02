@@ -58,6 +58,7 @@ from .utils import (
     add_metrics_arguments,
     add_subdivision_arguments,
     add_parameters_parser_arguments,
+    add_pillar_tracking_arguments,
     generate_filename,
     get_full_filename,
     get_input_files,

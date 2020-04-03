@@ -45,7 +45,6 @@ import concurrent.futures
 from scipy import ndimage
 import scipy.stats as st
 import numpy as np
-from skimage.feature import match_template
 
 import mps
 
@@ -55,6 +54,7 @@ from mps import utils
 from mps import analysis
 
 from ..utils.data_layer import save_dictionary, generate_filename
+from ..utils.bf_mps import BFMPS
 
 logger = utils.get_logger(__name__)
 contraction_data_keys = [
@@ -89,6 +89,7 @@ try:
     import skimage
     from skimage import feature, morphology, filters, exposure
     from skimage.restoration import denoise_wavelet, estimate_sigma
+    from skimage.feature import match_template
 except ImportError:
     msg = (
         "skimage not found - motion tracking not possible\n"
@@ -843,74 +844,6 @@ class MotionTracking(object):
             )
         return self._displacement_data
 
-    def plot_displacement_data(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("displacement_data")
-        logger.info("Plot displacement data")
-        plotter.plot_contraction_data(
-            contraction_data=self.displacement_data,
-            time_stamps=self.data.time_stamps,
-            time_unit=self.data.info["time_unit"],
-            label="Micrometers",
-            fname=fname,
-        )
-
-    def plot_velocity_data(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("velocity_data")
-        logger.info("Plot velocity data")
-        plotter.plot_contraction_data(
-            contraction_data=self.velocity_data,
-            time_stamps=self.data.time_stamps,
-            time_unit=self.data.info["time_unit"],
-            label="Micrometers / millisecond",
-            fname=fname,
-        )
-
-    def plot_mean_displacement(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("mean_displacement")
-        logger.info("Plot mean displacement")
-        plotter.plot_mean_contraction(
-            frames=self.data.frames,
-            contraction_data=self.mean_displacement,
-            label="Micrometers",
-            fname=fname,
-        )
-
-    def plot_mean_velocity(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("mean_velocity")
-        logger.info("Plot mean velocity")
-        plotter.plot_mean_contraction(
-            frames=self.data.frames,
-            contraction_data=self.mean_velocity,
-            label="Micrometers / millisecond",
-            fname=fname,
-        )
-
-    def plot_velocity_field(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("velocity_field")
-        logger.info("Plot velocity field")
-        plotter.animate_vectorfield(
-            vectors=self.velocity_vectors,
-            images=self.data.frames,
-            framerate=self.data.framerate,
-            fname=fname,
-        )
-
-    def plot_displacement_field(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("displacement_field")
-        logger.info("Plot displacement field")
-        plotter.animate_vectorfield(
-            vectors=self.displacement_vectors,
-            images=self.data.frames,
-            framerate=self.data.framerate,
-            fname=fname,
-        )
-
     def has_results(self, key):
         """
         Check if key is in the results and that it is differnet from zero.
@@ -955,16 +888,6 @@ class MotionTracking(object):
 
         utils.to_csv(res, fname, header)
         logger.info("Done saving displacements to csv")
-
-    def plot_all(self):
-        self.plot_displacement_data()
-        self.plot_velocity_data()
-        self.plot_mean_displacement()
-        self.plot_mean_velocity()
-        self.plot_velocity_field()
-        self.plot_displacement_field()
-
-        return True
 
     def run(self):
         """
@@ -1023,7 +946,7 @@ def track_motion(
 
     np.seterr(invalid="ignore")
 
-    mps_data = mps.MPS(f_in)
+    mps_data = BFMPS(f_in)
     assert (
         mps_data.num_frames != 1
     ), "Error: Single frame used as input"
@@ -1048,6 +971,7 @@ def track_motion(
     d_all["displacement_vectors"] = disp_data
     d_all["angle"] = motion.angle
     d_all["block_size"] = motion.block_size
+    d_all["info"] = mps_data.info
 
     print("Motion tracking done.")
 

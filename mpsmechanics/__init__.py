@@ -59,6 +59,7 @@ from .utils import (
     add_subdivision_arguments,
     add_parameters_parser_arguments,
     add_pillar_tracking_arguments,
+    BFMPS,
     generate_filename,
     get_full_filename,
     get_input_files,

@@ -7,7 +7,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import mps
+from ..utils.bf_mps import BFMPS
 
 from ..utils.data_layer import generate_filename
 from ..utils.data_layer import read_prev_layer
@@ -32,7 +32,7 @@ def load_input_data(f_in, param_list, overwrite_all):
 
     """
 
-    mps_data = mps.MPS(f_in)
+    mps_data = BFMPS(f_in)
 
     mc_data = read_prev_layer(
         f_in, analyze_mechanics, param_list[:-1], overwrite_all

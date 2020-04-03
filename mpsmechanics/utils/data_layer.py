@@ -11,7 +11,7 @@ from .folder_structure import get_input_properties
 
 
 def read_prev_layer(
-    input_file, layer_fn, param_list=[{}], overwrite=False
+    input_file, layer_fn, param_list=[{}, {}, {}, {}], overwrite=False
 ):
     """
 

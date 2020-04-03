@@ -7,8 +7,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import mps
-
+from ..utils.bf_mps import BFMPS
 from ..utils.data_layer import generate_filename, read_prev_layer
 from ..mechanical_analysis.mechanical_analysis import (
     analyze_mechanics,
@@ -104,7 +103,7 @@ def visualize_over_time(f_in, overwrite, overwrite_all, param_list):
 
     """
 
-    mps_data = mps.MPS(f_in)
+    mps_data = BFMPS(f_in)
     pacing = mps_data.pacing
 
     data = read_prev_layer(f_in, analyze_mechanics)

@@ -7,12 +7,14 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import mps
+from ..utils.bf_mps import BFMPS
 from ..utils.data_layer import generate_filename, read_prev_layer
 from .animation_funs import (
     get_animation_configuration,
     make_animation,
 )
+from .setup_plots import generate_filenames_pngmp4
+
 from ..pillar_tracking.pillar_tracking import track_pillars
 
 
@@ -88,10 +90,8 @@ def _plot_circle(
         - start_indices[1]
     )
 
-    circle = axis.plot(xcoords[time_step], ycoords[time_step], "r")[
-        0
-    ]
-
+    circle = axis.plot(xcoords[time_step], ycoords[time_step], "r")[0]
+    
     return circle, xcoords, ycoords
 
 
@@ -103,7 +103,7 @@ def _plot_mesh_over_image(
     xplots = min(4, num_pillars)
     yplots = int(np.ceil(num_pillars / xplots))
     fig, axes = plt.subplots(
-        yplots, xplots, figsize=(4 * xplots, 4 * yplots)
+        yplots, xplots, figsize=(5 * xplots, 5 * yplots)
     )
 
     if xplots > 1:
@@ -118,7 +118,7 @@ def _plot_mesh_over_image(
     for i in range(num_pillars):
         axis = axes[i]
         im_subplot, im_part, start_indices = _plot_part_of_image(
-            axis, images, time_step, pillar_coords[time_step, i]
+            axis, images, time_step, pillar_coords[0, i]
         )
 
         ci_subplots = _plot_circle(
@@ -179,19 +179,8 @@ def _make_animation(
     make_animation(fig, update, fname, **animation_config)
 
 
-def _generate_param_filename(f_in, user_params):
-    fname = generate_filename(
-        f_in,
-        f"pillars",
-        user_params,
-        "",
-        subfolder="pillar_tracking",  # mp3 or png
-    )
-    return fname
-
-
 def _read_input_data(f_in, param_list, overwrite_all):
-    mps_data = mps.MPS(f_in)
+    mps_data = BFMPS(f_in)
 
     pillar_disp = read_prev_layer(
         f_in, track_pillars, param_list[:-1], overwrite_all
@@ -240,11 +229,12 @@ def visualize_pillar_tracking(
         time,
     ) = _read_input_data(f_in, param_list, overwrite_all)
 
-    fname_p = _generate_param_filename(f_in, param_list)
-    fname_png = fname_p + ".png"
-    fname_mp4 = fname_p + ".mp4"
     time_step = param_list[-1]["time_step"]
-
+    
+    fname_png, fname_mp4 = generate_filenames_pngmp4(
+        f_in, "pillar_tracking", f"pillars", param_list
+    )
+    
     if overwrite or not os.path.isfile(fname_png):
         _plot_at_time_step(
             images, pillar_coords, radius, time, time_step, fname_png

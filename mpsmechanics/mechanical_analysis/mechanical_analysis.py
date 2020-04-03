@@ -10,7 +10,7 @@ Computes mechanical quantities over space and time.
 import os
 from collections import defaultdict
 import numpy as np
-import mps
+from ..utils.bf_mps import BFMPS
 
 from mpsmechanics.utils.data_layer import (
     read_prev_layer,
@@ -97,9 +97,9 @@ def _calc_mechanical_quantities(
 
     if use_pacing and np.max(pacing > 1):
         indices = np.where(np.diff(pacing[1:]) > 1)[0] + 1
-        pacing_step = indices[0] - 1
+        reference_index = indices[0] - 1
 
-        displacement = convert_disp_data(displacement, pacing_step)
+        displacement = convert_disp_data(displacement, reference_index)
         displacement = um_per_pixel * apply_filter(
             displacement, type_filter, sigma
         )
@@ -108,8 +108,9 @@ def _calc_mechanical_quantities(
         maxima = calc_beat_maxima(disp_data_folded)
         intervals = _calc_intervals_from_pacing(pacing)
     else:
+        reference_index = calculate_minmax(displacement)
         displacement = convert_disp_data(
-            displacement, calculate_minmax(displacement)
+            displacement, reference_index
         )
         displacement = um_per_pixel * apply_filter(
             displacement, type_filter, sigma
@@ -128,6 +129,8 @@ def _calc_mechanical_quantities(
     d_all["time"] = mps_data.time_stamps
     d_all["maxima"] = maxima
     d_all["intervals"] = intervals
+    d_all["info"] = mt_data["info"]
+    d_all["reference_index"] = reference_index
 
     return d_all
 
@@ -153,7 +156,6 @@ def analyze_mechanics(
     filename = generate_filename(
         f_in, "analyze_mechanics", param_list, ".npy"
     )
-    print("filename: ", filename)
 
     if (
         not overwrite_all
@@ -170,7 +172,7 @@ def analyze_mechanics(
         )
         return np.load(filename, allow_pickle=True).item()
 
-    mps_data = mps.MPS(f_in)
+    mps_data = BFMPS(f_in)
     mt_data = read_prev_layer(
         f_in, track_motion, param_list[:-1], overwrite_all
     )

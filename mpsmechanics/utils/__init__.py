@@ -4,7 +4,9 @@
 
 """
 
-from .bf_mps import BFMPS
+from .bf_mps import (
+        BFMPS,
+)
 
 from .folder_structure import (
     get_input_properties,

@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from ..utils.bf_mps import BFMPS
-from ..utils.data_layer import generate_filename, read_prev_layer
+from ..utils.data_layer import read_prev_layer
 from .animation_funs import (
     get_animation_configuration,
     make_animation,
@@ -189,10 +189,14 @@ def _read_input_data(f_in, param_list, overwrite_all):
         param_list[-1], mps_data
     )
 
-    pillar_coords = (
-        pillar_disp["displacement_pixels"]
-        + pillar_disp["initial_positions"]
-    )
+    # for visualization we need everything relative to first time frame
+
+    pillar_coords = pillar_disp["displacement_pixels"] - pillar_disp["displacement_pixels"][0]
+
+    # and in absolute coords
+
+    pillar_coords = pillar_coords + pillar_disp["initial_positions"]
+
     radius = (
         pillar_disp["material_parameters"]["radius"]
         / mps_data.info["um_per_pixel"]

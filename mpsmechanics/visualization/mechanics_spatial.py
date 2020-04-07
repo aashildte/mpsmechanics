@@ -416,10 +416,10 @@ def _init_subplots_2x2d(all_components, time_step, cb_range, shift):
         vy_values,
     ) = all_components
 
-    val_range = _get_value_range(
+    val_range = list(_get_value_range(
         [ux_values, uy_values, vx_values, vy_values]
-    )
-    sg_range = np.min(sg_values), np.max(sg_values)
+    ))
+    sg_range = [np.min(sg_values), np.max(sg_values)]
 
     # overwrite if given by user:
 
@@ -602,6 +602,7 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
         fname_png, fname_mp4 = generate_filenames_pngmp4(
             f_in, "visualize_mechanics", f"spatial_decomposition_{metric}", param_list
         )
+        
         metadata, spatial_data, time = setup_for_key(
             mps_data, mc_data, metric
         )

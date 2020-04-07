@@ -195,15 +195,18 @@ def setup_for_key(mps_data, mc_data, key):
 
 
 def generate_filenames_pngmp4(f_in, subfolder, prefix, param_list):
-    scaling_factor = str(param_list[-1].pop("scaling_factor"))
+    
+    param_list_copy = [_p.copy() for _p in param_list]
+    
+    scaling_factor = str(param_list_copy[-1].pop("scaling_factor"))
     scaling_factor = scaling_factor.replace(".", "p")
-
-    time_step = param_list[-1].pop("time_step") 
+     
+    time_step = param_list_copy[-1].pop("time_step") 
 
     fname = generate_filename(
         f_in,
         prefix,
-        param_list,
+        param_list_copy,
         "",                   # mp3 or png
         subfolder=subfolder,
     )

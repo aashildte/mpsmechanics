@@ -93,7 +93,11 @@ def _calc_mechanical_quantities(
 
     displacement = mt_data["displacement_vectors"]
     um_per_pixel = mps_data.info["um_per_pixel"]
-    dx = um_per_pixel * mt_data["block_size"]
+    
+    if type_filter == "downsampling":
+        dx = um_per_pixel * mt_data["block_size"] * sigma
+    else:
+        dx = um_per_pixel * mt_data["block_size"]
 
     if use_pacing and np.max(pacing > 1):
         indices = np.where(np.diff(pacing[1:]) > 1)[0] + 1

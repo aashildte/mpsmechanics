@@ -5,4 +5,4 @@
         args:
         - --max-line-length=70
         - -d duplicate-code
-        - --good-names=dx
+        - --good-names=t, x, y, dt, dx, dy

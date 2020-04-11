@@ -58,3 +58,48 @@ def apply_filter(motion_data, type_filter, sigma):
                     new_data[_t, _x, _y, _d] = avg
 
     return new_data
+
+
+def gaussian_filter_with_mask(motion_data : np.ndarray, sigma : float, mask : np.ndarray) -> np.ndarray:
+
+    xmap = _create_xy_maps(mask)
+    ymap = _create_xy_maps(mask.transpose())
+
+    filtered_data = np.zeros_like(motion_data)
+
+    for _x in xmap.keys():
+        for (y_start, y_end) in xmap[_x]:
+            filtered_data[:, _x, y_start:y_end, :] = gaussian_filter(motion_data[:, _x, y_start:y_end, :], [0, sigma, 0])
+
+    for _y in ymap.keys():
+        for (x_start, x_end) in ymap[_y]:
+            filtered_data[:, x_start:x_end, _y, :] = gaussian_filter(motion_data[:, x_start:x_end, _y, :], [0, sigma, 0])
+
+    return filtered_data
+
+
+def _create_xy_maps(mask : np.ndarray) -> (dict, dict):
+    assert len(mask.shape) ==2, "Error: Expectd 2D shape for mask"
+
+    x_dim, y_dim = mask.shape
+
+    xmap = {}
+
+    for _x in range(x_dim):
+        xmap[_x] = []
+        started = False
+        for _y in range(y_dim):
+            if mask[_x, _y]:
+                if not started:
+                    started = True
+                    start_index = _y
+            else:
+                if started:
+                    started = False
+                    stop_index = _y
+                    xmap[_x].append((start_index, stop_index))
+            if started and (_y == y_dim-1):
+                stop_index = _y + 1
+                xmap[_x].append((start_index, stop_index))
+
+    return xmap

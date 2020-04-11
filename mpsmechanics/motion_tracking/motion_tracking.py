@@ -25,22 +25,10 @@
 # SIMULA RESEARCH LABORATORY MAKES NO REPRESENTATIONS AND EXTENDS NO
 # WARRANTIES OF ANY KIND, EITHER IMPLIED OR EXPRESSED, INCLUDING, BUT
 # NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS
-__author__ = "Henrik Finsberg (henriknf@simula.no), 2017--2019"
-__maintainer__ = "Henrik Finsberg"
-__email__ = "henriknf@simula.no"
-"""
-This module is based on the Matlab code in the script scripttotry1105_nd2.m
-provided by Berenice
-"""
-from typing import Optional
 import time
 import os
 import logging
-from pathlib import Path
-from collections import namedtuple
 import hashlib
-import pickle
-import itertools
 import concurrent.futures
 from scipy import ndimage
 import scipy.stats as st
@@ -51,21 +39,23 @@ import mps
 from mps import utils
 
 # from mps import plotter
-from mps import analysis
 
 from ..utils.data_layer import save_dictionary, generate_filename
 from ..utils.bf_mps import BFMPS
 
-logger = utils.get_logger(__name__)
-contraction_data_keys = [
-    f"{key1}_{key2}"
-    for key2 in ["max", "mean", "min", "std"]
-    for key1 in ["x", "y", "amp", "angle"]
-]
-ContractionData = namedtuple(
-    "ContractionData", contraction_data_keys
-)
 
+__author__ = "Henrik Finsberg (henriknf@simula.no), 2017--2019"
+__maintainer__ = "Henrik Finsberg"
+__email__ = "henriknf@simula.no"
+
+"""
+
+This module is based on the Matlab code in the script scripttotry1105_nd2.m
+provided by Berenice
+
+"""
+
+logger = utils.get_logger(__name__)
 
 try:
     from numba import jit
@@ -85,68 +75,28 @@ except ImportError:
             return f
 
 
-try:
-    import skimage
-    from skimage import feature, morphology, filters, exposure
-    from skimage.restoration import denoise_wavelet, estimate_sigma
-    from skimage.feature import match_template
-except ImportError:
-    msg = (
-        "skimage not found - motion tracking not possible\n"
-        "Please install skimage in order to use the motion tracking algorithm"
-        "\n    pip install scikit-image"
-    )
-    logger.warning(msg)
-
-
 def block_matching_map(args):
-    """Helper function for running block maching algorithm in paralell
+    """
+    
+    Helper function for running block maching algorithm in paralell
 
-    Arguments
-    ---------
-    args: tuple
-        A tuple to be passed to `block_macthing`
-        `(reference_image, image, block_size, max_block_movement, filter_kernel_size)`.
     """
     vectors = block_matching(*args[:-1])
+    filter_kernel_size = args[-1]
 
-    if args[-1] > 0:
-        vectors[:, :, 0] = ndimage.median_filter(
-            vectors[:, :, 0], args[-1]
-        )
-        vectors[:, :, 1] = ndimage.median_filter(
-            vectors[:, :, 1], args[-1]
-        )
-    return vectors
+    if filter_kernel_size > 0:
+        vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], filter_kernel_size)
+        vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], filter_kernel_size)
 
-
-def template_matching_map(args):
-    """Helper function for running template maching algorithm in paralell
-
-    Arguments
-    ---------
-    args: tuple
-        A tuple to be passed to `template_matching`
-        `(reference_image, image, block_size, max_block_movement, filter_kernel_size)`.
-    """
-    vectors = template_matching(*args[:-1])
-
-    if args[-1] > 0:
-        vectors[:, :, 0] = ndimage.median_filter(
-            vectors[:, :, 0], args[-1]
-        )
-        vectors[:, :, 1] = ndimage.median_filter(
-            vectors[:, :, 1], args[-1]
-        )
     return vectors
 
 
 @jit(nopython=True)
 def block_matching(
-    reference_image: np.ndarray,
-    image: np.ndarray,
-    block_size: int,
-    max_block_movement: int,
+        reference_image: np.ndarray,
+        image: np.ndarray,
+        block_size: int,
+        max_block_movement: int,
 ):
     """
     Computes the displacements from `reference_image` to `image`
@@ -177,15 +127,11 @@ def block_matching(
     y_size, x_size = image.shape
     shape = (y_size // block_size, x_size // block_size)
     vectors = np.zeros((shape[0], shape[1], 2))
-    costs = np.ones(
-        (2 * max_block_movement + 1, 2 * max_block_movement + 1)
-    )
+    costs = np.ones((2 * max_block_movement + 1, 2 * max_block_movement + 1))
 
     # Need to copy images to float array
     # otherwise negative values will be converted to large 16-bit integers
-    ref_block = np.zeros(
-        (block_size, block_size)
-    )  # Block for reference image
+    ref_block = np.zeros((block_size, block_size))  # Block for reference image
     block = np.zeros((block_size, block_size))  # Block for image
 
     # Loop over each block
@@ -197,8 +143,7 @@ def block_matching(
             x_image = x_block * block_size
 
             block[:] = image[
-                y_image : y_image + block_size,
-                x_image : x_image + block_size,
+                y_image : y_image + block_size, x_image : x_image + block_size,
             ]
 
             # Check if box has values
@@ -206,34 +151,25 @@ def block_matching(
 
                 # Loop over values around the block within the `max_block_movement` range
                 for i, y_block_ref in enumerate(
-                    range(
-                        -max_block_movement, max_block_movement + 1
-                    )
+                        range(-max_block_movement, max_block_movement + 1)
                 ):
                     for j, x_block_ref in enumerate(
-                        range(
-                            -max_block_movement,
-                            max_block_movement + 1,
-                        )
+                            range(-max_block_movement, max_block_movement + 1,)
                     ):
 
                         y_image_ref = y_image + y_block_ref
                         x_image_ref = x_image + x_block_ref
 
                         # Just make sure that we are within the referece image
-                        if (
-                            y_image_ref < 0
-                            or y_image_ref + block_size > y_size
-                            or x_image_ref < 0
-                            or x_image_ref + block_size > x_size
-                        ):
+                        if (y_image_ref < 0
+                                or y_image_ref + block_size > y_size
+                                or x_image_ref < 0
+                                or x_image_ref + block_size > x_size):
                             costs[i, j] = np.nan
                         else:
                             ref_block[:] = reference_image[
-                                y_image_ref : y_image_ref
-                                + block_size,
-                                x_image_ref : x_image_ref
-                                + block_size,
+                                y_image_ref : y_image_ref + block_size,
+                                x_image_ref : x_image_ref + block_size,
                             ]
                             # Could improve this cost function / template matching
                             costs[i, j] = np.sum(
@@ -242,224 +178,19 @@ def block_matching(
 
                 # Find minimum cost vector and store it
                 dy, dx = np.where(costs == np.nanmin(costs))
+
                 # If there are more then one minima then we select none
                 if len(dy) > 1 or len(dx) > 1:
                     vectors[y_block, x_block, 0] = 0
                     vectors[y_block, x_block, 1] = 0
                 else:
-                    vectors[y_block, x_block, 0] = (
-                        max_block_movement - dy[0]
-                    )
-                    vectors[y_block, x_block, 1] = (
-                        max_block_movement - dx[0]
-                    )
+                    vectors[y_block, x_block, 0] = max_block_movement - dy[0]
+                    vectors[y_block, x_block, 1] = max_block_movement - dx[0]
             else:
                 # If no values in box set to no movement
                 vectors[y_block, x_block, :] = 0
 
     return vectors
-
-
-def template_matching(
-    reference_image: np.ndarray,
-    image: np.ndarray,
-    block_size: int,
-    max_block_movement: int,
-):
-    """
-    Computes the displacements from `reference_image` to `image`
-    using a template matching algorithm (`skimage.feature.match_template`)
-
-    Arguments
-    ---------
-    reference_image : np.ndarray
-        The frame used as reference
-    image : np.ndarray
-        The frame that you want to compute displacement for relative to
-        the referernce frame
-    block_size : int
-        Size of the blocks
-    max_block_movement : int
-        Maximum allowed movement of blocks when searching for best match.
-
-    """
-    # Shape of the image that is returned
-    y_size, x_size = image.shape
-    shape = (y_size // block_size, x_size // block_size)
-    vectors = np.zeros((shape[0], shape[1], 2))
-    costs = np.ones(
-        (2 * max_block_movement + 1, 2 * max_block_movement + 1)
-    )
-
-    # Need to copy images to float array
-    # otherwise negative values will be converted to large 16-bit integers
-    N = 2 * max_block_movement + block_size
-    search_block = np.zeros((N, N))  # Block for reference image
-
-    block = np.zeros((block_size, block_size))  # Block for image
-
-    # Loop over each block
-    for y_block in range(shape[0]):
-        for x_block in range(shape[1]):
-
-            # Coordinates in the orignal image
-            y_image = y_block * block_size
-            x_image = x_block * block_size
-
-            block[:] = image[
-                y_image : y_image + block_size,
-                x_image : x_image + block_size,
-            ]
-
-            if np.all(block == 0):
-                # If no values in box set to no movement
-                vectors[y_block, x_block, :] = 0
-                continue
-
-            y_min = max(0, y_image - max_block_movement)
-            y_max = min(
-                y_size, y_image + block_size + max_block_movement
-            )
-            x_min = max(0, x_image - max_block_movement)
-            x_max = min(
-                x_size, x_image + block_size + max_block_movement
-            )
-
-            search_block[:] = np.nan
-            y_ref_start = y_min - y_image + max_block_movement
-            y_ref_end = N - (
-                y_image + block_size + max_block_movement - y_max
-            )
-            x_ref_start = x_min - x_image + max_block_movement
-            x_ref_end = N - (
-                x_image + block_size + max_block_movement - x_max
-            )
-
-            search_block[
-                y_ref_start:y_ref_end, x_ref_start:x_ref_end
-            ] = reference_image[y_min:y_max, x_min:x_max]
-
-            result = match_template(search_block, block)
-            dy, dx = np.where(
-                np.abs(result - np.nanmax(result)) < 1e-5
-            )
-            # Select the case that has the smallest displacement
-            idx = np.argmin(
-                np.linalg.norm(
-                    np.abs(max_block_movement - np.array([dx, dy])),
-                    axis=0,
-                )
-            )
-
-            vectors[y_block, x_block, 0] = (
-                max_block_movement - dy[idx]
-            )
-            vectors[y_block, x_block, 1] = (
-                max_block_movement - dx[idx]
-            )
-
-    return vectors
-
-
-def mean_contraction(amplitude, vectors, um_per_pixel, factor=1.0):
-
-    amplitude_map = np.sum(amplitude, 2)
-    mask = amplitude_map < np.median(amplitude_map)
-
-    results = {
-        k: np.zeros(amplitude.shape[:2])
-        for k in contraction_data_keys
-    }
-
-    mapper = dict(
-        amp=amplitude,
-        x=vectors[:, :, 1, :],
-        y=vectors[:, :, 0, :],
-        angle=None,
-    )
-
-    for key in results.keys():
-        key1, key2 = key.split("_")
-        data = mapper[key1]
-        if data is None:
-            continue
-
-        data[mask] = 0
-        value = getattr(np, key2)(data, 2)
-        value *= um_per_pixel * factor
-        results[key][:] = value
-
-    return ContractionData(**results)
-
-
-def contraction_data(
-    amplitude: np.ndarray,
-    vectors: np.ndarray,
-    um_per_pixel: float,
-    factor=1.0,
-):
-    """
-    Compute a collection of features from amplide and vectors
-
-    Arguments
-    ---------
-    amplitude : np.ndarray
-        L2 norm of the vectors
-    vectors : np.ndarray
-        Vectors coming from the matching algorithm
-    um_per_pixel : float
-        Conversion factor from pixel to micrometers
-    factor : float
-        Additional factor to scale output. For velocities this is
-        shoud be framerate / delay
-    """
-
-    amplitude_map = np.sum(amplitude, 2)
-    mask = amplitude_map < np.median(amplitude_map)
-
-    num_frames = amplitude.shape[-1]
-    results = {
-        k: np.zeros(num_frames) for k in contraction_data_keys
-    }
-
-    data = dict(
-        x=np.zeros_like(vectors[:, :, 0, 0]),
-        y=np.zeros_like(vectors[:, :, 1, 0]),
-        amp=np.zeros_like(amplitude[:, :, 0]),
-        angle=np.zeros_like(amplitude[:, :, 0]),
-    )
-
-    for t in range(num_frames):
-
-        data["y"] = vectors[:, :, 0, t]
-        # Add minus here for some reason
-        data["x"] = -vectors[:, :, 1, t]
-        data["amp"] = amplitude[:, :, t]
-
-        data["y"][mask] = np.nan
-        data["x"][mask] = np.nan
-        data["amp"][mask] = np.nan
-        data["angle"] = np.rad2deg(
-            np.arctan(
-                np.divide(
-                    data["x"],
-                    data["y"],
-                    where=(data["y"] != 0),
-                    out=np.zeros_like(data["x"]),
-                )
-            )
-        )
-
-        for key in results.keys():
-            key1, key2 = key.split("_")
-            v = data[key1]
-            # Use the nan function from numpy
-            value = getattr(np, "nan" + key2)(v)
-            if key1 != "angle":
-                value *= um_per_pixel * factor
-            results[key][t] = value
-
-    return ContractionData(**results)
 
 
 class MotionTracking(object):
@@ -472,105 +203,51 @@ class MotionTracking(object):
     mps_data : mps.MPS
         The data that you want to analyze
     block_size : float
-        Sice of each block in micrometers. Default: 3 micrometers
+        Sice of each block in pixels. Default value: 9.
     max_block_movement: float
-        Maximum allowed movement of each block in micrometers
-        Default 3 micrometers.
-    reference_frame: str
-        What reference to use when computing displacements. Eiter 'mean', 'median' or
-        some integer refering to a particular frame. Default is 'median'. For 'median'/
-        'mean' the refercence frame will be the median/mean of all frames
-    delay: int
-        Delay between frames when computing the velocities. The default value
-        depends on the framerate. If set to 1 then the velocity will be computed
-        from each successive frame.
-    outdir: str
-        Output directory to store the results. If not provided, the the output directory
-        will try to match in directory of the input data.
+        Maximum allowed movement of each block. Default value: 18.
     serial : bool
         Run motion tracking in serial. Default: False (i.e default is paralell).
         Useful for debugging
     filter_kernel_size: int
-        Size of kernel for median filter applied to the motion vectors. Default: 0 
-        (i.e no filtering)
-    matching_method : str
-        Method used for block matching. Choices "block_matching" (default) or
-        "template_matching" 
+        Size of kernel for median filter applied to the motion vectors. Default: 8
     loglevel : int
         Level of how much that is printed (Default: 20 (INFO))
     """
 
-    _arrays = ["velocity_vectors", "displacement_vectors"]
-
-    def __init__(
-        self,
-        data: mps.MPS,
-        block_size: int = 3,
-        max_block_movement: int = 6,
-        reference_frame: str = "median",
-        delay: Optional[int] = None,
-        outdir: Optional[str] = None,
-        serial: bool = False,
-        filter_kernel_size: int = 8,
-        matching_method="block_matching",
-        loglevel=logging.INFO,
-    ):
+    def __init__(self,
+                 data: mps.MPS,
+                 block_size: int = 9,
+                 max_block_movement: int = 18,
+                 serial: bool = False,
+                 filter_kernel_size: int = 8,
+                 loglevel: int = logging.INFO):
 
         global logger
         logger = utils.get_logger(__name__, loglevel)
         self.data = data
-        self.block_size_microns = block_size
-        self.block_size = int(block_size / data.info["um_per_pixel"])
-        self.max_block_movement_microns = max_block_movement
-        self.max_block_movement = int(
-            max_block_movement / data.info["um_per_pixel"]
-        )
+        self.block_size = block_size
+        self.max_block_movement = max_block_movement
         self.serial = serial
-        self.reference_frame = reference_frame
         self.filter_kernel_size = filter_kernel_size
-
-        self.matching_map = (
-            block_matching_map
-            if matching_method == "block_matching"
-            else template_matching_map
-        )
 
         logger.info(
             (
                 "Initializing motion tracker with :\n"
                 f"Block size: {self.block_size} pixels "
-                f"/ {self.block_size_microns} um \n"
                 f"Max movement: {self.max_block_movement} pixels "
-                f"/ {self.max_block_movement_microns} um \n"
             )
         )
-        if delay is None:
-            delay = int(np.ceil(0.1 * data.framerate))
-        self.delay = delay
 
         self.macro_shape = (
             data.frames.shape[0] // self.block_size,
             data.frames.shape[1] // self.block_size,
         )
 
-        self.N = data.num_frames - self.delay
         self.shape = (
             self.macro_shape[0] * self.block_size,
             self.macro_shape[1] * self.block_size,
         )
-        self._init_arrays()
-
-        if outdir is None:
-            if hasattr(data, "_fname"):
-                outdir = Path(os.path.splitext(data._fname)[0])
-            elif hasattr(data, "name"):
-                outdir = Path(os.path.splitext(data.name)[0])
-            else:
-                outdir = Path("mps_motion_tracking")
-        else:
-            outdir = Path(outdir)
-        outdir.mkdir(parents=True, exist_ok=True)
-        self.outdir = outdir
 
         from mps import __version__
 
@@ -579,85 +256,25 @@ class MotionTracking(object):
                 repr(data)
                 + str(block_size)
                 + str(max_block_movement)
-                + str(delay)
-                + str(reference_frame)
                 + str(__version__)
             ).encode("utf-8")
         ).hexdigest()
 
-    def _init_arrays(self):
+        self.displacement_vectors = self.get_displacements()
 
-        self.computed = dict(
-            angle=False, velocities=False, displacements=False
-        )
-
-    @property
-    def _get_velocities_iter(self):
-        """
-        Iterable to be passed in to the map fuction for velocities
-        """
-
-        def gen():
-            for i in range(self.N):
-                yield (
-                    self.data.frames[
-                        : self.shape[0], : self.shape[1], i
-                    ],
-                    self.data.frames[
-                        : self.shape[0],
-                        : self.shape[1],
-                        i + self.delay,
-                    ],
-                    self.block_size,
-                    self.max_block_movement,
-                    self.filter_kernel_size,
-                )
-
-        return gen()
 
     def _get_displacements_iter(self):
         """
         Iterable to be passed in to the map fuction for displacements
         """
 
-        def check_int(s):
-            if s[0] in ("-", "+"):
-                return s[1:].isdigit()
-            return s.isdigit()
-
-        if check_int(self.reference_frame):
-            idx = int(self.reference_frame)
-            reference = self.data.frames[
-                : self.shape[0], : self.shape[1], idx
-            ]
-        elif self.reference_frame == "mean":
-            reference = np.mean(
-                self.data.frames[
-                    : self.shape[0], : self.shape[1], :
-                ],
-                2,
-            )
-        elif self.reference_frame == "median":
-            reference = np.median(
-                self.data.frames[
-                    : self.shape[0], : self.shape[1], :
-                ],
-                2,
-            )
-        else:
-            msg = (
-                "Unknown reference_frame {self.reference_frame}. "
-                'Expected an integer (as a string) of "mean" or "median"'
-            )
-            raise ValueError(msg)
+        reference = np.median(self.data.frames[: self.shape[0], : self.shape[1], :], 2,)
 
         def gen():
             for i in range(self.data.num_frames):
                 yield (
                     reference,
-                    self.data.frames[
-                        : self.shape[0], : self.shape[1], i
-                    ],
+                    self.data.frames[: self.shape[0], : self.shape[1], i],
                     self.block_size,
                     self.max_block_movement,
                     self.filter_kernel_size,
@@ -665,266 +282,79 @@ class MotionTracking(object):
 
         return gen()
 
-    def _get_velocities(self):
-
-        logger.info("Get velocities")
-        self._velocity_vectors = np.zeros(
-            (self.macro_shape[0], self.macro_shape[1], 2, self.N)
-        )
-
-        iterable = self._get_velocities_iter
-        t0 = time.time()
-        if self.serial:
-            for i, v in enumerate(map(self.matching_map, iterable)):
-                if i % 50 == 0:
-                    logger.info(f"Processing frame {i}/{self.N}")
-                self._velocity_vectors[:, :, :, i] = v
-
-        else:
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, v in enumerate(
-                    executor.map(self.matching_map, iterable)
-                ):
-
-                    if i % 50 == 0:
-                        logger.info(f"Processing frame {i}/{self.N}")
-                    self._velocity_vectors[:, :, :, i] = v
-
-        t1 = time.time()
-        logger.info(
-            f"Done getting velocities - Elapsed time = {t1-t0:.2f} seconds"
-        )
-        self.computed["velocities"] = True
-
-    def _get_displacements(self):
+    def get_displacements(self):
 
         logger.info("Get displacements")
-        self._displacement_vectors = np.zeros(
-            (
-                self.macro_shape[0],
-                self.macro_shape[1],
-                2,
-                self.data.num_frames,
-            )
+        displacement_vectors = np.zeros(
+            (self.macro_shape[0], self.macro_shape[1], 2, self.data.num_frames,)
         )
 
         iterable = self._get_displacements_iter()
-        t0 = time.time()
+        t_start = time.time()
         if self.serial:
-            for i, v in enumerate(map(self.matching_map, iterable)):
+            for i, vectors in enumerate(map(block_matching_map, iterable)):
                 if i % 50 == 0:
-                    logger.info(
-                        f"Processing frame {i}/{self.data.num_frames - 1}"
-                    )
-                    self._displacement_vectors[:, :, :, i] = v
+                    logger.info(f"Processing frame {i}/{self.data.num_frames - 1}")
+                displacement_vectors[:, :, :, i] = vectors
         else:
             with concurrent.futures.ProcessPoolExecutor() as executor:
-                for i, v in enumerate(
-                    executor.map(self.matching_map, iterable)
-                ):
+                for i, vectors in enumerate(executor.map(block_matching_map, iterable)):
                     if i % 50 == 0:
-                        logger.info(
-                            f"Processing frame {i}/{self.data.num_frames - 1}"
-                        )
-                    self._displacement_vectors[:, :, :, i] = v
+                        logger.info(f"Processing frame {i}/{self.data.num_frames - 1}")
+                    displacement_vectors[:, :, :, i] = vectors
 
-        t1 = time.time()
+        t_end = time.time()
         logger.info(
-            (
-                "Done getting displacements "
-                f" - Elapsed time = {t1-t0:.2f} seconds"
-            )
-        )
-        self.computed["displacements"] = True
-
-    def _get_angle(self):
-        """
-        
-        Estimating angle/how much the chamber is tilted using linear
-        regression.
-        
-        """
-
-        disp = self.displacement_vectors
-        T = disp.shape[-1]
-
-        xs, ys = [], []
-
-        for t in range(T):
-            xs_, ys_, _ = np.nonzero(disp[:, :, :, t])
-            xs += list(xs_)
-            ys += list(ys_)
-
-        if not xs:
-            print("Warning: No nonzero values detected.")
-            slope = 0
-        else:
-            slope = st.linregress(xs, ys)[0]
-
-        self._angle = np.arctan(slope)
-        self.computed["angle"] = True
-
-    @property
-    def angle(self):
-        if True or not self.has_results("angle"):
-            self._get_angle()
-        return np.copy(self._angle)
-
-    @property
-    def edges(self):
-        if not self.has_results("edges"):
-            self._edge_detection()
-        return np.copy(self._edges)
-
-    @property
-    def displacement_vectors(self):
-        if not self.has_results("displacements"):
-            self._get_displacements()
-        return np.copy(self._displacement_vectors)
-
-    @property
-    def displacement_amp(self):
-        if not self.has_results("displacements"):
-            self._get_displacements()
-        return np.linalg.norm(self.displacement_vectors, axis=2)
-
-    @property
-    def velocity_vectors(self):
-        if not self.has_results("velocities"):
-            self._get_velocities()
-        return np.copy(self._velocity_vectors)
-
-    @property
-    def velocity_amp(self):
-        if not self.has_results("velocities"):
-            self._get_velocities()
-        return np.linalg.norm(self.velocity_vectors, axis=2)
-
-    @property
-    def mean_displacement(self):
-        if not hasattr(self, "_mean_displacement"):
-            self._mean_displacement = mean_contraction(
-                amplitude=self.displacement_amp,
-                vectors=self.displacement_vectors,
-                um_per_pixel=self.data.info["um_per_pixel"],
-                factor=1.0,
-            )
-        return self._mean_displacement
-
-    @property
-    def mean_velocity(self):
-        if not hasattr(self, "_mean_velocity"):
-            self._mean_velocity = mean_contraction(
-                amplitude=self.velocity_amp,
-                vectors=self.velocity_vectors,
-                um_per_pixel=self.data.info["um_per_pixel"],
-                factor=self.data.framerate / self.delay,
-            )
-        return self._mean_velocity
-
-    @property
-    def velocity_data(self):
-        if not hasattr(self, "_velocity_data"):
-            self._velocity_data = contraction_data(
-                amplitude=self.velocity_amp,
-                vectors=self.velocity_vectors,
-                um_per_pixel=self.data.info["um_per_pixel"],
-                factor=self.data.framerate / self.delay,
-            )
-        return self._velocity_data
-
-    @property
-    def displacement_data(self):
-        if not hasattr(self, "_displacement_data"):
-            self._displacement_data = contraction_data(
-                amplitude=self.displacement_amp,
-                vectors=self.displacement_vectors,
-                um_per_pixel=self.data.info["um_per_pixel"],
-                factor=1.0,
-            )
-        return self._displacement_data
-
-    def has_results(self, key):
-        """
-        Check if key is in the results and that it is differnet from zero.
-        We can you this to see if results loaded from the cache should be
-        used or recomputed (assuming that results identical to zero is
-        not possible).
-        """
-        return self.computed[key]
-
-    def save_motion(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("motion")
-        utils.frames2mp4(
-            self.data.frames.T, fname, self.data.framerate
+            ("Done getting displacements " f" - Elapsed time = {t_end-t_start:.2f} seconds")
         )
 
-    def save_displacement(self, fname=None):
-
-        logger.info("Save displacements to csv")
-        header = ["t", "x", "y", "displacement_X", "displacement_Y"]
-
-        if fname is None:
-            fname = self.outdir.joinpath("displacement").as_posix()
-
-        d = self.displacement_vectors
-        N = d.shape[-1] * d.shape[0] * d.shape[1]
-        res = np.zeros((N, 5))
-        i = 0
-        # This is really slow - we could vectorize it,
-        # but do we really want to save this to csv?
-        for t in range(d.shape[-1]):
-            for y in range(d.shape[1]):
-                for x in range(d.shape[0]):
-                    res[i, :] = [
-                        t,
-                        x,
-                        y,
-                        d[x, y, 0, t],
-                        d[x, y, 1, t],
-                    ]
-                    i += 1
-
-        utils.to_csv(res, fname, header)
-        logger.info("Done saving displacements to csv")
-
-    def run(self):
-        """
-        Run the full motion tracking algorithm.
-        """
-        if not self.has_results("velocities"):
-            self._get_velocities()
-
-        if not self.has_results("displacements"):
-            self._get_displacements()
-
-        return True
-
-    def save_data(self, fname=None):
-        if fname is None:
-            fname = self.outdir.joinpath("motion_data.npy")
-        np.save(
-            fname,
-            dict(
-                displacement=utils.namedtuple2dict(
-                    self.displacement_data
-                ),
-                velocity=utils.namedtuple2dict(self.velocity_data),
-            ),
-        )
+        return displacement_vectors
 
 
-def track_motion(
-    f_in, overwrite, overwrite_all, param_list, save_data=True
-):
+def calc_chamber_angle(displacement_vectors: np.ndarray) -> float:
+    """
+
+    Estimating angle/how much the chamber is tilted using linear
+    regression.
+
+    Args:
+        displacement_vectors : np array of dimension T x X x Y x 2
+
+    Returns:
+        estimated angle
+
+    """
+
+    assert len(displacement_vectors.shape) == 4 and \
+            displacement_vectors.shape[-1] == 2, \
+            "Error: Expected shape T x X x Y x 2"
+
+    num_time_steps = displacement_vectors.shape[-1]
+
+    x_values, y_values = [], []
+
+    for _t in range(num_time_steps):
+        xs_, ys_, _ = np.nonzero(displacement_vectors[:, :, :, _t])
+        x_values += list(xs_)
+        y_values += list(ys_)
+
+    if not x_values:
+        print("Warning: No nonzero values detected.")
+        slope = 0
+    else:
+        slope = st.linregress(x_values, y_values)[0]
+
+    return np.arctan(slope)
+
+
+def track_motion(f_in, overwrite, overwrite_all, param_list, save_data=True):
     """
 
     Args:
         f_in - nd2 or zip file
         overwrite - recalculate values, or not
         overwrite_all - in this script, same as overwrite
-        param_list - give parameters to motion tracking algorithm, 
+        param_list - give parameters to motion tracking algorithm,
             predefined set of values
         save_data - boolean value: save as npy file when finished, or not
 
@@ -934,22 +364,16 @@ def track_motion(
 
     """
 
-    filename = generate_filename(
-        f_in, "track_motion", param_list, ".npy"
-    )
+    filename = generate_filename(f_in, "track_motion", param_list, ".npy")
 
     if not (overwrite or overwrite_all) and os.path.isfile(filename):
-        print(
-            "Previous data exist. Use flag --overwrite / -o to recalculate."
-        )
+        print("Previous data exist. Use flag --overwrite / -o to recalculate.")
         return np.load(filename, allow_pickle=True).item()
 
     np.seterr(invalid="ignore")
 
     mps_data = BFMPS(f_in)
-    assert (
-        mps_data.num_frames != 1
-    ), "Error: Single frame used as input"
+    assert mps_data.num_frames != 1, "Error: Single frame used as input"
 
     if len(param_list) > 1:
         motion = MotionTracking(mps_data, **(param_list[0]))
@@ -958,18 +382,14 @@ def track_motion(
 
     # convert to T x X x Y x 2 - TODO maybe we can do this earlier actually
     disp_data = np.swapaxes(
-        np.swapaxes(
-            np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2
-        ),
-        0,
-        3,
+        np.swapaxes(np.swapaxes(motion.displacement_vectors, 0, 1), 0, 2), 0, 3,
     )
 
     # save values
 
     d_all = {}
     d_all["displacement_vectors"] = disp_data
-    d_all["angle"] = motion.angle
+    d_all["angle"] = calc_chamber_angle(disp_data)
     d_all["block_size"] = motion.block_size
     d_all["info"] = mps_data.info
 

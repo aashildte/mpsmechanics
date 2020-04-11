@@ -7,6 +7,7 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+from ..mechanical_analysis.filters import filter_constrained
 
 def apply_filter(motion_data, type_filter, sigma):
     """
@@ -28,11 +29,18 @@ def apply_filter(motion_data, type_filter, sigma):
 
     assert type_filter in (
         "gaussian",
+        "gaussian_mask",
         "downsampling",
     ), "Error_ Type filter not recognized."
 
     if type_filter == "gaussian":
         return gaussian_filter(motion_data, [0, sigma, sigma, 0])
+
+    elif type_filter == "gaussian_mask":
+        mask_inner = filter_constrained(motion_data, 3)[0]
+        mask_outer = filter_constrained(motion_data, 0)[0]
+
+        return gaussian_filter_with_mask(motion_data, sigma, mask_inner, mask_outer)
 
     # else: downsamling
     sigma = int(sigma)
@@ -60,46 +68,21 @@ def apply_filter(motion_data, type_filter, sigma):
     return new_data
 
 
-def gaussian_filter_with_mask(motion_data : np.ndarray, sigma : float, mask : np.ndarray) -> np.ndarray:
-
-    xmap = _create_xy_maps(mask)
-    ymap = _create_xy_maps(mask.transpose())
+def gaussian_filter_with_mask(
+        motion_data: np.ndarray,
+        sigma: float,
+        mask_outer: np.ndarray,
+        mask_inner: np.ndarray) -> np.ndarray:
 
     filtered_data = np.zeros_like(motion_data)
 
-    for _x in xmap.keys():
-        for (y_start, y_end) in xmap[_x]:
-            filtered_data[:, _x, y_start:y_end, :] = gaussian_filter(motion_data[:, _x, y_start:y_end, :], [0, sigma, 0])
+    for t in range(len(motion_data)):
+        for i in range(2):
+            data_loc = gaussian_filter(motion_data[t, :, :, i]*mask_outer, sigma)
+            data_loc[np.logical_not(np.logical_and(mask_inner, mask_outer))] = 0
 
-    for _y in ymap.keys():
-        for (x_start, x_end) in ymap[_y]:
-            filtered_data[:, x_start:x_end, _y, :] = gaussian_filter(motion_data[:, x_start:x_end, _y, :], [0, sigma, 0])
+            filtered_data[t, :, :, i] = \
+                    np.where(np.logical_xor(mask_inner, mask_outer),
+                            motion_data[t, :, :, i], data_loc)
 
     return filtered_data
-
-
-def _create_xy_maps(mask : np.ndarray) -> (dict, dict):
-    assert len(mask.shape) ==2, "Error: Expectd 2D shape for mask"
-
-    x_dim, y_dim = mask.shape
-
-    xmap = {}
-
-    for _x in range(x_dim):
-        xmap[_x] = []
-        started = False
-        for _y in range(y_dim):
-            if mask[_x, _y]:
-                if not started:
-                    started = True
-                    start_index = _y
-            else:
-                if started:
-                    started = False
-                    stop_index = _y
-                    xmap[_x].append((start_index, stop_index))
-            if started and (_y == y_dim-1):
-                stop_index = _y + 1
-                xmap[_x].append((start_index, stop_index))
-
-    return xmap

@@ -50,7 +50,21 @@ def _calc_max_over_avg_interval(intervals, original_trace):
 
 
 def _calc_relevant_stats(values, intervals, tf_filter):
+    
+    last_shape = values.shape[3:]
 
+    if last_shape == ():
+        filter_ext = tf_filter
+    elif last_shape == (2,):
+        filter_ext = np.repeat(tf_filter[:, :, :, None], 2, axis=3) 
+    elif last_shape == (2, 2):
+        filter2 = np.repeat(tf_filter[:, :, :, None], 2, axis=3)
+        filter_ext = np.repeat(filter2[:, :, :, :, None], 2, axis=4)
+    else:
+        print(f"Error: Shape {last_shape} not recognized.")
+
+    values = np.where(filter_ext, values, np.zeros_like(values))
+    
     folded = calc_magnitude(values)
 
     over_time_avg = calc_avg_tf_filter(folded, tf_filter)
@@ -295,7 +309,7 @@ def calc_spatial_metrics(displacement, time, dx, angle, intervals):
            a consistent set of representations of the given quantity
 
     """
-    strain_filter_size = 4
+    strain_filter_size = 5
 
     tf_filter_uniform = filter_uniform(displacement)
     tf_filter_timedep = filter_time_dependent(displacement)

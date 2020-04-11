@@ -81,7 +81,7 @@ def _calc_intervals_from_pacing(pacing):
 def _calc_mechanical_quantities(
     mps_data,
     mt_data,
-    type_filter="gaussian",
+    type_filter="gaussian_mask",
     sigma=3,
     use_pacing=True,
 ):

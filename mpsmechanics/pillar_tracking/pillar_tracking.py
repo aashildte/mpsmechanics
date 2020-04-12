@@ -30,6 +30,33 @@ from .forcetransformation import (
     displacement_to_force_area,
 )
 
+def _calc_max_over_avg_interval(intervals, original_trace):
+
+    trace_per_interval = [
+        original_trace[i1:i2] for (i1, i2) in intervals
+    ]
+    shortest_interval = min(
+        [len(trace) for trace in trace_per_interval]
+    )
+    equal_intervals = [
+        trace[:shortest_interval] for trace in trace_per_interval
+    ]
+
+    avg_trace = np.mean(np.array(equal_intervals), axis=0)
+
+    return np.max(avg_trace, axis=0)
+
+
+def calc_int_avg(values, intervals):
+
+    norm = np.linalg.norm(values, axis=2) #will give the norm of the force sqrt(x^2+y^2) -->
+
+    if len(intervals) > 1:
+        metrics_int_avg = _calc_max_over_avg_interval(intervals, norm)
+    else:
+        metrics_int_avg = np.max(norm)
+
+    return metrics_int_avg
 
 def _define_pillars(
     pillar_positions: np.ndarray, radius: float, no_tracking_pts: float = 200,
@@ -63,18 +90,25 @@ def _define_pillars(
     pillars = np.zeros((no_pillars, no_tracking_pts, 2))
 
     for i in range(no_pillars):
-        x_pos, y_pos = x_positions[i], y_positions[i]
 
-        for j in range(no_tracking_pts):
-            random_xpos = np.random.uniform(x_pos, x_pos + radius)
-            random_ypos = np.random.uniform(y_pos, y_pos + radius)
+        if not np.isnan(x_positions[i]):
+            x_pos, y_pos = x_positions[i], y_positions[i]
 
-            while (random_xpos - x_pos) ** 2 + (random_ypos - y_pos) ** 2 > radius ** 2:
+            for j in range(no_tracking_pts):
                 random_xpos = np.random.uniform(x_pos, x_pos + radius)
                 random_ypos = np.random.uniform(y_pos, y_pos + radius)
 
-            pillars[i, j, 0] = random_xpos
-            pillars[i, j, 1] = random_ypos
+                while (random_xpos - x_pos) ** 2 + (random_ypos - y_pos) ** 2 > radius ** 2:
+                    random_xpos = np.random.uniform(x_pos, x_pos + radius)
+                    random_ypos = np.random.uniform(y_pos, y_pos + radius)
+
+                pillars[i, j, 0] = random_xpos
+                pillars[i, j, 1] = random_ypos
+
+        if np.isnan(x_positions[i]):
+            for j in range(no_tracking_pts):
+                pillars[i,j,0] = np.nan
+                pillars[i,j,1] = np.nan
 
     return pillars
 
@@ -100,7 +134,6 @@ def _calculate_current_timestep(
         numpy array of dimension no_tracking_pts x 2, middle point; relative displacement
 
     """
-
     fn_rel = interpolate_values_xy(x_coords, y_coords, disp_data)
 
     no_pillars, no_tracking_pts, no_dims = pillars.shape
@@ -109,7 +142,11 @@ def _calculate_current_timestep(
 
     for _p in range(no_pillars):
         for _n in range(no_tracking_pts):
-            disp_values[_p, _n] = fn_rel(*pillars[_p, _n])
+            if np.isnan(pillars[_p, :, :]).any():
+                #print(pillars[_p, :, :])
+                disp_values[_p, _n] = [np.nan, np.nan]
+            else:
+                disp_values[_p, _n] = fn_rel(*pillars[_p, _n])
 
     return disp_values
 
@@ -146,9 +183,8 @@ def _track_pillars_over_time(
     disp_relative_to_zero = disp_data - disp_data[0]
 
     # define pillars by their circumference
-
+    #print(pillar_positions)
     pillars = _define_pillars(pillar_positions, radius, no_tracking_pts)
-
     # some general values
     t_dim, x_dim, y_dim = disp_data.shape[:3]
     no_pillars, no_tracking_pts = pillars.shape[:2]

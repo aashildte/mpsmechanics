@@ -7,6 +7,7 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+from ..mechanical_analysis.filters import filter_constrained
 
 def apply_filter(motion_data, type_filter, sigma):
     """
@@ -28,11 +29,17 @@ def apply_filter(motion_data, type_filter, sigma):
 
     assert type_filter in (
         "gaussian",
+        "gaussian_mask",
         "downsampling",
     ), "Error_ Type filter not recognized."
 
     if type_filter == "gaussian":
         return gaussian_filter(motion_data, [0, sigma, sigma, 0])
+
+    elif type_filter == "gaussian_mask":
+        mask = filter_constrained(motion_data, 5)[0]
+
+        return gaussian_filter_with_mask(motion_data, sigma, mask)
 
     # else: downsamling
     sigma = int(sigma)
@@ -58,3 +65,34 @@ def apply_filter(motion_data, type_filter, sigma):
                     new_data[_t, _x, _y, _d] = avg
 
     return new_data
+
+
+def gaussian_filter_with_mask(
+        motion_data: np.ndarray,
+        sigma: float,
+        mask: np.ndarray) -> np.ndarray:
+    """
+    
+    Args:
+        displacement/motion data – numpy array of dimension T x X x Y x 2
+        sigma - parameter for gaussian filter
+        mask - which values to perform diffusion for; X x Y array
+
+    """
+
+    assert len(motion_data.shape) == 4 and motion_data.shape[-1] == 2, \
+        f"Error: Unexpected shape for motion data: {motion_data.shape}; expected T x X x Y x 2"
+    
+    assert mask.shape == motion_data.shape[1:3], \
+        f"Error: Unexpected shape for mask: {mask.shape}; expected {motion_data.shape[1:3]}"
+
+    filtered_data = np.zeros_like(motion_data)
+
+    for t in range(len(motion_data)):
+        for i in range(2):
+            data_loc = gaussian_filter(motion_data[t, :, :, i], sigma)
+
+            filtered_data[t, :, :, i] = \
+                    np.where(mask, motion_data[t, :, :, i], data_loc)
+
+    return filtered_data

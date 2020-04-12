@@ -129,13 +129,23 @@ def add_parameters_parser_arguments(parser, level):
     if level >= 0:
         l0_keys = []
     if level >= 1:
-        #parser.add_argument(
-        #    "-si",
-        #    "--sigma",
-        #    default=1,
-        #    help="Regularization filter parameter.",
-        #    type=float,
-        #)
+        """
+        parser.add_argument(
+            "-fi",
+            "--type_filter",
+            default="gaussian",
+            help="Regularization filter parameter.",
+            type=str,
+        )
+        parser.add_argument(
+            "-si",
+            "--sigma",
+            default=3,
+            help="Regularization filter parameter.",
+            type=float,
+        )
+        l1_keys = ["type_filter", "sigma"]
+        """
         l1_keys = []
 
     return [l0_keys, l1_keys]

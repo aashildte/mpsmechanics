@@ -42,7 +42,7 @@ from .motion_tracking import (
     block_matching,
     calculate_minmax,
     convert_disp_data,
-    template_matching,
+    gaussian_filter_with_mask,
     track_motion,
     MotionTracking,
 )

@@ -17,8 +17,6 @@ def _cl_parser():
     keys = mc.add_parameters_parser_arguments(parser, 2)
     keys.append(mc.add_animation_parser_arguments(parser) + mc.add_metrics_arguments(parser))
 
-    print(keys)
-
     return parser, channel, keys
 
 if __name__ == "__main__":

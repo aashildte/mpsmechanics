@@ -37,10 +37,9 @@ def apply_filter(motion_data, type_filter, sigma):
         return gaussian_filter(motion_data, [0, sigma, sigma, 0])
 
     elif type_filter == "gaussian_mask":
-        mask_inner = filter_constrained(motion_data, 3)[0]
-        mask_outer = filter_constrained(motion_data, 0)[0]
+        mask = filter_constrained(motion_data, 5)[0]
 
-        return gaussian_filter_with_mask(motion_data, sigma, mask_inner, mask_outer)
+        return gaussian_filter_with_mask(motion_data, sigma, mask)
 
     # else: downsamling
     sigma = int(sigma)
@@ -71,18 +70,29 @@ def apply_filter(motion_data, type_filter, sigma):
 def gaussian_filter_with_mask(
         motion_data: np.ndarray,
         sigma: float,
-        mask_outer: np.ndarray,
-        mask_inner: np.ndarray) -> np.ndarray:
+        mask: np.ndarray) -> np.ndarray:
+    """
+    
+    Args:
+        displacement/motion data – numpy array of dimension T x X x Y x 2
+        sigma - parameter for gaussian filter
+        mask - which values to perform diffusion for; X x Y array
+
+    """
+
+    assert len(motion_data.shape) == 4 and motion_data.shape[-1] == 2, \
+        f"Error: Unexpected shape for motion data: {motion_data.shape}; expected T x X x Y x 2"
+    
+    assert mask.shape == motion_data.shape[1:3], \
+        f"Error: Unexpected shape for mask: {mask.shape}; expected {motion_data.shape[1:3]}"
 
     filtered_data = np.zeros_like(motion_data)
 
     for t in range(len(motion_data)):
         for i in range(2):
-            data_loc = gaussian_filter(motion_data[t, :, :, i]*mask_outer, sigma)
-            data_loc[np.logical_not(np.logical_and(mask_inner, mask_outer))] = 0
+            data_loc = gaussian_filter(motion_data[t, :, :, i], sigma)
 
             filtered_data[t, :, :, i] = \
-                    np.where(np.logical_xor(mask_inner, mask_outer),
-                            motion_data[t, :, :, i], data_loc)
+                    np.where(mask, motion_data[t, :, :, i], data_loc)
 
     return filtered_data

@@ -26,8 +26,19 @@ def test_gaussian_filter_with_mask():
 
     mask = np.asarray(data_xy.copy(), dtype=np.bool)
 
-    assert np.allclose(data_org,
-                       mc.gaussian_filter_with_mask(data_org, sigma, mask))
+    # check if they get the same nonzeros
+
+    data_exp = data_org != 0
+    data_calc = mc.gaussian_filter_with_mask(data_org, sigma, mask) != 0
+
+    assert np.all(np.equal(data_exp, data_calc))
+
+    # check if they get the same zeros
+
+    data_exp = data_org == 0
+    data_calc = mc.gaussian_filter_with_mask(data_org, sigma, mask) == 0
+
+    assert np.all(np.equal(data_exp, data_calc))
 
 if __name__ == "__main__":
 

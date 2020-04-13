@@ -39,7 +39,7 @@ def apply_filter(motion_data, type_filter, sigma):
         return gaussian_filter(motion_data, [0, sigma, sigma, 0])
 
     if type_filter == "gaussian_mask":
-        mask = filter_constrained(motion_data, 5)[0]
+        mask = filter_constrained(motion_data, 3)[0]
 
         return gaussian_filter_with_mask(motion_data, sigma, mask)
 
@@ -96,9 +96,8 @@ def gaussian_filter_with_mask(
     for t in range(len(motion_data)):
         for i in range(2):
             data_loc = gaussian_filter(motion_data[t, :, :, i], sigma)
-            data_loc[np.logical_not(mask)] = 0
 
             filtered_data[t, :, :, i] = \
-                    np.where(mask, motion_data[t, :, :, i], data_loc)
-
+                    np.where(mask, data_loc, motion_data[t, :, :, i])
+   
     return filtered_data

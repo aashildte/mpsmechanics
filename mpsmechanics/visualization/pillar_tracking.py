@@ -178,6 +178,17 @@ def _make_animation(
     )
     make_animation(fig, update, fname, **animation_config)
 
+
+def _remove_nan_values(pillar_coords):
+    num_time_pts, num_pillars, num_dims = pillar_coords.shape 
+
+    pillar_coords_flat = np.extract(np.isfinite(pillar_coords), pillar_coords)
+
+    remaining_pillars = pillar_coords_flat.shape[0] // (num_time_pts*num_dims)
+
+    return pillar_coords_flat.reshape(num_time_pts, remaining_pillars, num_dims)
+
+
 def _read_input_data(f_in, param_list, overwrite_all):
     mps_data = BFMPS(f_in)
 
@@ -204,9 +215,7 @@ def _read_input_data(f_in, param_list, overwrite_all):
 
     time = mps_data.time_stamps
 
-    # remove nan values:
-
-    pillar_coords = np.extract(np.isfinite(pillar_coords), pillar_coords)
+    pillar_coords = _remove_nan_values(pillar_coords)
 
     return animation_config, images, pillar_coords, radius, time
 

@@ -202,6 +202,7 @@ def generate_filenames_pngmp4(f_in, subfolder, prefix, param_list):
     scaling_factor = scaling_factor.replace(".", "p")
      
     time_step = param_list_copy[-1].pop("time_step") 
+    param_list_copy[-1].pop("animate")
 
     fname = generate_filename(
         f_in,

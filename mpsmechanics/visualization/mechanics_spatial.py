@@ -583,7 +583,7 @@ def visualize_mechanics(f_in, overwrite, overwrite_all, param_list):
     )
 
     animate = animation_config.pop("animate")
-    metrics = param_list[-1].pop("metrics")
+    metrics = param_list[-1]["metrics"]
     metrics = metrics.split(" ")
 
     cb_range = (

@@ -51,10 +51,8 @@ def calc_int_avg(values, intervals):
 
     norm = np.linalg.norm(values, axis=2) #will give the norm of the force sqrt(x^2+y^2) -->
 
-    if len(intervals) > 1:
-        metrics_int_avg = _calc_max_over_avg_interval(intervals, norm)
-    else:
-        metrics_int_avg = np.max(norm)
+    #print("intervals", intervals)
+    metrics_int_avg = _calc_max_over_avg_interval(intervals, norm)
 
     return metrics_int_avg
 

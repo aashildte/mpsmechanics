@@ -180,7 +180,7 @@ def _make_animation(
 
 
 def _remove_nan_values(pillar_coords):
-    num_time_pts, num_pillars, num_dims = pillar_coords.shape 
+    num_time_pts, _, num_dims = pillar_coords.shape 
 
     pillar_coords_flat = np.extract(np.isfinite(pillar_coords), pillar_coords)
 

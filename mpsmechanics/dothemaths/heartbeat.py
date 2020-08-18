@@ -32,7 +32,7 @@ def calc_beat_intervals(data, disp_threshold=20):
     maxima = calc_beat_maxima(data, disp_threshold=disp_threshold)
 
     if len(maxima) < 3:
-        return []
+        return [(0, -1)]
 
     midpoints = [
         int((maxima[i] + maxima[i + 1]) / 2)

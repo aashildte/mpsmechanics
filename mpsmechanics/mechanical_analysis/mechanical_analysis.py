@@ -77,6 +77,28 @@ def _calc_intervals_from_pacing(pacing):
 
     return intervals
 
+def _find_reference_index(pacing):
+    
+    ref_index = 0     # initial guess
+
+    # in case we start in the middle of a pacing, increase index until we reach 0
+
+    for pac in pacing:
+        if pac > 0:
+            ref_infex += 1
+        else:
+            break
+
+    # then go to the first index after a 0
+
+    for pac in pacing[ref_index:]:
+        if pac > 0:
+            return ref_index + 1
+        else:
+            ref_index += 1
+
+    print("Error: No reference index found.")
+
 
 def _calc_mechanical_quantities(
     mps_data,
@@ -100,8 +122,7 @@ def _calc_mechanical_quantities(
         dx = um_per_pixel * mt_data["block_size"]
 
     if use_pacing and np.max(pacing > 1):
-        indices = np.where(np.diff(pacing[1:]) > 1)[0] + 1
-        reference_index = indices[0] - 1
+        reference_index = _find_reference_index(pacing)
 
         displacement = convert_disp_data(displacement, reference_index)
         displacement = um_per_pixel * apply_filter(

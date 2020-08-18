@@ -166,16 +166,12 @@ def visualize_fluorescence(f_in, overwrite, overwrite_all, param_list):
         param_list[-1]["range_max"],
     )
 
-    print(mps_data.size_x)
-
     N = min(mps_data.size_x, param_list[-1]["fl_intervals"])
     um_per_pixel = mps_data.info["um_per_pixel"]
     time = mps_data.time_stamps
     images = np.moveaxis(mps_data.frames, 2, 0)
 
     fname_data = generate_filename(f_in, "plots_spatial", param_list, ".npy")
-
-    print(fname_data)
 
     fname_png, fname_mp4 = generate_filenames_pngmp4(
         f_in, "plots_spatial", f"orgiginal_vs_corrected_{N}", param_list

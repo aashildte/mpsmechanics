@@ -93,7 +93,7 @@ def _find_reference_index(pacing):
 
     for pac in pacing[ref_index:]:
         if pac > 0:
-            return ref_index + 1
+            return ref_index
         else:
             ref_index += 1
 

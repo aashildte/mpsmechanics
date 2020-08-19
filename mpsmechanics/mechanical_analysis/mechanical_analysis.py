@@ -85,7 +85,7 @@ def _find_reference_index(pacing):
 
     for pac in pacing:
         if pac > 0:
-            ref_infex += 1
+            ref_index += 1
         else:
             break
 
